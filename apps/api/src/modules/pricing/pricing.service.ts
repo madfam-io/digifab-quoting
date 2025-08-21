@@ -10,19 +10,19 @@ import { Decimal } from 'decimal.js';
 export class PricingService {
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
-    private cacheService: CacheService,
+    private _configService: ConfigService,
+    private _cacheService: CacheService,
   ) {}
 
   async calculateQuoteItem(
     tenantId: string,
-    process: ProcessType,
+    _process: ProcessType,
     geometryMetrics: any,
     materialId: string,
     machineId: string,
-    selections: any,
+    _selections: any,
     quantity: number,
-    objective: any,
+    _objective: any,
   ) {
     // Simplified pricing calculation for MVP
     const material = await this.prisma.material.findFirst({

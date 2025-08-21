@@ -56,7 +56,7 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ 
     summary: 'Create a new job',
     description: 'Create a new background job for asynchronous processing (file analysis, quote calculation, etc.)' 
@@ -88,7 +88,7 @@ export class JobsController {
         ...createJobDto.data,
         tenantId,
         userId: user.id,
-      },
+      } as JobData,
       createJobDto.options,
     );
 
@@ -101,7 +101,7 @@ export class JobsController {
   }
 
   @Post('schedule')
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Schedule a job for future execution' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
@@ -118,7 +118,7 @@ export class JobsController {
         ...scheduleJobDto.data,
         tenantId,
         userId: user.id,
-      },
+      } as JobData,
       scheduleJobDto.delay,
       scheduleJobDto.options,
     );
@@ -132,7 +132,7 @@ export class JobsController {
   }
 
   @Post('recurring')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Create a recurring job' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
@@ -149,7 +149,7 @@ export class JobsController {
         ...recurringJobDto.data,
         tenantId,
         userId: user.id,
-      },
+      } as JobData,
       recurringJobDto.cronExpression,
       recurringJobDto.options,
     );
@@ -212,7 +212,7 @@ export class JobsController {
   }
 
   @Post(':jobId/retry')
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Retry a failed job' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
   @ApiResponse({ 
@@ -233,7 +233,7 @@ export class JobsController {
   }
 
   @Delete(':jobId')
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Cancel a job' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
   @ApiResponse({ 
@@ -251,7 +251,7 @@ export class JobsController {
   }
 
   @Post(':jobId/dead-letter')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Move job to dead letter queue' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
   @ApiResponse({ 
@@ -272,7 +272,7 @@ export class JobsController {
   }
 
   @Get('queues/metrics')
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ 
     summary: 'Get queue metrics',
     description: 'Retrieve real-time metrics and statistics for job queues' 
@@ -295,7 +295,7 @@ export class JobsController {
   }
 
   @Post('queues/:type/pause')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Pause a queue' })
   @ApiParam({ name: 'type', enum: JobType })
   @ApiResponse({ 
@@ -313,7 +313,7 @@ export class JobsController {
   }
 
   @Post('queues/:type/resume')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Resume a queue' })
   @ApiParam({ name: 'type', enum: JobType })
   @ApiResponse({ 
@@ -331,7 +331,7 @@ export class JobsController {
   }
 
   @Post('queues/:type/clean')
-  @Roles('Admin')
+  @Roles('admin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Clean old jobs from queue' })
   @ApiParam({ name: 'type', enum: JobType })

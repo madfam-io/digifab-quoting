@@ -2,6 +2,17 @@ import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/c
 import * as winston from 'winston';
 import { createWinstonLogger } from './winston.config';
 import { TenantContextService } from '../../modules/tenant/tenant-context.service';
+import { 
+  formatErrorForLogging 
+} from '../utils/error-handling';
+import {
+  LogMetadata,
+  HttpLogMetadata,
+  AuditLogMetadata,
+  SecurityLogMetadata,
+  PerformanceLogMetadata,
+  ErrorLogMetadata,
+} from './logger.interface';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LoggerService implements NestLoggerService {
@@ -18,51 +29,90 @@ export class LoggerService implements NestLoggerService {
     this.context = context;
   }
 
-  log(message: any, ...optionalParams: any[]) {
-    const meta = this.getMetadata(optionalParams);
+  log(message: string, context?: string | LogMetadata): void {
+    const meta = this.buildMetadata(context);
     this.logger.info(message, meta);
   }
 
-  error(message: any, trace?: string, context?: string) {
-    const meta = this.getMetadata([trace, context]);
-    this.logger.error(message, { ...meta, trace });
+  error(message: string | Error, trace?: string | Error, context?: string): void {
+    let errorMessage: string;
+    let errorStack: string | undefined;
+    let errorMeta: ErrorLogMetadata;
+
+    // Handle different parameter combinations
+    if (message instanceof Error) {
+      errorMessage = message.message;
+      errorStack = message.stack;
+      errorMeta = {
+        ...this.buildMetadata(context),
+        error: true,
+        stack: errorStack,
+        originalError: formatErrorForLogging(message),
+      };
+    } else if (typeof trace === 'string') {
+      errorMessage = message;
+      errorStack = trace;
+      errorMeta = {
+        ...this.buildMetadata(context),
+        error: true,
+        stack: errorStack,
+      };
+    } else if (trace instanceof Error) {
+      errorMessage = message;
+      errorStack = trace.stack;
+      errorMeta = {
+        ...this.buildMetadata(context),
+        error: true,
+        stack: errorStack,
+        originalError: formatErrorForLogging(trace),
+      };
+    } else {
+      errorMessage = message;
+      errorMeta = {
+        ...this.buildMetadata(context),
+        error: true,
+      };
+    }
+
+    this.logger.error(errorMessage, errorMeta);
   }
 
-  warn(message: any, ...optionalParams: any[]) {
-    const meta = this.getMetadata(optionalParams);
+  warn(message: string, context?: string | LogMetadata): void {
+    const meta = this.buildMetadata(context);
     this.logger.warn(message, meta);
   }
 
-  debug(message: any, ...optionalParams: any[]) {
-    const meta = this.getMetadata(optionalParams);
+  debug(message: string, context?: string | LogMetadata): void {
+    const meta = this.buildMetadata(context);
     this.logger.debug(message, meta);
   }
 
-  verbose(message: any, ...optionalParams: any[]) {
-    const meta = this.getMetadata(optionalParams);
+  verbose(message: string, context?: string | LogMetadata): void {
+    const meta = this.buildMetadata(context);
     this.logger.verbose(message, meta);
   }
 
   /**
    * Custom method for HTTP logging
    */
-  http(message: string, meta?: any) {
+  http(message: string, meta?: Partial<HttpLogMetadata>): void {
     const context = this.tenantContext.getContext();
-    this.logger.http(message, {
+    const logMeta: HttpLogMetadata = {
       ...meta,
       context: this.context,
       tenantId: context?.tenantId,
       userId: context?.userId,
       requestId: context?.requestId,
-    });
+    };
+    this.logger.http(message, logMeta);
   }
 
   /**
    * Custom method for audit logging
    */
-  audit(action: string, entity: string, entityId: string, meta?: any) {
+  audit(action: string, entity: string, entityId: string, meta?: Partial<AuditLogMetadata>): void {
     const context = this.tenantContext.getContext();
-    this.logger.info('Audit log', {
+    const logMeta: AuditLogMetadata = {
       audit: true,
       action,
       entity,
@@ -72,15 +122,16 @@ export class LoggerService implements NestLoggerService {
       tenantId: context?.tenantId,
       userId: context?.userId,
       requestId: context?.requestId,
-    });
+    };
+    this.logger.info('Audit log', logMeta);
   }
 
   /**
    * Custom method for security logging
    */
-  security(event: string, meta?: any) {
+  security(event: string, meta?: Partial<SecurityLogMetadata>): void {
     const context = this.tenantContext.getContext();
-    this.logger.warn('Security event', {
+    const logMeta: SecurityLogMetadata = {
       security: true,
       event,
       ...meta,
@@ -88,17 +139,16 @@ export class LoggerService implements NestLoggerService {
       tenantId: context?.tenantId,
       userId: context?.userId,
       requestId: context?.requestId,
-      ip: meta?.ip,
-      userAgent: meta?.userAgent,
-    });
+    };
+    this.logger.warn('Security event', logMeta);
   }
 
   /**
    * Custom method for performance logging
    */
-  performance(operation: string, duration: number, meta?: any) {
+  performance(operation: string, duration: number, meta?: Partial<PerformanceLogMetadata>): void {
     const context = this.tenantContext.getContext();
-    this.logger.info('Performance metric', {
+    const logMeta: PerformanceLogMetadata = {
       performance: true,
       operation,
       duration,
@@ -107,27 +157,26 @@ export class LoggerService implements NestLoggerService {
       tenantId: context?.tenantId,
       userId: context?.userId,
       requestId: context?.requestId,
-    });
+    };
+    this.logger.info('Performance metric', logMeta);
   }
 
-  private getMetadata(optionalParams: any[]): any {
-    const context = this.tenantContext.getContext();
-    const meta: any = {
+  private buildMetadata(contextOrMeta?: string | LogMetadata): LogMetadata {
+    const tenantContext = this.tenantContext.getContext();
+    const baseMetadata: LogMetadata = {
       context: this.context,
-      tenantId: context?.tenantId,
-      userId: context?.userId,
-      requestId: context?.requestId,
+      tenantId: tenantContext?.tenantId,
+      userId: tenantContext?.userId,
+      requestId: tenantContext?.requestId,
       timestamp: new Date().toISOString(),
     };
 
-    // Extract metadata from optional parameters
-    if (optionalParams.length > 0) {
-      const lastParam = optionalParams[optionalParams.length - 1];
-      if (typeof lastParam === 'object' && !Array.isArray(lastParam)) {
-        Object.assign(meta, lastParam);
-      }
+    if (typeof contextOrMeta === 'string') {
+      return { ...baseMetadata, context: contextOrMeta };
+    } else if (contextOrMeta) {
+      return { ...baseMetadata, ...contextOrMeta };
     }
 
-    return meta;
+    return baseMetadata;
   }
 }

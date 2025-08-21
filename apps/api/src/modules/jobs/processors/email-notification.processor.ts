@@ -10,8 +10,7 @@ import { LoggerService } from '@/common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { compile } from 'handlebars';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
 interface EmailResult {
   messageId: string;
@@ -19,6 +18,8 @@ interface EmailResult {
   rejected: string[];
   response: string;
 }
+
+type HandlebarsTemplateDelegate = (context: any, options?: any) => string;
 
 @Processor(JobType.EMAIL_NOTIFICATION)
 @Injectable()
@@ -32,7 +33,7 @@ export class EmailNotificationProcessor {
     private readonly configService: ConfigService,
   ) {
     // Initialize email transporter
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: this.configService.get('email.smtp.host'),
       port: this.configService.get('email.smtp.port'),
       secure: this.configService.get('email.smtp.secure', false),
@@ -111,17 +112,13 @@ export class EmailNotificationProcessor {
         duration: Date.now() - startTime,
       };
     } catch (error) {
-      this.logger.error(`Failed to send email`, error, {
-        jobId: job.id,
-        recipient: recipientEmail,
-        type,
-      });
+      this.logger.error(`Failed to send email`, toError(error));
 
       return {
         success: false,
         error: {
           code: 'EMAIL_SEND_FAILED',
-          message: error.message || 'Failed to send email',
+          message: getErrorMessage(error),
           details: error,
         },
         duration: Date.now() - startTime,
@@ -148,11 +145,7 @@ export class EmailNotificationProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<EmailNotificationJobData>, err: Error) {
-    this.logger.error(`Email notification job ${job.id} failed`, err, {
-      type: job.data.type,
-      recipient: job.data.recipientEmail,
-      attempts: job.attemptsMade,
-    });
+    this.logger.error(`Email notification job ${job.id} failed`, toError(err));
   }
 
   private loadTemplates(): void {
@@ -407,7 +400,7 @@ export class EmailNotificationProcessor {
 
   private async prepareAttachments(
     attachments?: EmailNotificationJobData['attachments'],
-  ): Promise<nodemailer.Attachment[]> {
+  ): Promise<nodemailer.SendMailOptions['attachments']> {
     if (!attachments || attachments.length === 0) {
       return [];
     }

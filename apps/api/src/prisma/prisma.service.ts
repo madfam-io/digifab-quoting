@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, INestApplication, Inject, Optional } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { TenantContextService } from '../modules/tenant/tenant-context.service';
 
 // Models that should have tenant isolation
@@ -60,8 +60,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         // For createMany operations, add tenantId to each record
         if (params.action === 'createMany') {
           if (Array.isArray(params.args.data)) {
-            params.args.data = params.args.data.map((item: any) => ({
-              ...item,
+            params.args.data = params.args.data.map((item: unknown) => ({
+              ...(item as object),
               tenantId: context.tenantId,
             }));
           } else {
@@ -119,7 +119,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async enableShutdownHooks(app: INestApplication) {
-    this.$on('beforeExit', async () => {
+    this.$on('beforeExit' as never, async () => {
       await app.close();
     });
   }
@@ -130,12 +130,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     }
 
     const models = Reflect.ownKeys(this).filter(
-      (key) => key[0] !== '_' && key[0] !== '$' && key !== 'constructor',
+      (key) => {
+        const keyStr = String(key);
+        return keyStr[0] !== '_' && keyStr[0] !== '$' && keyStr !== 'constructor';
+      }
     );
 
     return Promise.all(
       models.map((modelKey) => {
-        return this[modelKey].deleteMany();
+        const keyStr = String(modelKey);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (this as any)[keyStr].deleteMany();
       }),
     );
   }

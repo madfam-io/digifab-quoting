@@ -1,8 +1,7 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
 
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -24,7 +23,15 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
       const { passwordHash, ...result } = user;
-      return result as User;
+      return {
+        id: result.id,
+        tenantId: result.tenantId,
+        email: result.email,
+        name: `${result.firstName} ${result.lastName}`.trim(),
+        roles: [result.role.toLowerCase() as UserRole],
+        active: result.active,
+        lastLogin: result.lastLogin?.toISOString(),
+      } as User;
     }
     return null;
   }
@@ -46,8 +53,7 @@ export class AuthService {
     const sessionData = {
       userId: user.id,
       email: user.email,
-      role: user.role,
-      permissions: user.permissions || [],
+      roles: user.roles,
       tenantId: user.tenantId,
       lastLogin: new Date(),
     };
@@ -62,7 +68,7 @@ export class AuthService {
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     try {
       // Verify refresh token
-      const payload = this.jwtService.verify(refreshToken, {
+      const _payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get('jwt.secret'),
       });
 
@@ -77,7 +83,16 @@ export class AuthService {
       }
 
       // Generate new tokens
-      const tokens = await this.generateTokens(session.user as User);
+      const user: User = {
+        id: session.user.id,
+        tenantId: session.user.tenantId,
+        email: session.user.email,
+        name: `${session.user.firstName} ${session.user.lastName}`.trim(),
+        roles: [session.user.role.toLowerCase() as UserRole],
+        active: session.user.active,
+        lastLogin: session.user.lastLogin?.toISOString(),
+      };
+      const tokens = await this.generateTokens(user);
 
       // Update session
       await this.prisma.session.update({
@@ -131,7 +146,8 @@ export class AuthService {
         // Create default tenant for MVP
         const tenant = await this.prisma.tenant.create({
           data: {
-            name: registerDto.company,
+            code: 'DEFAULT',
+            name: registerDto.company || 'Default Company',
             domain: 'default',
             settings: {},
           },
@@ -153,7 +169,7 @@ export class AuthService {
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
         phone: registerDto.phone,
-        role: UserRole.CUSTOMER,
+        role: 'CUSTOMER',
         tenantId,
         emailVerified: false,
       },
@@ -172,11 +188,20 @@ export class AuthService {
 
     // Generate tokens and login
     const { passwordHash: _, ...userWithoutPassword } = user;
-    const tokens = await this.login(userWithoutPassword as User);
+    const userForLogin: User = {
+      id: userWithoutPassword.id,
+      tenantId: userWithoutPassword.tenantId,
+      email: userWithoutPassword.email,
+      name: `${userWithoutPassword.firstName} ${userWithoutPassword.lastName}`.trim(),
+      roles: [userWithoutPassword.role.toLowerCase() as UserRole],
+      active: userWithoutPassword.active,
+      lastLogin: userWithoutPassword.lastLogin?.toISOString(),
+    };
+    const tokens = await this.login(userForLogin);
 
     return {
       ...tokens,
-      user: userWithoutPassword as User,
+      user: userForLogin,
     };
   }
 

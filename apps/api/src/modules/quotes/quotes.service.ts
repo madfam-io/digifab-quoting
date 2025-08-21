@@ -6,14 +6,13 @@ import { CacheService } from '../redis/cache.service';
 import { QuoteCacheService } from '../redis/quote-cache.service';
 import { Cacheable, CacheInvalidate } from '../redis/decorators/cache.decorator';
 import { 
-  Quote, 
-  QuoteStatus, 
-  QuoteObjective,
-  ProcessType,
-  Currency,
   Quote as PrismaQuote,
   QuoteItem as PrismaQuoteItem,
 } from '@prisma/client';
+import { 
+  QuoteStatus,
+  Currency,
+} from '@madfam/shared';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AddQuoteItemDto } from './dto/add-quote-item.dto';
 import { CalculateQuoteDto } from './dto/calculate-quote.dto';
@@ -24,9 +23,9 @@ import { Decimal } from 'decimal.js';
 export class QuotesService {
   constructor(
     private prisma: PrismaService,
-    private filesService: FilesService,
+    private _filesService: FilesService,
     private pricingService: PricingService,
-    private cacheService: CacheService,
+    private _cacheService: CacheService,
     private quoteCacheService: QuoteCacheService,
   ) {}
 
@@ -179,7 +178,7 @@ export class QuotesService {
       data: {
         quoteId,
         name: dto.name || file.originalName,
-        process: dto.process,
+        processCode: dto.process,
         quantity: dto.quantity,
         selections: dto.options,
       },
@@ -242,15 +241,20 @@ export class QuotesService {
           async () => {
             const result = await this.pricingService.calculateQuoteItem(
               tenantId,
-              quoteItem,
-              quote.objective as any,
+              quoteItem.processCode as ProcessType,
+              {}, // geometryMetrics - placeholder
+              quoteItem.materialId || '',
+              '', // machineId - placeholder
+              quoteItem.selections,
+              quoteItem.quantity,
+              quote.objective,
             );
             return {
               pricing: {
-                unitCost: result.unitPrice.toNumber(),
-                totalCost: result.totalPrice.toNumber(),
-                margin: result.margin || 0,
-                finalPrice: result.totalPrice.toNumber(),
+                unitCost: result.unitPrice,
+                totalCost: result.totalPrice,
+                margin: result.costBreakdown.margin,
+                finalPrice: result.totalPrice,
               },
               manufacturing: {
                 estimatedTime: result.leadDays,
@@ -273,16 +277,17 @@ export class QuotesService {
               machine: pricingResult.manufacturing.machineCost,
               material: pricingResult.manufacturing.materialCost,
             },
-            sustainability: pricingResult.sustainability || {},
-            flags: pricingResult.warnings || [],
+            sustainability: {},
+            flags: [],
           },
         });
 
         calculatedItems.push(updatedItem);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         errors.push({
           itemId: item.id,
-          error: error.message,
+          error: errorMessage,
         });
       }
     }

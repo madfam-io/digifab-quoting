@@ -109,14 +109,18 @@ async function main() {
   ];
 
   for (const material of materials) {
-    const { color, ...materialData } = material;
+    const { color, costPerUnit, ...materialData } = material;
     await prisma.material.create({
       data: {
-        ...materialData,
+        code: materialData.code,
+        name: materialData.name,
+        process: materialData.process,
+        density: materialData.density,
         tenantId: tenant.id,
         co2eFactor: 2.5, // Default value
         costUom: 'kg',
-        pricePerUom: material.costPerUnit,
+        pricePerUom: costPerUnit,
+        costPerUnit: costPerUnit,
         properties: {
           color: color,
         },
@@ -226,8 +230,18 @@ async function main() {
   ];
 
   for (const option of processOptions) {
-    await prisma.processOption.create({
-      data: {
+    await prisma.processOption.upsert({
+      where: {
+        tenantId_process: {
+          tenantId: tenant.id,
+          process: option.process,
+        },
+      },
+      update: {
+        optionsSchema: option.optionsSchema,
+        marginFloorPercent: option.marginFloorPercent,
+      },
+      create: {
         ...option,
         tenantId: tenant.id,
       },

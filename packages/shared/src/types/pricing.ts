@@ -1,5 +1,5 @@
-import { UUID, Currency, Timestamped, TenantScoped } from './common';
-import { ProcessType } from './quote';
+import { UUID, Timestamped, TenantScoped } from './common';
+import { Currency, ProcessType } from './enums';
 
 export interface Material extends Timestamped, TenantScoped {
   id: UUID;

@@ -1,5 +1,13 @@
 export const API_VERSION = 'v1';
 
+export const USER_ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  OPERATOR: 'operator',
+  SUPPORT: 'support',
+  CUSTOMER: 'customer',
+} as const;
+
 export const DEFAULT_PAGINATION = {
   page: 1,
   pageSize: 20,

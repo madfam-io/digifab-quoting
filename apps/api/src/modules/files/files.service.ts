@@ -5,6 +5,7 @@ import * as AWS from 'aws-sdk';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { FileType, FILE_SIZE_LIMITS } from '@madfam/shared';
+import { getErrorMessage } from '@/common/utils/error-handling';
 
 export interface PresignedUrlResponse {
   uploadUrl: string;
@@ -143,7 +144,7 @@ export class FilesService {
           size: headResult.ContentLength || file.size,
           ndaAcceptanceId,
           metadata: {
-            ...file.metadata,
+            ...(file.metadata as any || {}),
             status: 'confirmed',
             confirmedAt: new Date().toISOString(),
           },
@@ -154,9 +155,9 @@ export class FilesService {
         where: { id: fileId },
         data: {
           metadata: {
-            ...file.metadata,
+            ...(file.metadata as any || {}),
             status: 'failed',
-            error: error.message,
+            error: getErrorMessage(error),
           },
         },
       });
@@ -211,7 +212,7 @@ export class FilesService {
         return result.Body as Buffer;
       }
     } catch (error) {
-      throw new BadRequestException(`Failed to download file: ${error.message}`);
+      throw new BadRequestException(`Failed to download file: ${getErrorMessage(error)}`);
     }
   }
 

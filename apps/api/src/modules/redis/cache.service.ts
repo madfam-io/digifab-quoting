@@ -184,7 +184,7 @@ export class CacheService {
       
       this.logger.log('Cache warm-up completed');
     } catch (error) {
-      this.logger.error('Error during cache warm-up', error);
+      this.logger.error('Error during cache warm-up', error as any);
     }
   }
 

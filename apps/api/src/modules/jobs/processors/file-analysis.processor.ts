@@ -13,6 +13,7 @@ import { FilesService } from '@/modules/files/files.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
+import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
 interface FileAnalysisResult {
   fileId: string;
@@ -122,16 +123,13 @@ export class FileAnalysisProcessor {
         duration,
       };
     } catch (error) {
-      this.logger.error(`File analysis failed for ${fileId}`, error, {
-        jobId: job.id,
-        tenantId,
-      });
+      this.logger.error(`File analysis failed for ${fileId}`, toError(error));
 
       return {
         success: false,
         error: {
           code: 'FILE_ANALYSIS_FAILED',
-          message: error.message || 'File analysis failed',
+          message: getErrorMessage(error),
           details: error,
         },
         duration: Date.now() - startTime,
@@ -159,11 +157,7 @@ export class FileAnalysisProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<FileAnalysisJobData>, err: Error) {
-    this.logger.error(`File analysis job ${job.id} failed`, err, {
-      fileId: job.data.fileId,
-      tenantId: job.data.tenantId,
-      attempts: job.attemptsMade,
-    });
+    this.logger.error(`File analysis job ${job.id} failed`, toError(err));
   }
 
   private async updateProgress(

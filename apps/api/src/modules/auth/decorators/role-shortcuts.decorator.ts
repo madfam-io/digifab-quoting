@@ -1,5 +1,5 @@
-import { SetMetadata, applyDecorators, UseGuards } from '@nestjs/common';
-import { UserRole } from '@madfam/shared';
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { USER_ROLES } from '@madfam/shared';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from './roles.decorator';
@@ -10,7 +10,7 @@ import { Roles } from './roles.decorator';
  */
 export const AdminOnly = () => applyDecorators(
   UseGuards(JwtAuthGuard, RolesGuard),
-  Roles(UserRole.ADMIN),
+  Roles(USER_ROLES.ADMIN),
 );
 
 /**
@@ -19,7 +19,7 @@ export const AdminOnly = () => applyDecorators(
  */
 export const ManagerOrHigher = () => applyDecorators(
   UseGuards(JwtAuthGuard, RolesGuard),
-  Roles(UserRole.MANAGER),
+  Roles(USER_ROLES.MANAGER),
 );
 
 /**
@@ -28,7 +28,7 @@ export const ManagerOrHigher = () => applyDecorators(
  */
 export const OperatorOrHigher = () => applyDecorators(
   UseGuards(JwtAuthGuard, RolesGuard),
-  Roles(UserRole.OPERATOR),
+  Roles(USER_ROLES.OPERATOR),
 );
 
 /**
@@ -37,7 +37,7 @@ export const OperatorOrHigher = () => applyDecorators(
  */
 export const SupportOrHigher = () => applyDecorators(
   UseGuards(JwtAuthGuard, RolesGuard),
-  Roles(UserRole.SUPPORT),
+  Roles(USER_ROLES.SUPPORT),
 );
 
 /**
@@ -54,5 +54,5 @@ export const Authenticated = () => applyDecorators(
  */
 export const InternalOnly = () => applyDecorators(
   UseGuards(JwtAuthGuard, RolesGuard),
-  Roles(UserRole.SUPPORT), // Since support is lowest internal role, hierarchy will allow all internal roles
+  Roles(USER_ROLES.SUPPORT), // Since support is lowest internal role, hierarchy will allow all internal roles
 );

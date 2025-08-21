@@ -1,6 +1,5 @@
 export type UUID = string;
 export type ISO8601 = string;
-export type Currency = 'MXN' | 'USD';
 export type Locale = 'es' | 'en';
 
 export interface Timestamped {

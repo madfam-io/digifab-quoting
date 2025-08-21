@@ -8,14 +8,11 @@ import {
   JobMetrics, 
   QueueMetrics,
   JobStatus,
-  FileAnalysisJobData,
-  QuoteCalculationJobData,
-  EmailNotificationJobData,
-  ReportGenerationJobData,
 } from './interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { RedisService } from '@/modules/redis/redis.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
+import { toError } from '@/common/utils/error-handling';
 
 @Injectable()
 export class JobsService implements OnModuleInit {
@@ -31,10 +28,10 @@ export class JobsService implements OnModuleInit {
   };
 
   constructor(
-    @InjectQueue(JobType.FILE_ANALYSIS) private readonly fileAnalysisQueue: Queue,
-    @InjectQueue(JobType.QUOTE_CALCULATION) private readonly quoteCalculationQueue: Queue,
-    @InjectQueue(JobType.EMAIL_NOTIFICATION) private readonly emailNotificationQueue: Queue,
-    @InjectQueue(JobType.REPORT_GENERATION) private readonly reportGenerationQueue: Queue,
+    @InjectQueue(JobType.FILE_ANALYSIS) fileAnalysisQueue: Queue,
+    @InjectQueue(JobType.QUOTE_CALCULATION) quoteCalculationQueue: Queue,
+    @InjectQueue(JobType.EMAIL_NOTIFICATION) emailNotificationQueue: Queue,
+    @InjectQueue(JobType.REPORT_GENERATION) reportGenerationQueue: Queue,
     @InjectQueue('dead-letter-queue') private readonly deadLetterQueue: Queue,
     private readonly logger: LoggerService,
     private readonly redisService: RedisService,
@@ -180,7 +177,7 @@ export class JobsService implements OnModuleInit {
     return {
       jobId: job.id as string,
       type: job.name as JobType,
-      status: this.mapBullStatus(state),
+      status: this.mapBullStatus(state as BullJobStatus),
       createdAt: new Date(job.timestamp),
       startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
       completedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
@@ -306,7 +303,7 @@ export class JobsService implements OnModuleInit {
 
     for (const s of statuses) {
       const jobs = await queue.clean(grace, s);
-      removed.push(...jobs);
+      removed.push(...jobs.map(j => j.id as string));
     }
 
     this.logger.log(`Cleaned ${removed.length} jobs from ${type} queue`);
@@ -376,7 +373,7 @@ export class JobsService implements OnModuleInit {
   }
 
   private setupQueueListeners(type: JobType, queue: Queue): void {
-    queue.on('completed', (job, result) => {
+    queue.on('completed', (job: Job, _result: unknown) => {
       this.logger.log(`Job ${job.id} of type ${type} completed`, {
         jobId: job.id,
         type,
@@ -386,12 +383,8 @@ export class JobsService implements OnModuleInit {
       });
     });
 
-    queue.on('failed', (job, err) => {
-      this.logger.error(`Job ${job.id} of type ${type} failed`, err, {
-        jobId: job.id,
-        type,
-        attempts: job.attemptsMade,
-      });
+    queue.on('failed', (job: Job, err: Error) => {
+      this.logger.error(`Job ${job.id} of type ${type} failed`, toError(err));
 
       // Move to dead letter queue after max attempts
       if (job.attemptsMade >= (job.opts.attempts || this.DEFAULT_JOB_OPTIONS.attempts!)) {
@@ -406,8 +399,8 @@ export class JobsService implements OnModuleInit {
       });
     });
 
-    queue.on('error', (error) => {
-      this.logger.error(`Queue ${type} error`, error);
+    queue.on('error', (error: Error) => {
+      this.logger.error(`Queue ${type} error`, toError(error));
     });
   }
 
@@ -509,30 +502,46 @@ export class JobsService implements OnModuleInit {
     };
   }
 
-  private mapBullStatus(status: BullJobStatus): JobStatus {
-    const statusMap: Record<BullJobStatus, JobStatus> = {
-      waiting: JobStatus.PENDING,
-      active: JobStatus.PROCESSING,
-      completed: JobStatus.COMPLETED,
-      failed: JobStatus.FAILED,
-      delayed: JobStatus.DELAYED,
-      paused: JobStatus.PENDING,
-    };
-
-    return statusMap[status] || JobStatus.PENDING;
+  private mapBullStatus(status: BullJobStatus | 'stuck'): JobStatus {
+    switch (status) {
+      case 'waiting':
+        return JobStatus.PENDING;
+      case 'active':
+        return JobStatus.PROCESSING;
+      case 'completed':
+        return JobStatus.COMPLETED;
+      case 'failed':
+        return JobStatus.FAILED;
+      case 'delayed':
+        return JobStatus.DELAYED;
+      case 'paused':
+        return JobStatus.PENDING;
+      case 'stuck':
+        return JobStatus.STUCK;
+      default:
+        return JobStatus.PENDING;
+    }
   }
 
   private mapToBullStatus(status: JobStatus): BullJobStatus {
-    const statusMap: Record<JobStatus, BullJobStatus> = {
-      [JobStatus.PENDING]: 'waiting',
-      [JobStatus.PROCESSING]: 'active',
-      [JobStatus.COMPLETED]: 'completed',
-      [JobStatus.FAILED]: 'failed',
-      [JobStatus.DELAYED]: 'delayed',
-      [JobStatus.STALLED]: 'failed',
-    };
-
-    return statusMap[status] || 'waiting';
+    switch (status) {
+      case JobStatus.PENDING:
+        return 'waiting';
+      case JobStatus.PROCESSING:
+        return 'active';
+      case JobStatus.COMPLETED:
+        return 'completed';
+      case JobStatus.FAILED:
+        return 'failed';
+      case JobStatus.DELAYED:
+        return 'delayed';
+      case JobStatus.STALLED:
+        return 'failed';
+      case JobStatus.STUCK:
+        return 'waiting'; // Bull doesn't have 'stuck' status
+      default:
+        return 'waiting';
+    }
   }
 
   private generateCorrelationId(): string {

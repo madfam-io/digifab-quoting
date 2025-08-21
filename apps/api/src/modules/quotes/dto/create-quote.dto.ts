@@ -1,9 +1,9 @@
-import { IsEnum, IsObject, IsOptional, ValidateNested, IsNumber, Min, Max, IsString } from 'class-validator';
+import { IsEnum, IsObject, IsOptional, ValidateNested, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Currency } from '@madfam/shared';
 
-class QuoteObjectiveDto {
+export class QuoteObjectiveDto implements Record<string, number> {
   @ApiProperty({ 
     example: 0.5, 
     minimum: 0, 
@@ -36,6 +36,9 @@ class QuoteObjectiveDto {
   @Min(0)
   @Max(1)
   green: number;
+
+  // Index signature to satisfy Prisma's InputJsonValue requirement
+  [key: string]: number;
 }
 
 export class CreateQuoteDto {

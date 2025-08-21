@@ -1,22 +1,7 @@
-import { UUID, Currency, Timestamped, TenantScoped } from './common';
+import { UUID, Timestamped, TenantScoped } from './common';
+import { Currency, QuoteStatus, ProcessType } from './enums';
 
-export type QuoteStatus = 
-  | 'draft'
-  | 'submitted'
-  | 'auto_quoted'
-  | 'needs_review'
-  | 'quoted'
-  | 'approved'
-  | 'ordered'
-  | 'in_production'
-  | 'qc'
-  | 'shipped'
-  | 'closed'
-  | 'cancelled';
-
-export type ProcessType = '3d_fff' | '3d_sla' | 'cnc_3axis' | 'laser_2d';
-
-export interface QuoteObjective {
+export interface QuoteObjectiveWeights {
   cost: number;
   lead: number;
   green: number;
@@ -27,7 +12,7 @@ export interface Quote extends Timestamped, TenantScoped {
   customerId?: UUID;
   status: QuoteStatus;
   currency: Currency;
-  objective: QuoteObjective;
+  objective: QuoteObjectiveWeights;
   validityUntil: string;
   totals?: QuoteTotals;
   sustainability?: SustainabilityMetrics;

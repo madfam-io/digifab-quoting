@@ -68,8 +68,9 @@ export class AuthController {
     description: 'Optional tenant identifier for multi-tenant login',
     required: false
   })
-  async login(@Request() req, @Body() loginDto: LoginDto) {
-    return this.authService.login(req.user);
+  async login(@Request() req: Express.Request, @Body() _loginDto: LoginDto) {
+    const user = req.user as Express.User;
+    return this.authService.login(user);
   }
 
   @Post('refresh')
@@ -112,7 +113,7 @@ export class AuthController {
     description: 'Invalid or missing authentication token',
     type: UnauthorizedResponseDto 
   })
-  async logout(@Request() req) {
+  async logout(@Request() req: Express.Request) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     await this.authService.logout(token);
   }

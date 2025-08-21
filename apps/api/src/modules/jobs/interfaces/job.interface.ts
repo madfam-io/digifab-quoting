@@ -14,13 +14,14 @@ export enum JobStatus {
   FAILED = 'failed',
   DELAYED = 'delayed',
   STALLED = 'stalled',
+  STUCK = 'stuck',
 }
 
 export interface JobProgress {
   percentage: number;
   message?: string;
   step?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BaseJobData {
@@ -28,7 +29,7 @@ export interface BaseJobData {
   userId?: string;
   correlationId?: string;
   priority?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface FileAnalysisJobData extends BaseJobData {
@@ -51,7 +52,7 @@ export interface QuoteCalculationJobData extends BaseJobData {
     quantity: number;
     material: string;
     process: string;
-    finishOptions?: Record<string, any>;
+    finishOptions?: Record<string, unknown>;
   }>;
   rushOrder?: boolean;
   currency?: string;
@@ -61,7 +62,7 @@ export interface EmailNotificationJobData extends BaseJobData {
   type: 'quote-ready' | 'quote-accepted' | 'quote-expired' | 'order-shipped';
   recipientEmail: string;
   recipientName?: string;
-  templateData: Record<string, any>;
+  templateData: Record<string, unknown>;
   attachments?: Array<{
     filename: string;
     path?: string;
@@ -81,15 +82,15 @@ export interface ReportGenerationJobData extends BaseJobData {
   };
 }
 
-export interface JobResult<T = any> {
+export interface JobResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   duration?: number;
 }
 
@@ -117,7 +118,7 @@ export interface JobMetrics {
   progress: number;
   attempts: number;
   error?: string;
-  result?: any;
+  result?: unknown;
   duration?: number;
 }
 

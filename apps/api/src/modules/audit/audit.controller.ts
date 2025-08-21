@@ -77,15 +77,13 @@ export class AuditController {
     name: 'limit', 
     required: false, 
     type: Number, 
-    default: 50,
-    description: 'Maximum number of records to return' 
+    description: 'Maximum number of records to return (default: 50)' 
   })
   @ApiQuery({ 
     name: 'offset', 
     required: false, 
     type: Number, 
-    default: 0,
-    description: 'Number of records to skip for pagination' 
+    description: 'Number of records to skip for pagination (default: 0)' 
   })
   @ApiResponse({
     status: 200,
@@ -140,7 +138,7 @@ export class AuditController {
   ) {
     // Non-admin users can only see their own audit logs
     const context = this.tenantContext.getContext();
-    if (!context?.userRoles?.includes('admin') && actorId && actorId !== context.userId) {
+    if (!context?.userRoles?.includes('admin') && actorId && context && actorId !== context.userId) {
       throw new ForbiddenException('You can only view your own audit logs');
     }
 
@@ -226,8 +224,7 @@ export class AuditController {
     name: 'limit', 
     required: false, 
     type: Number, 
-    default: 50,
-    description: 'Maximum number of records' 
+    description: 'Maximum number of records (default: 50)' 
   })
   @ApiResponse({
     status: 200,
@@ -260,7 +257,7 @@ export class AuditController {
   ) {
     // Non-admin users can only see their own audit logs
     const context = this.tenantContext.getContext();
-    if (!context?.userRoles?.includes('admin') && userId !== context.userId) {
+    if (!context?.userRoles?.includes('admin') && context && userId !== context.userId) {
       throw new ForbiddenException('You can only view your own audit logs');
     }
 
@@ -300,8 +297,7 @@ export class AuditController {
     name: 'format', 
     required: false, 
     enum: ['json', 'csv'], 
-    default: 'json',
-    description: 'Export format' 
+    description: 'Export format (default: json)' 
   })
   @ApiResponse({
     status: 200,

@@ -18,6 +18,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { unlink } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
+import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
 interface ReportResult {
   reportId: string;

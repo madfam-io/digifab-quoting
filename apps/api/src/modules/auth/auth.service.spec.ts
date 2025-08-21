@@ -7,7 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserRole } from '@madfam/shared';
+import { USER_ROLES } from '@madfam/shared';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -20,12 +20,12 @@ describe('AuthService', () => {
     id: 'user-123',
     email: 'test@example.com',
     tenantId: 'tenant-123',
-    roles: [UserRole.CUSTOMER],
+    roles: [USER_ROLES.CUSTOMER],
     active: true,
     passwordHash: '$2a$10$mockHashedPassword',
   };
 
-  const mockTokens = {
+  const _mockTokens = {
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
     expiresIn: 900,

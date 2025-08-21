@@ -1,5 +1,5 @@
 export default () => ({
-  port: parseInt(process.env.PORT, 10) || 4000,
+  port: parseInt(process.env.PORT || '4000', 10),
   database: {
     url: process.env.DATABASE_URL,
   },
@@ -35,7 +35,7 @@ export default () => ({
   defaults: {
     currency: process.env.DEFAULT_CURRENCY || 'MXN',
     locale: process.env.DEFAULT_LOCALE || 'es',
-    quoteValidityDays: parseInt(process.env.QUOTE_VALIDITY_DAYS, 10) || 14,
+    quoteValidityDays: parseInt(process.env.QUOTE_VALIDITY_DAYS || '14', 10),
   },
   fx: {
     provider: process.env.FX_PROVIDER || 'openexchangerates',

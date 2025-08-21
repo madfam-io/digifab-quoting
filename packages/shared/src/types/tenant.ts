@@ -1,4 +1,5 @@
-import { UUID, Currency, Locale, Timestamped } from './common';
+import { UUID, Locale, Timestamped } from './common';
+import { Currency } from './enums';
 
 export interface Tenant extends Timestamped {
   id: UUID;

@@ -1,0 +1,9 @@
+
+> @madfam/api@0.0.0 build
+> nest build --filter=@madfam/api
+
+error: unknown option '--filter'
+npm ERR! Lifecycle script `build` failed with error: 
+npm ERR! Error: command failed 
+npm ERR!   in workspace: @madfam/api@0.0.0 
+npm ERR!   at location: /Users/aldoruizluna/labspace/digifab-quoting/apps/api 

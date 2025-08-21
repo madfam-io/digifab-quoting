@@ -12,6 +12,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { QuotesService } from '@/modules/quotes/quotes.service';
 import { PricingService } from '@/modules/pricing/pricing.service';
 import { Decimal } from 'decimal.js';
+import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
 interface QuoteCalculationResult {
   quoteId: string;
@@ -156,16 +157,13 @@ export class QuoteCalculationProcessor {
         duration,
       };
     } catch (error) {
-      this.logger.error(`Quote calculation failed for ${quoteId}`, error, {
-        jobId: job.id,
-        tenantId,
-      });
+      this.logger.error(`Quote calculation failed for ${quoteId}`, toError(error));
 
       return {
         success: false,
         error: {
           code: 'QUOTE_CALCULATION_FAILED',
-          message: error.message || 'Quote calculation failed',
+          message: getErrorMessage(error),
           details: error,
         },
         duration: Date.now() - startTime,
@@ -193,11 +191,7 @@ export class QuoteCalculationProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<QuoteCalculationJobData>, err: Error) {
-    this.logger.error(`Quote calculation job ${job.id} failed`, err, {
-      quoteId: job.data.quoteId,
-      tenantId: job.data.tenantId,
-      attempts: job.attemptsMade,
-    });
+    this.logger.error(`Quote calculation job ${job.id} failed`, toError(err));
   }
 
   private async updateProgress(

@@ -8,7 +8,7 @@ export class LoginDto {
     format: 'email'
   })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ 
     example: 'password123',
@@ -18,7 +18,7 @@ export class LoginDto {
   })
   @IsString()
   @MinLength(8)
-  password: string;
+  password!: string;
 
   @ApiPropertyOptional({ 
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -35,25 +35,25 @@ export class LoginResponseDto {
     description: 'JWT access token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   })
-  accessToken: string;
+  accessToken!: string;
 
   @ApiProperty({
     description: 'Refresh token for obtaining new access tokens',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   })
-  refreshToken: string;
+  refreshToken!: string;
 
   @ApiProperty({
     description: 'Token type',
     example: 'Bearer'
   })
-  tokenType: string;
+  tokenType!: string;
 
   @ApiProperty({
     description: 'Access token expiration time in seconds',
     example: 3600
   })
-  expiresIn: number;
+  expiresIn!: number;
 
   @ApiProperty({
     description: 'User information'

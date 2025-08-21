@@ -8,15 +8,15 @@ import {
 } from './calculators';
 
 export class PricingEngine {
-  private calculators = {
-    '3d_fff': FFFPricingCalculator,
-    '3d_sla': SLAPricingCalculator,
-    'cnc_3axis': CNCPricingCalculator,
-    'laser_2d': LaserPricingCalculator,
+  private calculators: Record<string, typeof FFFPricingCalculator> = {
+    [ProcessType.FFF]: FFFPricingCalculator,
+    [ProcessType.SLA]: SLAPricingCalculator,
+    [ProcessType.CNC_3AXIS]: CNCPricingCalculator,
+    [ProcessType.LASER_2D]: LaserPricingCalculator,
   };
 
   calculate(input: PricingInput): PricingResult {
-    const CalculatorClass = this.calculators[input.process];
+    const CalculatorClass = this.calculators[input.process as string];
     
     if (!CalculatorClass) {
       throw new Error(`No calculator found for process: ${input.process}`);
@@ -67,7 +67,7 @@ export class PricingEngine {
 
     if (!input.process) {
       errors.push('Process type is required');
-    } else if (!this.calculators[input.process]) {
+    } else if (!this.calculators[input.process as string]) {
       errors.push(`Unsupported process type: ${input.process}`);
     }
 

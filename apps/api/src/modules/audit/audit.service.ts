@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
+import { AuditAction, AuditEntity } from '@madfam/shared';
+
+// Re-export for backward compatibility
+export { AuditAction, AuditEntity };
 
 export interface AuditLogEntry {
   entity: string;
@@ -9,44 +13,6 @@ export interface AuditLogEntry {
   before?: any;
   after?: any;
   metadata?: Record<string, any>;
-}
-
-export enum AuditAction {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  READ = 'read',
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-  EXPORT = 'export',
-  APPROVE = 'approve',
-  REJECT = 'reject',
-  ACCEPT = 'accept',
-  CANCEL = 'cancel',
-  SEND = 'send',
-  DOWNLOAD = 'download',
-  UPLOAD = 'upload',
-  CONFIG_CHANGE = 'config_change',
-  PERMISSION_GRANT = 'permission_grant',
-  PERMISSION_REVOKE = 'permission_revoke',
-}
-
-export enum AuditEntity {
-  USER = 'user',
-  QUOTE = 'quote',
-  QUOTE_ITEM = 'quote_item',
-  CUSTOMER = 'customer',
-  MATERIAL = 'material',
-  MACHINE = 'machine',
-  PRICING_RULE = 'pricing_rule',
-  MARGIN = 'margin',
-  DISCOUNT_RULE = 'discount_rule',
-  SHIPPING_RATE = 'shipping_rate',
-  TENANT = 'tenant',
-  PAYMENT = 'payment',
-  FILE = 'file',
-  SESSION = 'session',
-  CONFIG = 'config',
 }
 
 @Injectable()

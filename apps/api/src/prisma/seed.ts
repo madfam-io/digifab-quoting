@@ -147,6 +147,7 @@ async function main() {
         process: 'laser_2d',
         ...mat,
         costUom: 'm2',
+        costPerUnit: mat.pricePerUom,
       },
     });
   }

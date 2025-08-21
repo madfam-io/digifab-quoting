@@ -40,6 +40,13 @@ export class TenantContextService {
   }
 
   /**
+   * Alias for getCurrentTenantId for backward compatibility
+   */
+  getTenantId(): string {
+    return this.getCurrentTenantId();
+  }
+
+  /**
    * Get the current user ID
    */
   getCurrentUserId(): string | undefined {
