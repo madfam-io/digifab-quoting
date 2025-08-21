@@ -56,11 +56,11 @@ export class JobOptionsDto implements JobOptions {
 export class CreateJobDto {
   @ApiProperty({ enum: JobType, description: 'Type of job to create' })
   @IsEnum(JobType)
-  type: JobType;
+  type!: JobType;
 
   @ApiProperty({ description: 'Job data payload' })
   @IsObject()
-  data: Record<string, any>;
+  data!: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'Job processing options' })
   @IsOptional()
@@ -73,17 +73,17 @@ export class ScheduleJobDto extends CreateJobDto {
   @IsNumber()
   @Min(1000) // At least 1 second
   @Max(86400000) // Max 24 hours
-  delay: number;
+  delay!: number;
 }
 
 export class RecurringJobDto {
   @ApiProperty({ enum: JobType, description: 'Type of job to create' })
   @IsEnum(JobType)
-  type: JobType;
+  type!: JobType;
 
   @ApiProperty({ description: 'Job data payload' })
   @IsObject()
-  data: Record<string, any>;
+  data!: Record<string, any>;
 
   @ApiProperty({ 
     description: 'Cron expression for scheduling',
@@ -91,7 +91,7 @@ export class RecurringJobDto {
   })
   @IsString()
   @Matches(/^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/)
-  cronExpression: string;
+  cronExpression!: string;
 
   @ApiPropertyOptional({ description: 'Job processing options' })
   @IsOptional()
@@ -128,16 +128,16 @@ export class JobQueryDto {
 
 export class JobStatusDto {
   @ApiProperty({ description: 'Job ID' })
-  jobId: string;
+  jobId!: string;
 
   @ApiProperty({ enum: JobType, description: 'Job type' })
-  type: JobType;
+  type!: JobType;
 
   @ApiProperty({ enum: JobStatus, description: 'Current job status' })
-  status: JobStatus;
+  status!: JobStatus;
 
   @ApiProperty({ description: 'Job creation timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiPropertyOptional({ description: 'Job start timestamp' })
   startedAt?: Date;
@@ -149,10 +149,10 @@ export class JobStatusDto {
   failedAt?: Date;
 
   @ApiProperty({ description: 'Job progress percentage (0-100)' })
-  progress: number;
+  progress!: number;
 
   @ApiProperty({ description: 'Number of attempts made' })
-  attempts: number;
+  attempts!: number;
 
   @ApiPropertyOptional({ description: 'Error message if job failed' })
   error?: string;
@@ -166,34 +166,34 @@ export class JobStatusDto {
 
 export class QueueStatusDto {
   @ApiProperty({ description: 'Queue name' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Number of waiting jobs' })
-  waiting: number;
+  waiting!: number;
 
   @ApiProperty({ description: 'Number of active jobs' })
-  active: number;
+  active!: number;
 
   @ApiProperty({ description: 'Number of completed jobs' })
-  completed: number;
+  completed!: number;
 
   @ApiProperty({ description: 'Number of failed jobs' })
-  failed: number;
+  failed!: number;
 
   @ApiProperty({ description: 'Number of delayed jobs' })
-  delayed: number;
+  delayed!: number;
 
   @ApiProperty({ description: 'Whether the queue is paused' })
-  paused: boolean;
+  paused!: boolean;
 
   @ApiProperty({ description: 'Completion rate percentage' })
-  completedRate: number;
+  completedRate!: number;
 
   @ApiProperty({ description: 'Failure rate percentage' })
-  failedRate: number;
+  failedRate!: number;
 
   @ApiProperty({ description: 'Average processing time in milliseconds' })
-  avgProcessingTime: number;
+  avgProcessingTime!: number;
 }
 
 export class CleanJobsDto {
@@ -203,7 +203,7 @@ export class CleanJobsDto {
   })
   @IsNumber()
   @Min(0)
-  grace: number;
+  grace!: number;
 
   @ApiPropertyOptional({ 
     description: 'Job statuses to clean',
@@ -219,19 +219,19 @@ export class CleanJobsDto {
 export class FileAnalysisJobDto {
   @ApiProperty({ description: 'File ID to analyze' })
   @IsString()
-  fileId: string;
+  fileId!: string;
 
   @ApiProperty({ description: 'File URL for downloading' })
   @IsString()
-  fileUrl: string;
+  fileUrl!: string;
 
   @ApiProperty({ description: 'Original file name' })
   @IsString()
-  fileName: string;
+  fileName!: string;
 
   @ApiProperty({ description: 'File type/extension' })
   @IsString()
-  fileType: string;
+  fileType!: string;
 
   @ApiPropertyOptional({ description: 'Analysis options' })
   @IsOptional()
@@ -247,11 +247,11 @@ export class FileAnalysisJobDto {
 export class QuoteCalculationJobDto {
   @ApiProperty({ description: 'Quote ID to calculate' })
   @IsString()
-  quoteId: string;
+  quoteId!: string;
 
   @ApiProperty({ description: 'Quote items to calculate', type: [Object] })
   @IsArray()
-  items: Array<{
+  items!: Array<{
     fileId: string;
     quantity: number;
     material: string;
@@ -276,11 +276,11 @@ export class EmailNotificationJobDto {
     description: 'Email notification type' 
   })
   @IsEnum(['quote-ready', 'quote-accepted', 'quote-expired', 'order-shipped'])
-  type: 'quote-ready' | 'quote-accepted' | 'quote-expired' | 'order-shipped';
+  type!: 'quote-ready' | 'quote-accepted' | 'quote-expired' | 'order-shipped';
 
   @ApiProperty({ description: 'Recipient email address' })
   @IsString()
-  recipientEmail: string;
+  recipientEmail!: string;
 
   @ApiPropertyOptional({ description: 'Recipient name' })
   @IsOptional()
@@ -289,7 +289,7 @@ export class EmailNotificationJobDto {
 
   @ApiProperty({ description: 'Template data for email rendering' })
   @IsObject()
-  templateData: Record<string, any>;
+  templateData!: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'Email attachments', type: [Object] })
   @IsOptional()
@@ -307,18 +307,18 @@ export class ReportGenerationJobDto {
     description: 'Report type to generate' 
   })
   @IsEnum(['quote', 'order', 'invoice', 'analytics'])
-  reportType: 'quote' | 'order' | 'invoice' | 'analytics';
+  reportType!: 'quote' | 'order' | 'invoice' | 'analytics';
 
   @ApiProperty({ description: 'Entity ID for the report' })
   @IsString()
-  entityId: string;
+  entityId!: string;
 
   @ApiProperty({ 
     enum: ['pdf', 'excel', 'csv'],
     description: 'Report output format' 
   })
   @IsEnum(['pdf', 'excel', 'csv'])
-  format: 'pdf' | 'excel' | 'csv';
+  format!: 'pdf' | 'excel' | 'csv';
 
   @ApiPropertyOptional({ description: 'Report generation options' })
   @IsOptional()

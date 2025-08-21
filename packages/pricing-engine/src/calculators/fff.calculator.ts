@@ -64,7 +64,6 @@ export class FFFPricingCalculator extends BasePricingCalculator {
     
     // Layer height affects print time significantly
     const layerHeight = selections.layerHeight || 0.2;
-    const layerCount = Math.ceil(geometry.bboxMm.z / layerHeight);
     
     // Simplified deposition rate calculation
     const depositionRateCm3PerHr = 12; // Default for standard FFF

@@ -238,13 +238,13 @@ export class QuoteCalculationProcessor {
       include: {
         items: {
           include: {
-            file: {
+            files: {
               include: {
                 fileAnalysis: true,
               },
             },
             material: true,
-            process: true,
+            manufacturingProcess: true,
           },
         },
         customer: true,
@@ -315,18 +315,18 @@ export class QuoteCalculationProcessor {
     // Calculate base costs
     const volume = fileAnalysis.volume || 0;
     const materialCost = new Decimal(volume)
-      .mul(material.density || 1)
-      .mul(material.costPerKg)
+      .mul(material.density?.toString() || '1')
+      .mul(material.costPerKg?.toString() || '0')
       .toNumber();
 
-    const setupCost = new Decimal(process.setupCost || 0).toNumber();
+    const setupCost = new Decimal(process.setupCost?.toString() || '0').toNumber();
     const machineTime = this.estimateMachineTime(
       volume,
       process.code,
-      fileAnalysis.complexity,
+      fileAnalysis.complexity?.toString() || 'moderate',
     );
     const laborCost = new Decimal(machineTime)
-      .mul(process.hourlyRate || 0)
+      .mul(process.hourlyRate?.toString() || '0')
       .toNumber();
 
     // Calculate overhead
@@ -390,8 +390,8 @@ export class QuoteCalculationProcessor {
       'complex': 1.8,
     };
 
-    const baseRate = baseRates[processCode] || 0.001;
-    const multiplier = complexityMultipliers[complexity] || 1;
+    const baseRate = baseRates[processCode as keyof typeof baseRates] || 0.001;
+    const multiplier = complexityMultipliers[complexity as keyof typeof complexityMultipliers] || 1;
 
     return volume * baseRate * multiplier;
   }
@@ -432,7 +432,7 @@ export class QuoteCalculationProcessor {
       'LASER_2D': 2,
     };
 
-    const baseDays = baseLeadTimes[processCode] || 3;
+    const baseDays = baseLeadTimes[processCode as keyof typeof baseLeadTimes] || 3;
     const productionDays = Math.ceil(totalMachineTime / 8); // 8 hours per day
 
     return baseDays + productionDays;
@@ -453,7 +453,7 @@ export class QuoteCalculationProcessor {
 
     // Volume discount
     let volumeDiscount = 0;
-    const totalQuantity = items.reduce((sum, item) => sum + 1, 0); // Simplified
+    const totalQuantity = items.reduce((sum, _item) => sum + 1, 0); // Simplified
     if (totalQuantity >= 100) {
       volumeDiscount = subtotal * 0.1;
     } else if (totalQuantity >= 50) {

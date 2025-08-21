@@ -5,9 +5,10 @@ import {
   ProcessingTime, 
   MaterialUsage 
 } from '../types';
+import { GeometryMetrics, QuoteItemSelections } from '@madfam/shared';
 
 export class CNCPricingCalculator extends BasePricingCalculator {
-  private readonly MRR_RATES = {
+  private readonly MRR_RATES: Record<string, number> = {
     'Al 6061': 3.0,     // cm³/min
     'Steel 1018': 1.0,  // cm³/min
     'Acrylic': 6.0,     // cm³/min
@@ -207,7 +208,7 @@ export class CNCPricingCalculator extends BasePricingCalculator {
     }
     
     // Tolerance warnings
-    if (selections.tolerance === 'tight' && geometry.holesCount > 10) {
+    if (selections.tolerance === 'tight' && geometry.holesCount && geometry.holesCount > 10) {
       warnings.push('Many features with tight tolerances will increase cost');
     }
     

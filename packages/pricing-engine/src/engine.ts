@@ -6,9 +6,12 @@ import {
   CNCPricingCalculator,
   LaserPricingCalculator,
 } from './calculators';
+import { BasePricingCalculator } from './calculators/base.calculator';
+
+type PricingCalculatorConstructor = new (input: PricingInput) => BasePricingCalculator;
 
 export class PricingEngine {
-  private calculators: Record<string, typeof FFFPricingCalculator> = {
+  private calculators: Record<string, PricingCalculatorConstructor> = {
     [ProcessType.FFF]: FFFPricingCalculator,
     [ProcessType.SLA]: SLAPricingCalculator,
     [ProcessType.CNC_3AXIS]: CNCPricingCalculator,

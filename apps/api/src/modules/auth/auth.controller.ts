@@ -7,6 +7,7 @@ import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, RefreshTokenResponseDto } from './dto/refresh-token.dto';
 import { UnauthorizedResponseDto, ValidationErrorResponseDto, ConflictResponseDto } from '../../common/dto/api-response.dto';
+import { User } from '@madfam/shared';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -69,7 +70,7 @@ export class AuthController {
     required: false
   })
   async login(@Request() req: Express.Request, @Body() _loginDto: LoginDto) {
-    const user = req.user as Express.User;
+    const user = req.user as User;
     return this.authService.login(user);
   }
 
@@ -113,7 +114,7 @@ export class AuthController {
     description: 'Invalid or missing authentication token',
     type: UnauthorizedResponseDto 
   })
-  async logout(@Request() req: Express.Request) {
+  async logout(@Request() req: any) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     await this.authService.logout(token);
   }

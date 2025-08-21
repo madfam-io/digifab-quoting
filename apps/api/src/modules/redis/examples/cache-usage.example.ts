@@ -4,11 +4,11 @@
  * This file demonstrates various caching patterns and best practices
  */
 
-import { Controller, Get, Post, Param, Body, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, UseInterceptors } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '../cache.service';
 import { QuoteCacheService } from '../quote-cache.service';
-import { Cacheable, CacheInvalidate, CachePut } from '../decorators/cache.decorator';
+import { Cacheable, CacheInvalidate } from '../decorators/cache.decorator';
 import { CacheInterceptor } from '../interceptors/cache.interceptor';
 
 /**
@@ -156,7 +156,7 @@ export class QuoteCalculationService {
   }
 
   // Placeholder method
-  private async performQuoteCalculation(fileHash: string, options: any) {
+  private async performQuoteCalculation(_fileHash: string, _options: any) {
     return {
       unitCost: 100,
       totalCost: 1000,
@@ -264,7 +264,7 @@ export class BatchQuoteService {
     return `quote:file:${key.fileHash}:${key.service}:${key.material}:${key.quantity}:default`;
   }
 
-  private async calculateSingleQuote(request: any) {
+  private async calculateSingleQuote(_request: any) {
     return {
       pricing: { unitCost: 100, totalCost: 1000, margin: 0.3, finalPrice: 1300 },
       manufacturing: { estimatedTime: 5, machineCost: 500, materialCost: 500 },

@@ -13,7 +13,7 @@ export class QuoteObjectiveDto implements Record<string, number> {
   @IsNumber()
   @Min(0)
   @Max(1)
-  cost: number;
+  cost!: number;
 
   @ApiProperty({ 
     example: 0.3, 
@@ -24,7 +24,7 @@ export class QuoteObjectiveDto implements Record<string, number> {
   @IsNumber()
   @Min(0)
   @Max(1)
-  lead: number;
+  lead!: number;
 
   @ApiProperty({ 
     example: 0.2, 
@@ -35,7 +35,7 @@ export class QuoteObjectiveDto implements Record<string, number> {
   @IsNumber()
   @Min(0)
   @Max(1)
-  green: number;
+  green!: number;
 
   // Index signature to satisfy Prisma's InputJsonValue requirement
   [key: string]: number;
@@ -49,7 +49,7 @@ export class CreateQuoteDto {
     example: 'MXN'
   })
   @IsEnum(['MXN', 'USD'])
-  currency: Currency;
+  currency!: Currency;
 
   @ApiProperty({ 
     type: QuoteObjectiveDto,
@@ -63,7 +63,7 @@ export class CreateQuoteDto {
   @IsObject()
   @ValidateNested()
   @Type(() => QuoteObjectiveDto)
-  objective: QuoteObjectiveDto;
+  objective!: QuoteObjectiveDto;
 
   @ApiPropertyOptional({ 
     description: 'Additional metadata for the quote',
@@ -83,42 +83,42 @@ export class QuoteResponseDto {
     description: 'Unique quote identifier',
     example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
   })
-  id: string;
+  id!: string;
 
   @ApiProperty({ 
     description: 'Quote number for reference',
     example: 'Q-2024-0001' 
   })
-  quoteNumber: string;
+  quoteNumber!: string;
 
   @ApiProperty({ 
     description: 'Quote status',
     enum: ['draft', 'calculating', 'ready', 'sent', 'accepted', 'rejected', 'expired', 'cancelled'],
     example: 'draft' 
   })
-  status: string;
+  status!: string;
 
   @ApiProperty({ 
     description: 'Quote currency',
     example: 'MXN' 
   })
-  currency: string;
+  currency!: string;
 
   @ApiProperty({ 
     description: 'Total quote amount',
     example: 1500.00 
   })
-  totalAmount: number;
+  totalAmount!: number;
 
   @ApiProperty({ 
     description: 'Quote creation timestamp',
     example: '2024-01-01T00:00:00.000Z' 
   })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ 
     description: 'Quote expiration date',
     example: '2024-01-15T00:00:00.000Z' 
   })
-  expiresAt: Date;
+  expiresAt!: Date;
 }

@@ -8,7 +8,7 @@ export class RegisterDto {
     format: 'email'
   })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ 
     example: 'SecurePass123!',
@@ -18,7 +18,7 @@ export class RegisterDto {
   })
   @IsString()
   @MinLength(6)
-  password: string;
+  password!: string;
 
   @ApiProperty({ 
     example: 'John',
@@ -27,7 +27,7 @@ export class RegisterDto {
     maxLength: 50
   })
   @IsString()
-  firstName: string;
+  firstName!: string;
 
   @ApiProperty({ 
     example: 'Doe',
@@ -36,7 +36,7 @@ export class RegisterDto {
     maxLength: 50
   })
   @IsString()
-  lastName: string;
+  lastName!: string;
 
   @ApiPropertyOptional({ 
     example: '+1234567890',
@@ -55,7 +55,7 @@ export class RegisterDto {
     maxLength: 100
   })
   @IsString()
-  company: string;
+  company!: string;
 
   @ApiPropertyOptional({ 
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -72,18 +72,18 @@ export class RegisterResponseDto {
     description: 'Indicates successful registration',
     example: true
   })
-  success: boolean;
+  success!: boolean;
 
   @ApiProperty({
     description: 'Registration confirmation message',
     example: 'User registered successfully'
   })
-  message: string;
+  message!: string;
 
   @ApiProperty({
     description: 'Created user information'
   })
-  user: {
+  user!: {
     id: string;
     email: string;
     firstName: string;

@@ -102,7 +102,7 @@ export abstract class BasePricingCalculator {
     // This is a simplified scoring algorithm
     const co2eScore = Math.max(0, 100 - totalCo2e.toNumber() * 10);
     const wasteScore = Math.max(0, 100 - wastePercent * 2);
-    const recycledScore = (material.recycledPercent?.toNumber() || 0);
+    const recycledScore = (material.recycledPercent || 0);
     
     const score = Math.round((co2eScore * 0.5 + wasteScore * 0.3 + recycledScore * 0.2));
     
@@ -110,7 +110,7 @@ export abstract class BasePricingCalculator {
       score,
       co2eKg: totalCo2e,
       energyKwh,
-      recycledPercent: material.recycledPercent?.toNumber() || 0,
+      recycledPercent: material.recycledPercent || 0,
       wastePercent: Math.round(wastePercent),
     };
   }

@@ -12,7 +12,7 @@ export class CreatePresignedUploadDto {
   })
   @IsString()
   @Matches(/^[a-zA-Z0-9._-]+$/, { message: 'Filename contains invalid characters' })
-  filename: string;
+  filename!: string;
 
   @ApiProperty({ 
     enum: ['stl', 'step', 'iges', 'dxf', 'dwg', 'pdf'],
@@ -20,7 +20,7 @@ export class CreatePresignedUploadDto {
     example: 'stl'
   })
   @IsEnum(['stl', 'step', 'iges', 'dxf', 'dwg', 'pdf'])
-  type: FileType;
+  type!: FileType;
 
   @ApiProperty({ 
     example: 1048576, 
@@ -31,7 +31,7 @@ export class CreatePresignedUploadDto {
   @IsInt()
   @Min(1)
   @Max(200 * 1024 * 1024) // 200MB
-  size: number;
+  size!: number;
 }
 
 export class PresignedUploadResponseDto {
@@ -39,19 +39,19 @@ export class PresignedUploadResponseDto {
     description: 'Unique file identifier',
     example: '123e4567-e89b-12d3-a456-426614174000'
   })
-  fileId: string;
+  fileId!: string;
 
   @ApiProperty({
     description: 'Presigned URL for uploading the file',
     example: 'https://s3.amazonaws.com/bucket/files/123e4567.stl?X-Amz-Algorithm=AWS4-HMAC-SHA256&...'
   })
-  uploadUrl: string;
+  uploadUrl!: string;
 
   @ApiProperty({
     description: 'HTTP method to use for upload',
     example: 'PUT'
   })
-  method: string;
+  method!: string;
 
   @ApiProperty({
     description: 'Headers to include in the upload request',
@@ -60,11 +60,11 @@ export class PresignedUploadResponseDto {
       'x-amz-server-side-encryption': 'AES256'
     }
   })
-  headers: Record<string, string>;
+  headers!: Record<string, string>;
 
   @ApiProperty({
     description: 'URL expiration timestamp',
     example: '2024-01-01T01:00:00.000Z'
   })
-  expiresAt: Date;
+  expiresAt!: Date;
 }

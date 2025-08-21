@@ -12,6 +12,7 @@ import {
 import { 
   QuoteStatus,
   Currency,
+  ProcessType,
 } from '@madfam/shared';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AddQuoteItemDto } from './dto/add-quote-item.dto';
@@ -38,14 +39,18 @@ export class QuotesService {
     const validityUntil = new Date();
     validityUntil.setDate(validityUntil.getDate() + validityDays);
 
+    // Generate unique quote number
+    const quoteNumber = await this.generateQuoteNumber(tenantId);
+
     return this.prisma.quote.create({
       data: {
         tenantId,
         customerId,
+        number: quoteNumber,
         currency: dto.currency,
         objective: dto.objective,
         validityUntil,
-        status: 'draft',
+        status: QuoteStatus.DRAFT,
       },
     });
   }
@@ -66,7 +71,7 @@ export class QuotesService {
     const where = {
       tenantId,
       ...(filters.customerId && { customerId: filters.customerId }),
-      ...(filters.status && { status: filters.status }),
+      ...(filters.status && { status: filters.status as string }),  // Cast enum to string for Prisma
     };
 
     const [items, total] = await Promise.all([
@@ -137,7 +142,7 @@ export class QuotesService {
   ): Promise<PrismaQuote> {
     const quote = await this.findOne(tenantId, id);
 
-    if (quote.status !== 'draft' && quote.status !== 'submitted') {
+    if (quote.status !== QuoteStatus.DRAFT && quote.status !== QuoteStatus.SUBMITTED) {
       throw new BadRequestException('Cannot update quote in current status');
     }
 
@@ -157,7 +162,7 @@ export class QuotesService {
   ): Promise<PrismaQuoteItem> {
     const quote = await this.findOne(tenantId, quoteId);
 
-    if (quote.status !== 'draft') {
+    if (quote.status !== QuoteStatus.DRAFT) {
       throw new BadRequestException('Cannot add items to non-draft quote');
     }
 
@@ -299,7 +304,7 @@ export class QuotesService {
     const updatedQuote = await this.prisma.quote.update({
       where: { id: quoteId },
       data: {
-        status: errors.length > 0 ? 'needs_review' : 'auto_quoted',
+        status: errors.length > 0 ? QuoteStatus.NEEDS_REVIEW : QuoteStatus.AUTO_QUOTED,
         totals,
         sustainability: this.calculateSustainabilitySummary(calculatedItems),
       },
@@ -326,7 +331,7 @@ export class QuotesService {
       throw new BadRequestException('Unauthorized to approve this quote');
     }
 
-    if (quote.status !== 'quoted' && quote.status !== 'auto_quoted') {
+    if (quote.status !== QuoteStatus.QUOTED && quote.status !== QuoteStatus.AUTO_QUOTED) {
       throw new BadRequestException('Quote cannot be approved in current status');
     }
 
@@ -336,7 +341,7 @@ export class QuotesService {
 
     return this.prisma.quote.update({
       where: { id: quoteId },
-      data: { status: 'approved' },
+      data: { status: QuoteStatus.APPROVED },
     });
   }
 
@@ -344,14 +349,20 @@ export class QuotesService {
   async cancel(tenantId: string, quoteId: string): Promise<PrismaQuote> {
     const quote = await this.findOne(tenantId, quoteId);
 
-    const allowedStatuses: QuoteStatus[] = ['draft', 'submitted', 'auto_quoted', 'quoted', 'needs_review'];
+    const allowedStatuses: QuoteStatus[] = [
+      QuoteStatus.DRAFT,
+      QuoteStatus.SUBMITTED,
+      QuoteStatus.AUTO_QUOTED,
+      QuoteStatus.QUOTED,
+      QuoteStatus.NEEDS_REVIEW,
+    ];
     if (!allowedStatuses.includes(quote.status as QuoteStatus)) {
       throw new BadRequestException('Quote cannot be cancelled in current status');
     }
 
     return this.prisma.quote.update({
       where: { id: quoteId },
-      data: { status: 'cancelled' },
+      data: { status: QuoteStatus.CANCELLED },
     });
   }
 
@@ -402,5 +413,30 @@ export class QuotesService {
       co2eKg: totalCo2e.toNumber(),
       energyKwh: totalEnergyKwh.toNumber(),
     };
+  }
+
+  private async generateQuoteNumber(tenantId: string): Promise<string> {
+    // Get the current date components
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    
+    // Get the count of quotes for this tenant in the current month
+    const startOfMonth = new Date(year, now.getMonth(), 1);
+    const endOfMonth = new Date(year, now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    const count = await this.prisma.quote.count({
+      where: {
+        tenantId,
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      },
+    });
+    
+    // Generate quote number in format: Q-YYYY-MM-XXXX
+    const sequence = String(count + 1).padStart(4, '0');
+    return `Q-${year}-${month}-${sequence}`;
   }
 }

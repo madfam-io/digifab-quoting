@@ -31,7 +31,6 @@ export class CacheInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const request = context.switchToHttp().getRequest();
     const cacheKey = this.generateCacheKey(context, options);
 
     // Try to get from cache

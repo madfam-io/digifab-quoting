@@ -13,6 +13,16 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBadRequestResponse, ApiNotFoundResponse, ApiUnauthorizedResponse, ApiHeader, ApiPayloadTooLargeResponse } from '@nestjs/swagger';
 import { FilesService, PresignedUrlResponse } from './files.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Request as ExpressRequest } from 'express';
+
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    id: string;
+    tenantId: string;
+    email: string;
+    roles: string[];
+  };
+}
 import { CreatePresignedUploadDto, PresignedUploadResponseDto } from './dto/create-presigned-upload.dto';
 import { ConfirmUploadDto } from './dto/confirm-upload.dto';
 import { UnauthorizedResponseDto, ValidationErrorResponseDto, NotFoundResponseDto } from '../../common/dto/api-response.dto';
@@ -52,7 +62,7 @@ export class FilesController {
     description: 'File size exceeds 200MB limit'
   })
   async createPresignedUpload(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() dto: CreatePresignedUploadDto,
   ): Promise<PresignedUrlResponse> {
     return this.filesService.createPresignedUpload(
@@ -88,7 +98,7 @@ export class FilesController {
     type: ValidationErrorResponseDto 
   })
   async confirmUpload(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') fileId: string,
     @Body() dto: ConfirmUploadDto,
   ): Promise<void> {
@@ -127,7 +137,7 @@ export class FilesController {
     type: NotFoundResponseDto 
   })
   async getFileUrl(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') fileId: string,
   ): Promise<{ url: string }> {
     const url = await this.filesService.getFileUrl(req.user.tenantId, fileId);
@@ -158,7 +168,7 @@ export class FilesController {
     type: ValidationErrorResponseDto 
   })
   async deleteFile(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') fileId: string,
   ): Promise<void> {
     await this.filesService.deleteFile(req.user.tenantId, fileId);

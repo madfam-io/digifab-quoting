@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse, ApiUnauthorizedResponse, ApiHeader } from '@nestjs/swagger';
 import { PricingService } from './pricing.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -80,7 +81,7 @@ export class PricingController {
     }
   })
   getMaterials(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
     return this.pricingService.getMaterials(req.user.tenantId, process);
@@ -146,7 +147,7 @@ export class PricingController {
     }
   })
   getMachines(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
     return this.pricingService.getMachines(req.user.tenantId, process);
@@ -248,7 +249,7 @@ export class PricingController {
     }
   })
   getProcessOptions(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
     return this.pricingService.getProcessOptions(req.user.tenantId, process);

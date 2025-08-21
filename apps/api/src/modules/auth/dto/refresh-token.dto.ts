@@ -9,7 +9,7 @@ export class RefreshTokenDto {
   })
   @IsString()
   @IsJWT()
-  refreshToken: string;
+  refreshToken!: string;
 }
 
 export class RefreshTokenResponseDto {
@@ -17,23 +17,23 @@ export class RefreshTokenResponseDto {
     description: 'New JWT access token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   })
-  accessToken: string;
+  accessToken!: string;
 
   @ApiProperty({
     description: 'New refresh token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   })
-  refreshToken: string;
+  refreshToken!: string;
 
   @ApiProperty({
     description: 'Token type',
     example: 'Bearer'
   })
-  tokenType: string;
+  tokenType!: string;
 
   @ApiProperty({
     description: 'Access token expiration time in seconds',
     example: 3600
   })
-  expiresIn: number;
+  expiresIn!: number;
 }

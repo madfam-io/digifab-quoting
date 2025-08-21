@@ -17,17 +17,17 @@ export interface PresignedUrlResponse {
 @Injectable()
 export class FilesService {
   private s3: AWS.S3;
-  private bucketName: string;
+  private readonly bucketName: string;
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {
     this.s3 = new AWS.S3({
-      region: this.configService.get('aws.s3.region'),
+      region: this.configService.get<string>('aws.s3.region') || 'us-east-1',
       signatureVersion: 'v4',
     });
-    this.bucketName = this.configService.get('aws.s3.bucket');
+    this.bucketName = this.configService.get<string>('aws.s3.bucket') || 'madfam-uploads';
   }
 
   async createPresignedUpload(

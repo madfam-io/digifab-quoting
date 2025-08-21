@@ -22,7 +22,8 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
     if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
-      const { passwordHash, ...result } = user;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash: _, ...result } = user;
       return {
         id: result.id,
         tenantId: result.tenantId,
@@ -45,7 +46,7 @@ export class AuthService {
         userId: user.id,
         token: tokens.accessToken,
         refreshToken: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + this.configService.get<number>('jwt.refreshTokenExpiry') * 1000),
+        expiresAt: new Date(Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000),
       },
     });
 
@@ -68,7 +69,7 @@ export class AuthService {
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     try {
       // Verify refresh token
-      const _payload = this.jwtService.verify(refreshToken, {
+      this.jwtService.verify(refreshToken, {
         secret: this.configService.get('jwt.secret'),
       });
 
@@ -100,7 +101,7 @@ export class AuthService {
         data: {
           token: tokens.accessToken,
           refreshToken: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.configService.get<number>('jwt.refreshTokenExpiry') * 1000),
+          expiresAt: new Date(Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000),
         },
       });
 
@@ -187,7 +188,8 @@ export class AuthService {
     });
 
     // Generate tokens and login
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _pwd, ...userWithoutPassword } = user;
     const userForLogin: User = {
       id: userWithoutPassword.id,
       tenantId: userWithoutPassword.tenantId,
@@ -217,7 +219,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get('jwt.refreshTokenExpiry'),
+      expiresIn: this.configService.get('jwt.refreshTokenExpiry') || '1d',
     });
 
     return {

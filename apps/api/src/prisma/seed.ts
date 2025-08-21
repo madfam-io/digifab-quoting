@@ -90,6 +90,7 @@ async function main() {
         process: '3d_fff',
         ...mat,
         costUom: 'kg',
+        costPerUnit: mat.pricePerUom,
         recycledPercent: mat.code === 'PLA' ? 30 : 0,
       },
     });
@@ -108,6 +109,7 @@ async function main() {
       co2eFactor: 6.0,
       costUom: 'l',
       pricePerUom: 80,
+      costPerUnit: 80,
     },
   });
 
@@ -127,6 +129,7 @@ async function main() {
         process: 'cnc_3axis',
         ...mat,
         costUom: 'kg',
+        costPerUnit: mat.pricePerUom,
       },
     });
   }

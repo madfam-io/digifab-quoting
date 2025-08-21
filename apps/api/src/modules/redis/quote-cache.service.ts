@@ -112,7 +112,6 @@ export class QuoteCacheService {
     material: string,
     config: any,
   ): Promise<void> {
-    const key = `pricing:${service}:${material}`;
     await this.cacheService.cachePricingRules(service, material, config, this.PRICING_CACHE_TTL);
   }
 

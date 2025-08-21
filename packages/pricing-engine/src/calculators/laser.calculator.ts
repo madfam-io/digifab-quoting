@@ -5,9 +5,10 @@ import {
   ProcessingTime, 
   MaterialUsage 
 } from '../types';
+import { GeometryMetrics } from '@madfam/shared';
 
 export class LaserPricingCalculator extends BasePricingCalculator {
-  private readonly CUTTING_SPEEDS = {
+  private readonly CUTTING_SPEEDS: Record<string, Record<number, number>> = {
     'Acrylic': {
       3: 15,   // mm thickness: mm/s
       6: 8,
@@ -28,7 +29,7 @@ export class LaserPricingCalculator extends BasePricingCalculator {
     },
   };
 
-  private readonly PIERCE_TIMES = {
+  private readonly PIERCE_TIMES: Record<number, number> = {
     3: 0.5,   // mm thickness: seconds
     6: 1.0,
     10: 2.0,
@@ -83,7 +84,7 @@ export class LaserPricingCalculator extends BasePricingCalculator {
       ),
       sustainability,
       confidence: 0.98, // Very high confidence for laser cutting
-      warnings: this.generateWarnings(usage, time),
+      warnings: this.generateWarnings(usage),
     };
   }
 
@@ -223,7 +224,7 @@ export class LaserPricingCalculator extends BasePricingCalculator {
     return areaM2.mul(material.pricePerUom).mul(thickness / 3); // Adjust for thickness
   }
 
-  private generateWarnings(usage: MaterialUsage, time: ProcessingTime): string[] {
+  private generateWarnings(usage: MaterialUsage): string[] {
     const warnings: string[] = [];
     const { geometry, material, selections } = this.input;
     

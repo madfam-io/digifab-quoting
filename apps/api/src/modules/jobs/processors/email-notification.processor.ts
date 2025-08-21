@@ -149,13 +149,6 @@ export class EmailNotificationProcessor {
   }
 
   private loadTemplates(): void {
-    const templateTypes: EmailNotificationJobData['type'][] = [
-      'quote-ready',
-      'quote-accepted',
-      'quote-expired',
-      'order-shipped',
-    ];
-
     // In production, these would be loaded from files or a template service
     // For now, using inline templates
     const templates = {

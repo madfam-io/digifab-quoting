@@ -1,9 +1,7 @@
 import { SetMetadata } from '@nestjs/common';
 import { 
   CacheOptions, 
-  CacheContext, 
-  CacheableTarget, 
-  CacheableDescriptor 
+  CacheContext
 } from '../interfaces/cache-options.interface';
 
 export const CACHE_KEY_METADATA = 'cache_key_metadata';
@@ -15,18 +13,19 @@ export const CACHE_INVALIDATE_METADATA = 'cache_invalidate_metadata';
  * @param options Cache options
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
-  return (
-    target: CacheableTarget, 
+  return <T extends Function>(
+    target: Object, 
     propertyKey: string | symbol, 
-    descriptor: CacheableDescriptor
-  ): CacheableDescriptor => {
+    descriptor: TypedPropertyDescriptor<T>
+  ): TypedPropertyDescriptor<T> | void => {
     SetMetadata(CACHE_OPTIONS_METADATA, options || {})(target, propertyKey, descriptor);
     
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as Function;
+    
+    if (!originalMethod) return descriptor;
     
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
-      const _tenantContext = this.tenantContext;
       
       if (!cacheService) {
         // No cache service available, execute method normally
@@ -34,7 +33,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
       }
 
       // Generate cache key
-      const keyPrefix = options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
+      const keyPrefix = options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
       const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
       const cacheKey = keyGenerator(keyPrefix, ...args);
       
@@ -47,10 +46,10 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
       return await cacheService.getOrSet({
         key: cacheKey,
         ttl: options?.ttl,
-        fetchFn: () => originalMethod!.apply(this, args),
+        fetchFn: () => originalMethod.apply(this, args),
         tenantSpecific: true,
       });
-    };
+    } as any;
 
     return descriptor;
   };
@@ -61,17 +60,19 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to invalidate
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
-  return (
-    target: CacheableTarget, 
+  return <T extends Function>(
+    target: Object, 
     propertyKey: string | symbol, 
-    descriptor: CacheableDescriptor
-  ): CacheableDescriptor => {
+    descriptor: TypedPropertyDescriptor<T>
+  ): TypedPropertyDescriptor<T> | void => {
     SetMetadata(CACHE_INVALIDATE_METADATA, patterns)(target, propertyKey, descriptor);
     
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as Function;
+    
+    if (!originalMethod) return descriptor;
     
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
-      const result = await originalMethod!.apply(this, args);
+      const result = await originalMethod.apply(this, args);
       
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
@@ -80,7 +81,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
       }
       
       return result;
-    };
+    } as any;
 
     return descriptor;
   };
@@ -91,23 +92,25 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  * @param options Cache options
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
-  return (
-    target: CacheableTarget, 
+  return <T extends Function>(
+    target: Object, 
     propertyKey: string | symbol, 
-    descriptor: CacheableDescriptor
-  ): CacheableDescriptor => {
-    const originalMethod = descriptor.value;
+    descriptor: TypedPropertyDescriptor<T>
+  ): TypedPropertyDescriptor<T> | void => {
+    const originalMethod = descriptor.value as Function;
+    
+    if (!originalMethod) return descriptor;
     
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
-      const result = await originalMethod!.apply(this, args);
+      const result = await originalMethod.apply(this, args);
       
       const cacheService = this.cacheService || this.cache;
       if (cacheService && result !== null && result !== undefined) {
-        const keyPrefix = options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
+        const keyPrefix = options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
         const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
         const cacheKey = keyGenerator(keyPrefix, ...args);
         
-        await cacheService.redisService.set(
+        await (cacheService as any).redisService.set(
           cacheKey,
           result,
           options?.ttl,
@@ -116,7 +119,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
       }
       
       return result;
-    };
+    } as any;
 
     return descriptor;
   };
@@ -127,12 +130,14 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to evict
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
-  return (
-    target: CacheableTarget, 
+  return <T extends Function>(
+    target: Object, 
     propertyKey: string | symbol, 
-    descriptor: CacheableDescriptor
-  ): CacheableDescriptor => {
-    const originalMethod = descriptor.value;
+    descriptor: TypedPropertyDescriptor<T>
+  ): TypedPropertyDescriptor<T> | void => {
+    const originalMethod = descriptor.value as Function;
+    
+    if (!originalMethod) return descriptor;
     
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
@@ -141,8 +146,8 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
         await cacheService.invalidate(patterns);
       }
       
-      return originalMethod!.apply(this, args);
-    };
+      return originalMethod.apply(this, args);
+    } as any;
 
     return descriptor;
   };

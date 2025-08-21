@@ -39,9 +39,9 @@ export class PricingService {
 
     // Basic calculation
     const volumeCm3 = geometryMetrics.volumeCm3 || 1;
-    const materialCost = new Decimal(volumeCm3).mul(material.costPerUnit || 1).div(1000); // Convert to cost per cm³
+    const materialCost = new Decimal(volumeCm3).mul(material.costPerUnit?.toString() || '1').div(1000); // Convert to cost per cm³
     const machineHours = volumeCm3 / 60; // Simplified: 60 cm³/hour
-    const machineCost = new Decimal(machineHours).mul(machine.hourlyRate || 500);
+    const machineCost = new Decimal(machineHours).mul(machine.hourlyRate?.toString() || '500');
     
     const unitPrice = materialCost.plus(machineCost).mul(1.5); // 50% markup
     const totalPrice = unitPrice.mul(quantity);
@@ -110,10 +110,7 @@ export class PricingService {
 
     return this.prisma.processOption.findMany({
       where,
-      orderBy: [
-        { type: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: { process: 'asc' },
     });
   }
 
@@ -140,11 +137,11 @@ export class PricingService {
       defaultMargin: defaultMargin?.marginPercent?.toNumber() || 0.3,
       minimumMargin: defaultMargin?.floorPercent?.toNumber() || 0.15,
       targetMargin: defaultMargin?.targetPercent?.toNumber() || 0.35,
-      rushOrderRate: tenant?.settings?.['rushOrderRate'] || 0.25,
-      overheadRate: tenant?.settings?.['overheadRate'] || 0.15,
-      taxRate: tenant?.settings?.['taxRate'] || 0.16, // IVA in Mexico
-      quoteValidityDays: tenant?.settings?.['quoteValidityDays'] || 14,
-      volumeDiscountThresholds: tenant?.settings?.['volumeDiscountThresholds'] || {
+      rushOrderRate: (tenant?.settings as any)?.rushOrderRate || 0.25,
+      overheadRate: (tenant?.settings as any)?.overheadRate || 0.15,
+      taxRate: (tenant?.settings as any)?.taxRate || 0.16, // IVA in Mexico
+      quoteValidityDays: (tenant?.settings as any)?.quoteValidityDays || 14,
+      volumeDiscountThresholds: (tenant?.settings as any)?.volumeDiscountThresholds || {
         50: 0.05,
         100: 0.1,
         500: 0.15,

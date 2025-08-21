@@ -5,6 +5,7 @@ import {
   ProcessingTime, 
   MaterialUsage 
 } from '../types';
+import { GeometryMetrics } from '@madfam/shared';
 
 export class SLAPricingCalculator extends BasePricingCalculator {
   calculate(): PricingResult {
@@ -55,7 +56,7 @@ export class SLAPricingCalculator extends BasePricingCalculator {
       ),
       sustainability,
       confidence: 0.95, // High confidence for SLA
-      warnings: this.generateWarnings(usage, time),
+      warnings: this.generateWarnings(usage),
     };
   }
 
@@ -149,7 +150,7 @@ export class SLAPricingCalculator extends BasePricingCalculator {
     return minutes;
   }
 
-  private generateWarnings(usage: MaterialUsage, time: ProcessingTime): string[] {
+  private generateWarnings(usage: MaterialUsage): string[] {
     const warnings: string[] = [];
     const { geometry, selections } = this.input;
     
@@ -159,7 +160,6 @@ export class SLAPricingCalculator extends BasePricingCalculator {
     }
     
     // Check for thin walls
-    const minWallThickness = 0.5; // mm
     if (selections.tolerance === 'tight') {
       warnings.push('Tight tolerances may require manual finishing');
     }
@@ -170,7 +170,7 @@ export class SLAPricingCalculator extends BasePricingCalculator {
     }
     
     // Check if part has many overhangs
-    if (usage.supportVolumeCm3 > usage.netVolumeCm3 * 0.5) {
+    if (usage.supportVolumeCm3 && usage.supportVolumeCm3 > usage.netVolumeCm3 * 0.5) {
       warnings.push('Extensive supports required, consider part orientation');
     }
     

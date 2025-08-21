@@ -27,7 +27,6 @@ import { Tenant } from '@/modules/tenant/decorators/tenant.decorator';
 import { 
   JobType, 
   JobStatus,
-  JobMetrics,
   QueueMetrics,
 } from './interfaces/job.interface';
 import { 

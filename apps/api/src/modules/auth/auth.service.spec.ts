@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../redis/cache.service';
 import { USER_ROLES } from '@madfam/shared';
 
 describe('AuthService', () => {
@@ -20,16 +21,20 @@ describe('AuthService', () => {
     id: 'user-123',
     email: 'test@example.com',
     tenantId: 'tenant-123',
+    firstName: 'John',
+    lastName: 'Doe',
+    role: 'CUSTOMER',
     roles: [USER_ROLES.CUSTOMER],
     active: true,
     passwordHash: '$2a$10$mockHashedPassword',
+    lastLogin: null,
   };
 
-  const _mockTokens = {
-    accessToken: 'mock-access-token',
-    refreshToken: 'mock-refresh-token',
-    expiresIn: 900,
-  };
+  // const _mockTokens = {
+  //   accessToken: 'mock-access-token',
+  //   refreshToken: 'mock-refresh-token',
+  //   expiresIn: 900,
+  // };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -63,6 +68,7 @@ describe('AuthService', () => {
               findUnique: jest.fn(),
               update: jest.fn(),
               deleteMany: jest.fn(),
+              findFirst: jest.fn(),
             },
             tenant: {
               findFirst: jest.fn(),
@@ -74,6 +80,13 @@ describe('AuthService', () => {
             customer: {
               create: jest.fn(),
             },
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            cacheUserSession: jest.fn(),
+            invalidate: jest.fn(),
           },
         },
       ],
@@ -105,8 +118,10 @@ describe('AuthService', () => {
         id: mockUser.id,
         email: mockUser.email,
         tenantId: mockUser.tenantId,
+        name: 'John Doe',
         roles: mockUser.roles,
         active: mockUser.active,
+        lastLogin: undefined,
       });
       expect(usersService.findByEmail).toHaveBeenCalledWith('test@example.com');
     });
@@ -131,8 +146,15 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should generate tokens and create session', async () => {
-      const user = { ...mockUser };
-      delete user.passwordHash;
+      const user = {
+        id: mockUser.id,
+        email: mockUser.email,
+        tenantId: mockUser.tenantId,
+        name: 'John Doe',
+        roles: mockUser.roles,
+        active: mockUser.active,
+        lastLogin: undefined,
+      };
       
       (jwtService.sign as jest.Mock).mockReturnValueOnce('access-token');
       (jwtService.sign as jest.Mock).mockReturnValueOnce('refresh-token');

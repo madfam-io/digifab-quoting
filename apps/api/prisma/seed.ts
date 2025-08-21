@@ -121,6 +121,7 @@ async function main() {
         costUom: 'kg',
         pricePerUom: costPerUnit,
         costPerUnit: costPerUnit,
+        costPerKg: costPerUnit, // Add costPerKg field
         properties: {
           color: color,
         },

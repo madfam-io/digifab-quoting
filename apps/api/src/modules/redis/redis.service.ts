@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private client: Redis | null = null;
   private readonly defaultTTL = 3600; // 1 hour default
   private statistics: CacheStatistics = {
     hits: 0,
@@ -29,6 +29,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     const redisUrl = this.configService.get<string>('redis.url');
+    if (!redisUrl) {
+      this.logger.warn('Redis URL not configured, Redis will not be available');
+      return;
+    }
     this.client = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
@@ -85,6 +89,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Get a value from cache
    */
   async get<T>(key: string): Promise<T | null> {
+    if (!this.client) {
+      return null;
+    }
     try {
       const value = await this.client.get(key);
       
@@ -121,6 +128,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     ttl?: number,
     metadata?: Partial<CacheEntry['metadata']>
   ): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
     try {
       const entry: CacheEntry<T> = {
         data: value,
@@ -152,6 +162,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Delete a value from cache
    */
   async delete(key: string | string[]): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
     try {
       const keys = Array.isArray(key) ? key : [key];
       const result = await this.client.del(...keys);
@@ -168,6 +181,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Delete all keys matching a pattern
    */
   async deletePattern(pattern: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
     try {
       const keys = await this.client.keys(pattern);
       if (keys.length === 0) return 0;
@@ -184,6 +200,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Check if a key exists
    */
   async exists(key: string): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
     try {
       const result = await this.client.exists(key);
       return result === 1;
@@ -197,6 +216,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Get remaining TTL for a key
    */
   async ttl(key: string): Promise<number> {
+    if (!this.client) {
+      return -1;
+    }
     try {
       return await this.client.ttl(key);
     } catch (error) {
@@ -209,6 +231,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Extend TTL for a key
    */
   async expire(key: string, ttl: number): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
     try {
       const result = await this.client.expire(key, ttl);
       return result === 1;
@@ -222,6 +247,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Flush all cache (use with caution)
    */
   async flushAll(): Promise<void> {
+    if (!this.client) {
+      return;
+    }
     try {
       await this.client.flushall();
       this.logger.warn('All cache flushed');
@@ -264,6 +292,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Execute Redis command directly (for advanced use)
    */
   async execute<T = any>(command: string, ...args: any[]): Promise<T> {
+    if (!this.client) {
+      throw new Error('Redis client not initialized');
+    }
     try {
       return await this.client.call(command, ...args);
     } catch (error) {
@@ -276,7 +307,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get the Redis client instance
    */
-  getClient(): Redis {
+  getClient(): Redis | null {
     return this.client;
   }
 
@@ -284,7 +315,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Check if Redis is connected
    */
   isConnected(): boolean {
-    return this.client && this.client.status === 'ready';
+    return !!this.client && this.client.status === 'ready';
   }
 
   private updateHitRate(): void {

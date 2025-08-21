@@ -5,14 +5,14 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   Request,
   Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam, ApiBadRequestResponse, ApiNotFoundResponse, ApiForbiddenResponse, ApiUnauthorizedResponse, ApiHeader } from '@nestjs/swagger';
+import { Request as ExpressRequest } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam, ApiBadRequestResponse, ApiNotFoundResponse, ApiUnauthorizedResponse, ApiHeader } from '@nestjs/swagger';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto, QuoteResponseDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
@@ -20,11 +20,10 @@ import { AddQuoteItemDto, QuoteItemResponseDto } from './dto/add-quote-item.dto'
 import { CalculateQuoteDto } from './dto/calculate-quote.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { QuoteStatus } from '@madfam/shared';
 import { Audit } from '../audit/audit.interceptor';
 import { AuditAction, AuditEntity } from '../audit/audit.service';
-import { PaginatedResponseDto, ValidationErrorResponseDto, NotFoundResponseDto, UnauthorizedResponseDto, ForbiddenResponseDto } from '../../common/dto/api-response.dto';
+import { ValidationErrorResponseDto, NotFoundResponseDto, UnauthorizedResponseDto } from '../../common/dto/api-response.dto';
 
 @ApiTags('quotes')
 @Controller('quotes')
@@ -63,7 +62,7 @@ export class QuotesController {
     includeBody: true,
     includeResponse: true,
   })
-  create(@Request() req, @Body() createQuoteDto: CreateQuoteDto) {
+  create(@Request() req: ExpressRequest, @Body() createQuoteDto: CreateQuoteDto) {
     return this.quotesService.create(
       req.user.tenantId,
       req.user.id,
@@ -120,7 +119,7 @@ export class QuotesController {
     }
   })
   findAll(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Query('status') status?: QuoteStatus,
     @Query('customerId') customerId?: string,
     @Query('page') page?: string,
@@ -153,14 +152,14 @@ export class QuotesController {
     description: 'Quote not found',
     type: NotFoundResponseDto 
   })
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req: ExpressRequest, @Param('id') id: string) {
     return this.quotesService.findOne(req.user.tenantId, id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update quote' })
   update(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Param('id') id: string,
     @Body() updateQuoteDto: UpdateQuoteDto,
   ) {
@@ -192,7 +191,7 @@ export class QuotesController {
     type: ValidationErrorResponseDto 
   })
   addItem(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Param('id') quoteId: string,
     @Body() addQuoteItemDto: AddQuoteItemDto,
   ) {
@@ -234,7 +233,7 @@ export class QuotesController {
     type: ValidationErrorResponseDto 
   })
   calculate(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Param('id') id: string,
     @Body() calculateQuoteDto: CalculateQuoteDto,
   ) {
@@ -275,14 +274,14 @@ export class QuotesController {
     description: 'Quote is not in ready status or has expired',
     type: ValidationErrorResponseDto 
   })
-  approve(@Request() req, @Param('id') id: string) {
+  approve(@Request() req: ExpressRequest, @Param('id') id: string) {
     return this.quotesService.approve(req.user.tenantId, id, req.user.id);
   }
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel quote' })
-  cancel(@Request() req, @Param('id') id: string) {
+  cancel(@Request() req: ExpressRequest, @Param('id') id: string) {
     return this.quotesService.cancel(req.user.tenantId, id);
   }
 
@@ -318,7 +317,7 @@ export class QuotesController {
     description: 'Quote not found',
     type: NotFoundResponseDto 
   })
-  async generatePdf(@Request() req, @Param('id') id: string) {
+  async generatePdf(@Request() _req: ExpressRequest, @Param('id') _id: string) {
     // TODO: Implement PDF generation
     return { 
       url: 'https://example.com/quote.pdf',

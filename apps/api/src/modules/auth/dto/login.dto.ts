@@ -58,7 +58,7 @@ export class LoginResponseDto {
   @ApiProperty({
     description: 'User information'
   })
-  user: {
+  user!: {
     id: string;
     email: string;
     firstName: string;

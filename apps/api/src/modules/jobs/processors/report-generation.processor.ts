@@ -18,7 +18,6 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { unlink } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
-import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
 interface ReportResult {
   reportId: string;
@@ -221,9 +220,9 @@ export class ReportGenerationProcessor {
           include: {
             items: {
               include: {
-                file: true,
+                files: true,
                 material: true,
-                process: true,
+                manufacturingProcess: true,
               },
             },
             customer: true,
@@ -239,9 +238,9 @@ export class ReportGenerationProcessor {
               include: {
                 items: {
                   include: {
-                    file: true,
+                    files: true,
                     material: true,
-                    process: true,
+                    manufacturingProcess: true,
                   },
                 },
               },
@@ -344,7 +343,7 @@ export class ReportGenerationProcessor {
     reportType: ReportGenerationJobData['reportType'],
     data: any,
     options: ReportGenerationJobData['options'],
-    job: Job<ReportGenerationJobData>,
+    _job: Job<ReportGenerationJobData>,
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.pdf`;
     const filePath = join(tmpdir(), fileName);
@@ -396,7 +395,7 @@ export class ReportGenerationProcessor {
     reportType: ReportGenerationJobData['reportType'],
     data: any,
     options: ReportGenerationJobData['options'],
-    job: Job<ReportGenerationJobData>,
+    _job: Job<ReportGenerationJobData>,
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.xlsx`;
     const filePath = join(tmpdir(), fileName);
@@ -426,8 +425,8 @@ export class ReportGenerationProcessor {
   private async generateCsvReport(
     reportType: ReportGenerationJobData['reportType'],
     data: any,
-    options: ReportGenerationJobData['options'],
-    job: Job<ReportGenerationJobData>,
+    _options: ReportGenerationJobData['options'],
+    _job: Job<ReportGenerationJobData>,
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.csv`;
     const filePath = join(tmpdir(), fileName);
@@ -496,10 +495,13 @@ export class ReportGenerationProcessor {
     if (options?.includeItemDetails) {
       doc.fontSize(14).text('Items', { underline: true });
       quote.items.forEach((item: any, index: number) => {
+        const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
+        const materialName = item.material?.name || 'Unknown material';
+        const processName = item.manufacturingProcess?.name || item.processCode || 'Unknown process';
         doc.fontSize(12)
-          .text(`${index + 1}. ${item.file.fileName}`)
-          .text(`   Material: ${item.material.name}`)
-          .text(`   Process: ${item.process.name}`)
+          .text(`${index + 1}. ${fileName}`)
+          .text(`   Material: ${materialName}`)
+          .text(`   Process: ${processName}`)
           .text(`   Quantity: ${item.quantity}`)
           .text(`   Unit Price: ${quote.currency} ${item.unitPrice}`)
           .text(`   Total: ${quote.currency} ${item.totalPrice}`)
@@ -530,7 +532,7 @@ export class ReportGenerationProcessor {
       .text(`Delivery Status: ${order.status}`);
   }
 
-  private addInvoiceContent(doc: PDFDocument, invoice: any, options: any): void {
+  private addInvoiceContent(doc: PDFDocument, invoice: any, _options: any): void {
     // Invoice header
     doc.fontSize(16).text(`INVOICE #${invoice.number}`, { align: 'right' });
     doc.moveDown();
@@ -559,7 +561,7 @@ export class ReportGenerationProcessor {
       });
   }
 
-  private addAnalyticsContent(doc: PDFDocument, data: any, options: any): void {
+  private addAnalyticsContent(doc: PDFDocument, data: any, _options: any): void {
     doc.fontSize(14).text('Report Period', { underline: true })
       .fontSize(12)
       .text(`From: ${new Date(data.criteria.startDate).toLocaleDateString()}`)
@@ -589,7 +591,7 @@ export class ReportGenerationProcessor {
     workbook: ExcelJS.Workbook,
     data: any,
     type: string,
-    options: any,
+    _options: any,
   ): void {
     const sheet = workbook.addWorksheet(type === 'quote' ? 'Quote' : 'Order');
 
@@ -606,10 +608,13 @@ export class ReportGenerationProcessor {
     // Data
     const items = type === 'quote' ? data.items : data.quote.items;
     items.forEach((item: any) => {
+      const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
+      const materialName = item.material?.name || 'Unknown material';
+      const processName = item.manufacturingProcess?.name || item.processCode || 'Unknown process';
       sheet.addRow({
-        item: item.file.fileName,
-        material: item.material.name,
-        process: item.process.name,
+        item: fileName,
+        material: materialName,
+        process: processName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         total: item.totalPrice,
@@ -628,14 +633,14 @@ export class ReportGenerationProcessor {
     sheet.getColumn('total').numFmt = '"$"#,##0.00';
   }
 
-  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: any, options: any): void {
-    const sheet = workbook.addWorksheet('Invoice');
+  private addInvoiceSheet(workbook: ExcelJS.Workbook, _invoice: any, _options: any): void {
+    workbook.addWorksheet('Invoice');
 
     // Add invoice data similar to quote/order
     // Implementation details...
   }
 
-  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: any, options: any): void {
+  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: any, _options: any): void {
     // Revenue sheet
     const revenueSheet = workbook.addWorksheet('Revenue');
     revenueSheet.columns = [
@@ -675,7 +680,10 @@ export class ReportGenerationProcessor {
     let csv = 'Item,Material,Process,Quantity,Unit Price,Total\n';
     
     items.forEach((item: any) => {
-      csv += `"${item.file.fileName}","${item.material.name}","${item.process.name}",${item.quantity},${item.unitPrice},${item.totalPrice}\n`;
+      const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
+      const materialName = item.material?.name || 'Unknown material';
+      const processName = item.manufacturingProcess?.name || item.processCode || 'Unknown process';
+      csv += `"${fileName}","${materialName}","${processName}",${item.quantity},${item.unitPrice},${item.totalPrice}\n`;
     });
 
     csv += `\n,,,,Subtotal,${data.subtotal || data.quote.subtotal}\n`;
