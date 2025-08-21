@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for the monorepo
+COPY package*.json ./
+COPY turbo.json ./
+COPY tsconfig.json ./
+
+# Copy workspace packages
+COPY packages/ ./packages/
+COPY apps/api/ ./apps/api/
+
+# Install all dependencies
+RUN npm ci
+
+# Generate Prisma client
+WORKDIR /app/apps/api
+RUN npx prisma generate
+
+WORKDIR /app
+
+EXPOSE 4000
+
+CMD ["npm", "run", "dev", "--", "--filter=@madfam/api"]

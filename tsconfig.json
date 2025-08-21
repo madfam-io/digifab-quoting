@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@madfam/shared": ["./packages/shared/src"],
+      "@madfam/shared/*": ["./packages/shared/src/*"],
+      "@madfam/ui": ["./packages/ui/src"],
+      "@madfam/ui/*": ["./packages/ui/src/*"],
+      "@madfam/pricing-engine": ["./packages/pricing-engine/src"],
+      "@madfam/pricing-engine/*": ["./packages/pricing-engine/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".turbo", "coverage"]
+}
