@@ -132,7 +132,7 @@ export function FileUpload({
 
       updateFileStatus(uploadFile.id, 'success', 100, undefined, fileId);
     } catch (error) {
-      updateFileStatus(uploadFile.id, 'error', 0, error.message);
+      updateFileStatus(uploadFile.id, 'error', 0, error instanceof Error ? error.message : 'Upload failed');
     }
   };
 
@@ -236,7 +236,7 @@ export function FileUpload({
 
       {successfulFiles.length > 0 && (
         <Button
-          onClick={() => onFilesUploaded(successfulFiles.map(f => f.fileId!))}
+          onClick={() => onFilesUploaded(successfulFiles.map(f => f.fileId || ''))}
           className="w-full"
         >
           Continuar con {successfulFiles.length} archivo{successfulFiles.length !== 1 && 's'}

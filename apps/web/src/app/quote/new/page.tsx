@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileUpload } from '@/components/upload/FileUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewQuotePage() {
   const router = useRouter();
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
 
   const handleFilesUploaded = async (fileIds: string[]) => {
