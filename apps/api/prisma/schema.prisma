@@ -67,6 +67,8 @@ model User {
   ndaAcceptances NDAAcceptance[]
   sessions       Session[]
   customer       Customer?
+  orders         Order[]
+  invoices       Invoice[]
 
   @@index([tenantId])
   @@index([email])
@@ -108,18 +110,23 @@ model Customer {
 // ==================== QUOTING MODELS ====================
 
 model Quote {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   tenantId       String
   customerId     String?
-  status         String   @default("draft")
-  currency       String   @default("MXN")
-  objective      Json     @default("{\"cost\": 0.5, \"lead\": 0.3, \"green\": 0.2}")
+  number         String    @unique
+  status         String    @default("draft")
+  currency       String    @default("MXN")
+  objective      Json      @default("{\"cost\": 0.5, \"lead\": 0.3, \"green\": 0.2}")
   validityUntil  DateTime
+  validUntil     DateTime?
+  subtotal       Decimal?  @db.Decimal(10, 2)
+  tax            Decimal?  @db.Decimal(10, 2)
+  total          Decimal?  @db.Decimal(10, 2)
   totals         Json?
   sustainability Json?
-  metadata       Json     @default("{}")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relations
   tenant         Tenant          @relation(fields: [tenantId], references: [id])
@@ -127,6 +134,7 @@ model Quote {
   items          QuoteItem[]
   paymentIntents PaymentIntent[]
   auditLogs      AuditLog[]
+  orders         Order[]
 
   @@index([tenantId])
   @@index([customerId])
@@ -137,27 +145,35 @@ model Quote {
 model QuoteItem {
   id             String   @id @default(cuid())
   quoteId        String
+  fileId         String?
   name           String
-  process        String
+  processCode    String
+  materialId     String?
+  processId      String?
   quantity       Int
   unitPrice      Decimal? @db.Decimal(10, 2)
   totalPrice     Decimal? @db.Decimal(10, 2)
+  leadTime       Int?
   leadDays       Int?
   selections     Json
   costBreakdown  Json?
   sustainability Json?
   flags          String[] @default([])
+  metadata       Json     @default("{}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  quote        Quote         @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  files        File[]
-  dfmReport    DFMReport?
-  supplierBids SupplierBid[]
+  quote               Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  files               File[]
+  material            Material?              @relation(fields: [materialId], references: [id])
+  manufacturingProcess ManufacturingProcess?  @relation(fields: [processId], references: [id])
+  dfmReport           DFMReport?
+  supplierBids        SupplierBid[]
 
   @@index([quoteId])
-  @@index([process])
+  @@index([fileId])
+  @@index([processCode])
 }
 
 model File {
@@ -173,15 +189,20 @@ model File {
   version         Int      @default(1)
   ndaAcceptanceId String?
   metadata        Json     @default("{}")
+  status          String   @default("PENDING")
+  analysisResult  Json?
+  analyzedAt      DateTime?
   createdAt       DateTime @default(now())
 
   // Relations
-  quoteItem     QuoteItem?     @relation(fields: [quoteItemId], references: [id])
+  quoteItems    QuoteItem[]
   ndaAcceptance NDAAcceptance? @relation(fields: [ndaAcceptanceId], references: [id])
+  fileAnalysis  FileAnalysis?
 
   @@index([tenantId])
   @@index([quoteItemId])
   @@index([hash])
+  @@index([status])
 }
 
 model DFMReport {
@@ -209,6 +230,7 @@ model Material {
   costUom              String    @default("kg")
   pricePerUom          Decimal   @db.Decimal(10, 2)
   costPerUnit          Decimal   @db.Decimal(10, 2)
+  costPerKg            Decimal?  @db.Decimal(10, 2)
   recycledPercent      Decimal?  @db.Decimal(5, 2)
   properties           Json      @default("{}")
   active               Boolean   @default(true)
@@ -218,11 +240,36 @@ model Material {
   updatedAt            DateTime  @updatedAt
 
   // Relations
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  quoteItems QuoteItem[]
 
   @@unique([tenantId, code, versionEffectiveFrom])
   @@index([tenantId])
   @@index([process])
+  @@index([active])
+}
+
+model ManufacturingProcess {
+  id           String   @id @default(cuid())
+  tenantId     String
+  code         String
+  name         String
+  category     String
+  setupCost    Decimal? @db.Decimal(10, 2)
+  hourlyRate   Decimal? @db.Decimal(10, 2)
+  minOrderQty  Int?
+  maxPartSize  Json?
+  capabilities Json     @default("{}")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  quoteItems QuoteItem[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([category])
   @@index([active])
 }
 
@@ -450,4 +497,102 @@ model FXRate {
 
   @@unique([base, quote, asOf])
   @@index([asOf])
+}
+
+// ==================== JOB QUEUE MODELS ====================
+
+model FileAnalysis {
+  id               String   @id @default(cuid())
+  fileId           String   @unique
+  tenantId         String
+  volume           Decimal? @db.Decimal(10, 3)
+  surfaceArea      Decimal? @db.Decimal(10, 3)
+  boundingBoxX     Decimal? @db.Decimal(10, 3)
+  boundingBoxY     Decimal? @db.Decimal(10, 3)
+  boundingBoxZ     Decimal? @db.Decimal(10, 3)
+  partCount        Int      @default(1)
+  triangleCount    Int?
+  dfmScore         Int      @default(100)
+  dfmIssues        Json     @default("[]")
+  manufacturable   Boolean  @default(true)
+  hasUndercuts     Boolean  @default(false)
+  hasThinWalls     Boolean  @default(false)
+  hasSmallFeatures Boolean  @default(false)
+  complexity       String   @default("simple")
+  processingTime   Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  file File @relation(fields: [fileId], references: [id])
+
+  @@index([tenantId])
+  @@index([fileId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String
+  entityId    String
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  status      String   @default("PENDING")
+  generatedAt DateTime?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([entityId])
+  @@index([status])
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  tenantId      String
+  number        String   @unique
+  quoteId       String
+  customerId    String
+  status        String   @default("PENDING")
+  paymentStatus String   @default("PENDING")
+  totalPaid     Decimal  @db.Decimal(10, 2)
+  currency      String
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  quote     Quote     @relation(fields: [quoteId], references: [id])
+  customer  User      @relation(fields: [customerId], references: [id])
+  invoices  Invoice[]
+
+  @@index([tenantId])
+  @@index([quoteId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  tenantId   String
+  number     String   @unique
+  orderId    String
+  customerId String
+  currency   String
+  total      Decimal  @db.Decimal(10, 2)
+  dueDate    DateTime
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  order    Order @relation(fields: [orderId], references: [id])
+  customer User  @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([customerId])
 }

@@ -186,6 +186,35 @@ export class FilesService {
     return url;
   }
 
+  async downloadFile(fileUrl: string): Promise<Buffer> {
+    try {
+      // If it's an S3 URL, extract bucket and key
+      if (fileUrl.includes('s3.amazonaws.com') || fileUrl.includes('s3://')) {
+        const urlParts = new URL(fileUrl);
+        const pathParts = urlParts.pathname.split('/').filter(p => p);
+        const bucket = urlParts.hostname.split('.')[0];
+        const key = pathParts.join('/');
+
+        const result = await this.s3.getObject({
+          Bucket: bucket || this.bucketName,
+          Key: key,
+        }).promise();
+
+        return result.Body as Buffer;
+      } else {
+        // For presigned URLs or other URLs, download directly
+        const result = await this.s3.getObject({
+          Bucket: this.bucketName,
+          Key: fileUrl, // Assuming fileUrl is actually the key
+        }).promise();
+
+        return result.Body as Buffer;
+      }
+    } catch (error) {
+      throw new BadRequestException(`Failed to download file: ${error.message}`);
+    }
+  }
+
   async deleteFile(tenantId: string, fileId: string): Promise<void> {
     const file = await this.prisma.file.findFirst({
       where: {

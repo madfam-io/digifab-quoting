@@ -2,6 +2,9 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { FilesService } from '../files/files.service';
 import { PricingService } from '../pricing/pricing.service';
+import { CacheService } from '../redis/cache.service';
+import { QuoteCacheService } from '../redis/quote-cache.service';
+import { Cacheable, CacheInvalidate } from '../redis/decorators/cache.decorator';
 import { 
   Quote, 
   QuoteStatus, 
@@ -23,6 +26,8 @@ export class QuotesService {
     private prisma: PrismaService,
     private filesService: FilesService,
     private pricingService: PricingService,
+    private cacheService: CacheService,
+    private quoteCacheService: QuoteCacheService,
   ) {}
 
   async create(
@@ -94,6 +99,7 @@ export class QuotesService {
     };
   }
 
+  @Cacheable({ prefix: 'quote:detail', ttl: 300 }) // Cache for 5 minutes
   async findOne(tenantId: string, id: string): Promise<any> {
     const quote = await this.prisma.quote.findFirst({
       where: {
@@ -124,6 +130,7 @@ export class QuotesService {
     return quote;
   }
 
+  @CacheInvalidate('quote:detail:*')
   async update(
     tenantId: string,
     id: string,
@@ -221,23 +228,53 @@ export class QuotesService {
           quoteItem = await this.addItem(tenantId, quoteId, item);
         }
 
-        // Calculate pricing
-        const pricingResult = await this.pricingService.calculateQuoteItem(
-          tenantId,
-          quoteItem,
-          quote.objective as any,
+        // Try to get cached pricing result first
+        const cacheKey = {
+          fileHash: quoteItem.files[0]?.hash || '',
+          service: quoteItem.process,
+          material: quoteItem.selections?.material || 'default',
+          quantity: quoteItem.quantity,
+          options: quoteItem.selections,
+        };
+
+        const pricingResult = await this.quoteCacheService.getOrCalculateQuote(
+          cacheKey,
+          async () => {
+            const result = await this.pricingService.calculateQuoteItem(
+              tenantId,
+              quoteItem,
+              quote.objective as any,
+            );
+            return {
+              pricing: {
+                unitCost: result.unitPrice.toNumber(),
+                totalCost: result.totalPrice.toNumber(),
+                margin: result.margin || 0,
+                finalPrice: result.totalPrice.toNumber(),
+              },
+              manufacturing: {
+                estimatedTime: result.leadDays,
+                machineCost: result.costBreakdown?.machine || 0,
+                materialCost: result.costBreakdown?.material || 0,
+              },
+              timestamp: Date.now(),
+            };
+          },
         );
 
         // Update quote item with results
         const updatedItem = await this.prisma.quoteItem.update({
           where: { id: quoteItem.id },
           data: {
-            unitPrice: pricingResult.unitPrice.toNumber(),
-            totalPrice: pricingResult.totalPrice.toNumber(),
-            leadDays: pricingResult.leadDays,
-            costBreakdown: pricingResult.costBreakdown,
-            sustainability: pricingResult.sustainability,
-            flags: pricingResult.warnings,
+            unitPrice: pricingResult.pricing.unitCost,
+            totalPrice: pricingResult.pricing.totalCost,
+            leadDays: pricingResult.manufacturing.estimatedTime,
+            costBreakdown: {
+              machine: pricingResult.manufacturing.machineCost,
+              material: pricingResult.manufacturing.materialCost,
+            },
+            sustainability: pricingResult.sustainability || {},
+            flags: pricingResult.warnings || [],
           },
         });
 
@@ -298,6 +335,7 @@ export class QuotesService {
     });
   }
 
+  @CacheInvalidate('quote:detail:*')
   async cancel(tenantId: string, quoteId: string): Promise<PrismaQuote> {
     const quote = await this.findOne(tenantId, quoteId);
 

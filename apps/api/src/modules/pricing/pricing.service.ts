@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { CacheService } from '../redis/cache.service';
+import { Cacheable } from '../redis/decorators/cache.decorator';
 import { ProcessType } from '@madfam/shared';
 import { Decimal } from 'decimal.js';
 
@@ -9,6 +11,7 @@ export class PricingService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private cacheService: CacheService,
   ) {}
 
   async calculateQuoteItem(
@@ -61,6 +64,7 @@ export class PricingService {
     };
   }
 
+  @Cacheable({ prefix: 'materials', ttl: 1800 }) // Cache for 30 minutes
   async getMaterials(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
@@ -78,6 +82,7 @@ export class PricingService {
     });
   }
 
+  @Cacheable({ prefix: 'machines', ttl: 1800 }) // Cache for 30 minutes
   async getMachines(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
@@ -93,6 +98,7 @@ export class PricingService {
     });
   }
 
+  @Cacheable({ prefix: 'process-options', ttl: 1800 }) // Cache for 30 minutes
   async getProcessOptions(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
@@ -109,5 +115,40 @@ export class PricingService {
         { name: 'asc' },
       ],
     });
+  }
+
+  @Cacheable({ prefix: 'tenant-pricing-config', ttl: 3600 }) // Cache for 1 hour
+  async getTenantPricingConfig(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        settings: true,
+        features: true,
+      },
+    });
+
+    const margins = await this.prisma.margin.findMany({
+      where: {
+        tenantId,
+        active: true,
+      },
+    });
+
+    const defaultMargin = margins.find(m => m.type === 'default');
+
+    return {
+      defaultMargin: defaultMargin?.marginPercent?.toNumber() || 0.3,
+      minimumMargin: defaultMargin?.floorPercent?.toNumber() || 0.15,
+      targetMargin: defaultMargin?.targetPercent?.toNumber() || 0.35,
+      rushOrderRate: tenant?.settings?.['rushOrderRate'] || 0.25,
+      overheadRate: tenant?.settings?.['overheadRate'] || 0.15,
+      taxRate: tenant?.settings?.['taxRate'] || 0.16, // IVA in Mexico
+      quoteValidityDays: tenant?.settings?.['quoteValidityDays'] || 14,
+      volumeDiscountThresholds: tenant?.settings?.['volumeDiscountThresholds'] || {
+        50: 0.05,
+        100: 0.1,
+        500: 0.15,
+      },
+    };
   }
 }

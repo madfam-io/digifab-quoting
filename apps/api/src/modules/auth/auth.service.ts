@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../redis/cache.service';
 import { AuthTokens, JWTPayload, User, UserRole } from '@madfam/shared';
 import { RegisterDto } from './dto/register.dto';
 
@@ -16,6 +17,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private prisma: PrismaService,
+    private cacheService: CacheService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -39,6 +41,17 @@ export class AuthService {
         expiresAt: new Date(Date.now() + this.configService.get<number>('jwt.refreshTokenExpiry') * 1000),
       },
     });
+
+    // Cache user session for performance
+    const sessionData = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions || [],
+      tenantId: user.tenantId,
+      lastLogin: new Date(),
+    };
+    await this.cacheService.cacheUserSession(user.id, sessionData);
 
     // Update last login
     await this.usersService.updateLastLogin(user.id);
@@ -83,6 +96,17 @@ export class AuthService {
   }
 
   async logout(token: string): Promise<void> {
+    // Find session to get user ID
+    const session = await this.prisma.session.findFirst({
+      where: { token },
+    });
+
+    if (session) {
+      // Clear cached session
+      await this.cacheService.invalidate(`session:${session.userId}`);
+    }
+
+    // Delete session from database
     await this.prisma.session.deleteMany({
       where: { token },
     });
