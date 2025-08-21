@@ -5,7 +5,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { PricingService } from './pricing.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProcessType } from '@madfam/shared';
@@ -19,7 +19,7 @@ export class PricingController {
 
   @Get('materials')
   @ApiOperation({ summary: 'Get available materials' })
-  @ApiQuery({ name: 'process', required: false, enum: ProcessType })
+  @ApiQuery({ name: 'process', required: false, enum: ['3d_fff', '3d_sla', 'cnc_3axis', 'laser_2d'] })
   getMaterials(
     @Request() req,
     @Query('process') process?: ProcessType,
@@ -29,7 +29,7 @@ export class PricingController {
 
   @Get('machines')
   @ApiOperation({ summary: 'Get available machines' })
-  @ApiQuery({ name: 'process', required: false, enum: ProcessType })
+  @ApiQuery({ name: 'process', required: false, enum: ['3d_fff', '3d_sla', 'cnc_3axis', 'laser_2d'] })
   getMachines(
     @Request() req,
     @Query('process') process?: ProcessType,
@@ -39,7 +39,7 @@ export class PricingController {
 
   @Get('process-options')
   @ApiOperation({ summary: 'Get process options and constraints' })
-  @ApiQuery({ name: 'process', required: false, enum: ProcessType })
+  @ApiQuery({ name: 'process', required: false, enum: ['3d_fff', '3d_sla', 'cnc_3axis', 'laser_2d'] })
   getProcessOptions(
     @Request() req,
     @Query('process') process?: ProcessType,

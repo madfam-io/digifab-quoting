@@ -4,7 +4,8 @@
     "jsx": "react-jsx",
     "lib": ["ES2015", "DOM"],
     "module": "ESNext",
-    "target": "ES6"
+    "target": "ES6",
+    "moduleResolution": "node"
   },
   "include": ["src"],
   "exclude": ["node_modules"]

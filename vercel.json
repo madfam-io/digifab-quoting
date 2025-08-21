@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "buildCommand": "npm run build -- --filter=@madfam/web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "ignoreCommand": "npx turbo-ignore",
+  "devCommand": "npm run dev -- --filter=@madfam/web"
+}
