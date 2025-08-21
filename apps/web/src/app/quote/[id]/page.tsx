@@ -133,6 +133,8 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
     shipped: 'default',
     closed: 'secondary',
     cancelled: 'destructive',
+    rejected: 'destructive',
+    expired: 'secondary',
   };
 
   return (

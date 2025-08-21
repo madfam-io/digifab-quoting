@@ -1,11 +1,19 @@
 // Quote related enums
 export enum QuoteStatus {
   DRAFT = 'draft',
-  PENDING = 'pending',
+  SUBMITTED = 'submitted',
+  AUTO_QUOTED = 'auto_quoted',
+  NEEDS_REVIEW = 'needs_review',
+  QUOTED = 'quoted',
   APPROVED = 'approved',
+  ORDERED = 'ordered',
+  IN_PRODUCTION = 'in_production',
+  QC = 'qc',
+  SHIPPED = 'shipped',
+  CLOSED = 'closed',
+  CANCELLED = 'cancelled',
   REJECTED = 'rejected',
   EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
 }
 
 export enum QuoteObjective {
