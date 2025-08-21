@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuidSchema, currencySchema, timestampedSchema, tenantScopedSchema } from './common';
+import { uuidSchema, currencySchema } from './common';
 
 export const quoteStatusSchema = z.enum([
   'draft',
