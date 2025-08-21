@@ -27,6 +27,7 @@ model Tenant {
 
   // Relations
   users          User[]
+  customers      Customer[]
   materials      Material[]
   machines       Machine[]
   processOptions ProcessOption[]
@@ -36,6 +37,7 @@ model Tenant {
   discountRules  DiscountRule[]
   shippingRates  ShippingRate[]
   pricingRules   PricingRule[]
+  margins        Margin[]
 
   @@index([code])
   @@index([domain])
@@ -46,7 +48,11 @@ model User {
   tenantId      String
   email         String    @unique
   passwordHash  String?
+  firstName     String?
+  lastName      String?
   name          String?
+  phone         String?
+  role          String    @default("customer")
   roles         String[]  @default(["customer"])
   active        Boolean   @default(true)
   emailVerified Boolean   @default(false)
@@ -60,6 +66,7 @@ model User {
   auditLogs      AuditLog[]
   ndaAcceptances NDAAcceptance[]
   sessions       Session[]
+  customer       Customer?
 
   @@index([tenantId])
   @@index([email])
@@ -78,6 +85,24 @@ model Session {
 
   @@index([userId])
   @@index([token])
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  tenantId        String
+  userId          String   @unique
+  company         String
+  billingAddress  Json     @default("{}")
+  shippingAddress Json     @default("{}")
+  taxId           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
 }
 
 // ==================== QUOTING MODELS ====================
@@ -183,6 +208,7 @@ model Material {
   co2eFactor           Decimal   @db.Decimal(6, 3)
   costUom              String    @default("kg")
   pricePerUom          Decimal   @db.Decimal(10, 2)
+  costPerUnit          Decimal   @db.Decimal(10, 2)
   recycledPercent      Decimal?  @db.Decimal(5, 2)
   properties           Json      @default("{}")
   active               Boolean   @default(true)
@@ -259,6 +285,27 @@ model PricingRule {
   @@index([process])
   @@index([active])
   @@index([priority])
+}
+
+model Margin {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  type               String   @default("default")
+  process            String?
+  marginPercent      Decimal  @db.Decimal(5, 2)
+  floorPercent       Decimal  @db.Decimal(5, 2)
+  targetPercent      Decimal  @db.Decimal(5, 2)
+  maxDiscountPercent Decimal  @db.Decimal(5, 2)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, type, process])
+  @@index([tenantId])
+  @@index([active])
 }
 
 model DiscountRule {
