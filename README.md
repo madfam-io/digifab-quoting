@@ -30,29 +30,41 @@ A multi-tenant digital fabrication quoting system supporting 3D printing, CNC ma
    # Edit .env with your configuration
    ```
 
-4. **Start the development environment**
+4. **Start the database (if not using external PostgreSQL)**
    ```bash
-   # Using Docker (recommended)
-   docker-compose up -d
-
-   # Or run services locally
-   npm run dev
+   # Using Docker
+   docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres --name postgres postgres:14
    ```
 
 5. **Set up the database**
    ```bash
-   # Run migrations
-   npm run db:migrate
-
+   # Generate Prisma client
+   cd apps/api
+   npx prisma generate
+   
+   # Push schema to database
+   npx prisma db push
+   
    # Seed initial data
    npm run db:seed
+   cd ../..
    ```
 
-6. **Access the applications**
-   - API: http://localhost:4000
-   - API Docs: http://localhost:4000/api/docs
+6. **Start the development environment**
+   ```bash
+   # From root directory
+   npm run dev
+   ```
+
+7. **Access the applications**
+   - API: http://localhost:3001
+   - API Docs: http://localhost:3001/api/docs
    - Web App: http://localhost:3000
    - Worker API: http://localhost:8000
+
+### Default Test Users
+- **Admin**: `admin@madfam.io` / `admin123`
+- **Customer**: `test@example.com` / `test123`
 
 ## 📁 Project Structure
 
