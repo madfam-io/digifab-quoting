@@ -1,4 +1,4 @@
 {
-  "buildCommand": "cd ../.. && npm install && npm run build -- --filter=@madfam/web...",
+  "buildCommand": "cd ../.. && npm install --include=dev && npm run build -- --filter=@madfam/web...",
   "framework": "nextjs"
 }
