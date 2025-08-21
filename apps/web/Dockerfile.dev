@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for the monorepo
+COPY package*.json ./
+COPY turbo.json ./
+COPY tsconfig.json ./
+
+# Copy workspace packages
+COPY packages/ ./packages/
+COPY apps/web/ ./apps/web/
+
+# Install all dependencies
+RUN npm ci
+
+WORKDIR /app
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--filter=@madfam/web"]
