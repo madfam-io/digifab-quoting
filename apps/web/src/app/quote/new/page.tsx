@@ -34,7 +34,7 @@ export default function NewQuotePage() {
 
     try {
       // Create quote
-      const quote = await apiClient.post('/quotes', {
+      const quote = await apiClient.post<{ id: string }>('/quotes', {
         currency: 'MXN',
         objective: {
           cost: 0.5,

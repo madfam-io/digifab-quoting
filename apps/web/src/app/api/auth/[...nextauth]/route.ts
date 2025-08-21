@@ -1,10 +1,10 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { LoginRequest, AuthTokens } from '@madfam/shared';
+import { AuthTokens } from '@madfam/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -31,7 +31,14 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          const data: AuthTokens & { user: any } = await response.json();
+          const data: AuthTokens & { user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            role: string;
+            tenantId: string;
+          } } = await response.json();
 
           return {
             id: data.user.id,

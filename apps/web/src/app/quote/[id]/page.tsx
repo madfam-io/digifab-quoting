@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, FileText, Download, CreditCard } from 'lucide-react';
+import { Loader2, Download, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/components/ui/use-toast';
@@ -122,11 +122,17 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
 
   const statusColors: Record<QuoteStatus, string> = {
     draft: 'secondary',
-    calculated: 'default',
-    sent: 'default',
-    approved: 'success',
-    rejected: 'destructive',
-    expired: 'secondary',
+    submitted: 'default',
+    auto_quoted: 'default',
+    needs_review: 'secondary',
+    quoted: 'default',
+    approved: 'default',
+    ordered: 'default',
+    in_production: 'default',
+    qc: 'default',
+    shipped: 'default',
+    closed: 'secondary',
+    cancelled: 'destructive',
   };
 
   return (
@@ -139,7 +145,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
               Created on {new Date(quote.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <Badge variant={statusColors[quote.status] as any}>
+          <Badge variant={statusColors[quote.status] as 'default' | 'secondary' | 'destructive' | 'outline'}>
             {quote.status.toUpperCase()}
           </Badge>
         </div>
@@ -206,7 +212,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                   Valid until: {new Date(quote.validUntil).toLocaleDateString()}
                 </div>
 
-                {quote.status === 'calculated' && (
+                {quote.status === 'quoted' && (
                   <Button
                     onClick={handleApprove}
                     disabled={approving}

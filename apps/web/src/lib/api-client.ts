@@ -3,7 +3,7 @@ import { getSession } from 'next-auth/react';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: any) {
+  constructor(public status: number, message: string, public data?: unknown) {
     super(message);
     this.name = 'ApiError';
   }
@@ -45,7 +45,7 @@ export const apiClient = {
     return handleResponse<T>(response);
   },
 
-  async post<T>(path: string, data?: any): Promise<T> {
+  async post<T>(path: string, data?: unknown): Promise<T> {
     const headers = await getHeaders();
     const response = await fetch(`${API_URL}/api/v1${path}`, {
       method: 'POST',
@@ -55,7 +55,7 @@ export const apiClient = {
     return handleResponse<T>(response);
   },
 
-  async patch<T>(path: string, data: any): Promise<T> {
+  async patch<T>(path: string, data: unknown): Promise<T> {
     const headers = await getHeaders();
     const response = await fetch(`${API_URL}/api/v1${path}`, {
       method: 'PATCH',
