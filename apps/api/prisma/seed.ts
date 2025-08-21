@@ -9,6 +9,7 @@ async function main() {
     where: { domain: 'default' },
     update: {},
     create: {
+      code: 'DEFAULT',
       name: 'Default Tenant',
       domain: 'default',
       settings: {
@@ -83,44 +84,41 @@ async function main() {
   // Create materials
   const materials = [
     // FFF Materials
-    { name: 'PLA Standard', type: 'plastic', processTypes: ['FFF'], costPerUnit: 25, color: 'white' },
-    { name: 'ABS', type: 'plastic', processTypes: ['FFF'], costPerUnit: 30, color: 'white' },
-    { name: 'PETG', type: 'plastic', processTypes: ['FFF'], costPerUnit: 35, color: 'clear' },
-    { name: 'TPU 95A', type: 'plastic', processTypes: ['FFF'], costPerUnit: 45, color: 'black' },
-    { name: 'Nylon', type: 'plastic', processTypes: ['FFF'], costPerUnit: 50, color: 'white' },
+    { code: 'PLA-STD', name: 'PLA Standard', process: 'FFF', density: 1.24, costPerUnit: 25, color: 'white' },
+    { code: 'ABS-STD', name: 'ABS', process: 'FFF', density: 1.04, costPerUnit: 30, color: 'white' },
+    { code: 'PETG-STD', name: 'PETG', process: 'FFF', density: 1.27, costPerUnit: 35, color: 'clear' },
+    { code: 'TPU-95A', name: 'TPU 95A', process: 'FFF', density: 1.21, costPerUnit: 45, color: 'black' },
+    { code: 'NYLON-STD', name: 'Nylon', process: 'FFF', density: 1.14, costPerUnit: 50, color: 'white' },
     
     // SLA Materials
-    { name: 'Standard Resin', type: 'resin', processTypes: ['SLA'], costPerUnit: 80, color: 'grey' },
-    { name: 'Tough Resin', type: 'resin', processTypes: ['SLA'], costPerUnit: 120, color: 'grey' },
-    { name: 'Flexible Resin', type: 'resin', processTypes: ['SLA'], costPerUnit: 150, color: 'black' },
+    { code: 'RESIN-STD', name: 'Standard Resin', process: 'SLA', density: 1.18, costPerUnit: 80, color: 'grey' },
+    { code: 'RESIN-TOUGH', name: 'Tough Resin', process: 'SLA', density: 1.20, costPerUnit: 120, color: 'grey' },
+    { code: 'RESIN-FLEX', name: 'Flexible Resin', process: 'SLA', density: 1.15, costPerUnit: 150, color: 'black' },
     
     // CNC Materials
-    { name: 'Aluminum 6061', type: 'metal', processTypes: ['CNC_3AXIS'], costPerUnit: 50, color: 'silver' },
-    { name: 'Steel 1018', type: 'metal', processTypes: ['CNC_3AXIS'], costPerUnit: 40, color: 'silver' },
-    { name: 'Stainless Steel 304', type: 'metal', processTypes: ['CNC_3AXIS'], costPerUnit: 60, color: 'silver' },
-    { name: 'Delrin (POM)', type: 'plastic', processTypes: ['CNC_3AXIS'], costPerUnit: 35, color: 'white' },
-    { name: 'Nylon 6', type: 'plastic', processTypes: ['CNC_3AXIS'], costPerUnit: 30, color: 'white' },
+    { code: 'AL-6061', name: 'Aluminum 6061', process: 'CNC_3AXIS', density: 2.70, costPerUnit: 50, color: 'silver' },
+    { code: 'STEEL-1018', name: 'Steel 1018', process: 'CNC_3AXIS', density: 7.87, costPerUnit: 40, color: 'silver' },
+    { code: 'SS-304', name: 'Stainless Steel 304', process: 'CNC_3AXIS', density: 8.00, costPerUnit: 60, color: 'silver' },
+    { code: 'POM-STD', name: 'Delrin (POM)', process: 'CNC_3AXIS', density: 1.41, costPerUnit: 35, color: 'white' },
+    { code: 'NYLON-6', name: 'Nylon 6', process: 'CNC_3AXIS', density: 1.14, costPerUnit: 30, color: 'white' },
     
     // Laser Materials
-    { name: 'Acrylic 3mm', type: 'plastic', processTypes: ['LASER_2D'], costPerUnit: 15, color: 'clear' },
-    { name: 'Plywood 3mm', type: 'wood', processTypes: ['LASER_2D'], costPerUnit: 10, color: 'natural' },
-    { name: 'MDF 3mm', type: 'wood', processTypes: ['LASER_2D'], costPerUnit: 8, color: 'natural' },
+    { code: 'ACRYLIC-3MM', name: 'Acrylic 3mm', process: 'LASER_2D', density: 1.19, costPerUnit: 15, color: 'clear' },
+    { code: 'PLYWOOD-3MM', name: 'Plywood 3mm', process: 'LASER_2D', density: 0.60, costPerUnit: 10, color: 'natural' },
+    { code: 'MDF-3MM', name: 'MDF 3mm', process: 'LASER_2D', density: 0.75, costPerUnit: 8, color: 'natural' },
   ];
 
   for (const material of materials) {
-    await prisma.material.upsert({
-      where: { 
-        tenantId_name: {
-          tenantId: tenant.id,
-          name: material.name,
-        },
-      },
-      update: {},
-      create: {
-        ...material,
+    const { color, ...materialData } = material;
+    await prisma.material.create({
+      data: {
+        ...materialData,
         tenantId: tenant.id,
+        co2eFactor: 2.5, // Default value
+        costUom: 'kg',
+        pricePerUom: material.costPerUnit,
         properties: {
-          color: material.color,
+          color: color,
         },
       },
     });
@@ -131,33 +129,32 @@ async function main() {
   // Create machines
   const machines = [
     // FFF Machines
-    { name: 'Prusa MK3S+', processType: 'FFF', buildVolume: { x: 250, y: 210, z: 210 }, hourlyRate: 500 },
-    { name: 'Ultimaker S5', processType: 'FFF', buildVolume: { x: 330, y: 240, z: 300 }, hourlyRate: 600 },
+    { name: 'Prusa MK3S+', model: 'MK3S+', process: 'FFF', buildVolume: { x: 250, y: 210, z: 210 }, hourlyRate: 500 },
+    { name: 'Ultimaker S5', model: 'S5', process: 'FFF', buildVolume: { x: 330, y: 240, z: 300 }, hourlyRate: 600 },
     
     // SLA Machines
-    { name: 'Form 3', processType: 'SLA', buildVolume: { x: 145, y: 145, z: 185 }, hourlyRate: 800 },
+    { name: 'Form 3', model: 'Form 3', process: 'SLA', buildVolume: { x: 145, y: 145, z: 185 }, hourlyRate: 800 },
     
     // CNC Machines
-    { name: 'Haas VF-2', processType: 'CNC_3AXIS', buildVolume: { x: 762, y: 406, z: 508 }, hourlyRate: 1500 },
-    { name: 'Tormach 1100M', processType: 'CNC_3AXIS', buildVolume: { x: 457, y: 254, z: 406 }, hourlyRate: 1200 },
+    { name: 'Haas VF-2', model: 'VF-2', process: 'CNC_3AXIS', buildVolume: { x: 762, y: 406, z: 508 }, hourlyRate: 1500 },
+    { name: 'Tormach 1100M', model: '1100M', process: 'CNC_3AXIS', buildVolume: { x: 457, y: 254, z: 406 }, hourlyRate: 1200 },
     
     // Laser Machines
-    { name: 'Epilog Fusion Pro 48', processType: 'LASER_2D', buildVolume: { x: 1219, y: 914, z: 311 }, hourlyRate: 1000 },
+    { name: 'Epilog Fusion Pro 48', model: 'Fusion Pro 48', process: 'LASER_2D', buildVolume: { x: 1219, y: 914, z: 311 }, hourlyRate: 1000 },
   ];
 
   for (const machine of machines) {
-    await prisma.machine.upsert({
-      where: {
-        tenantId_name: {
-          tenantId: tenant.id,
-          name: machine.name,
-        },
-      },
-      update: {},
-      create: {
-        ...machine,
+    const { buildVolume, ...machineData } = machine;
+    await prisma.machine.create({
+      data: {
+        ...machineData,
         tenantId: tenant.id,
-        capabilities: {},
+        powerW: 300, // Default power consumption
+        setupMinutes: 15, // Default setup time
+        specs: {
+          buildVolume: buildVolume,
+          resolution: { x: 0.1, y: 0.1, z: 0.1 },
+        },
       },
     });
   }
@@ -166,36 +163,71 @@ async function main() {
 
   // Create process options
   const processOptions = [
-    // Finishes
-    { process: 'FFF', name: 'Standard', type: 'finish', cost: 0 },
-    { process: 'FFF', name: 'Sanded', type: 'finish', cost: 50 },
-    { process: 'FFF', name: 'Painted', type: 'finish', cost: 100 },
-    { process: 'SLA', name: 'Standard', type: 'finish', cost: 0 },
-    { process: 'SLA', name: 'Clear Coated', type: 'finish', cost: 80 },
-    { process: 'CNC_3AXIS', name: 'As Machined', type: 'finish', cost: 0 },
-    { process: 'CNC_3AXIS', name: 'Anodized', type: 'finish', cost: 150 },
-    { process: 'LASER_2D', name: 'Standard', type: 'finish', cost: 0 },
-    { process: 'LASER_2D', name: 'Engraved', type: 'finish', cost: 50 },
-    
-    // Precision
-    { process: 'FFF', name: 'Standard (±0.3mm)', type: 'precision', cost: 0 },
-    { process: 'FFF', name: 'High (±0.1mm)', type: 'precision', cost: 100 },
-    { process: 'CNC_3AXIS', name: 'Standard (±0.1mm)', type: 'precision', cost: 0 },
-    { process: 'CNC_3AXIS', name: 'High (±0.05mm)', type: 'precision', cost: 200 },
+    { 
+      process: 'FFF', 
+      optionsSchema: {
+        finish: {
+          type: 'select',
+          options: ['standard', 'sanded', 'painted'],
+          default: 'standard',
+          costs: { standard: 0, sanded: 50, painted: 100 }
+        },
+        precision: {
+          type: 'select',
+          options: ['standard', 'high'],
+          default: 'standard',
+          costs: { standard: 0, high: 100 }
+        }
+      },
+      marginFloorPercent: 20
+    },
+    { 
+      process: 'SLA', 
+      optionsSchema: {
+        finish: {
+          type: 'select',
+          options: ['standard', 'clear_coated'],
+          default: 'standard',
+          costs: { standard: 0, clear_coated: 80 }
+        }
+      },
+      marginFloorPercent: 25
+    },
+    { 
+      process: 'CNC_3AXIS', 
+      optionsSchema: {
+        finish: {
+          type: 'select',
+          options: ['as_machined', 'anodized'],
+          default: 'as_machined',
+          costs: { as_machined: 0, anodized: 150 }
+        },
+        precision: {
+          type: 'select',
+          options: ['standard', 'high'],
+          default: 'standard',
+          costs: { standard: 0, high: 200 }
+        }
+      },
+      marginFloorPercent: 30
+    },
+    { 
+      process: 'LASER_2D', 
+      optionsSchema: {
+        finish: {
+          type: 'select',
+          options: ['standard', 'engraved'],
+          default: 'standard',
+          costs: { standard: 0, engraved: 50 }
+        }
+      },
+      marginFloorPercent: 15
+    },
   ];
 
   for (const option of processOptions) {
-    await prisma.processOption.upsert({
-      where: {
-        tenantId_process_name_type: {
-          tenantId: tenant.id,
-          process: option.process,
-          name: option.name,
-          type: option.type,
-        },
-      },
-      update: {},
-      create: {
+    await prisma.processOption.create({
+      data: {
         ...option,
         tenantId: tenant.id,
       },
@@ -207,51 +239,58 @@ async function main() {
   // Create pricing rules
   const pricingRules = [
     {
-      tenantId: tenant.id,
       name: 'FFF Base Pricing',
-      processType: 'FFF',
+      process: 'FFF',
       formula: 'material_volume * material_cost + print_time * machine_rate',
       parameters: {
         setup_cost: 50,
         min_price: 100,
+        markup: 1.35,
       },
+      priority: 1,
     },
     {
-      tenantId: tenant.id,
       name: 'SLA Base Pricing',
-      processType: 'SLA',
+      process: 'SLA',
       formula: 'material_volume * material_cost * 1.2 + print_time * machine_rate',
       parameters: {
         setup_cost: 100,
         min_price: 200,
+        markup: 1.4,
       },
+      priority: 1,
     },
     {
-      tenantId: tenant.id,
       name: 'CNC Base Pricing',
-      processType: 'CNC_3AXIS',
+      process: 'CNC_3AXIS',
       formula: '(material_volume * material_cost + machine_time * machine_rate) * complexity_factor',
       parameters: {
         setup_cost: 200,
         min_price: 500,
         complexity_factor: 1.5,
+        markup: 1.5,
       },
+      priority: 1,
     },
     {
-      tenantId: tenant.id,
       name: 'Laser Base Pricing',
-      processType: 'LASER_2D',
+      process: 'LASER_2D',
       formula: 'material_area * material_cost + cut_time * machine_rate',
       parameters: {
         setup_cost: 30,
         min_price: 50,
+        markup: 1.25,
       },
+      priority: 1,
     },
   ];
 
   for (const rule of pricingRules) {
     await prisma.pricingRule.create({
-      data: rule,
+      data: {
+        ...rule,
+        tenantId: tenant.id,
+      },
     });
   }
 
@@ -259,14 +298,35 @@ async function main() {
 
   // Create margins
   const margins = [
-    { tenantId: tenant.id, name: 'Standard Margin', percentage: 35, isDefault: true },
-    { tenantId: tenant.id, name: 'Rush Order', percentage: 50, isDefault: false },
-    { tenantId: tenant.id, name: 'Volume Discount', percentage: 25, isDefault: false },
+    { 
+      type: 'default', 
+      marginPercent: 35, 
+      floorPercent: 20,
+      targetPercent: 40,
+      maxDiscountPercent: 15
+    },
+    { 
+      type: 'rush', 
+      marginPercent: 50, 
+      floorPercent: 35,
+      targetPercent: 55,
+      maxDiscountPercent: 10
+    },
+    { 
+      type: 'volume', 
+      marginPercent: 25, 
+      floorPercent: 15,
+      targetPercent: 30,
+      maxDiscountPercent: 20
+    },
   ];
 
   for (const margin of margins) {
     await prisma.margin.create({
-      data: margin,
+      data: {
+        ...margin,
+        tenantId: tenant.id,
+      },
     });
   }
 

@@ -354,10 +354,7 @@ export class JobsService implements OnModuleInit {
 
       // Get jobs from different states
       const states: BullJobStatus[] = options?.status
-        ? [this.mapToB
-
-
-Status(options.status)]
+        ? [this.mapToBullStatus(options.status)]
         : ['waiting', 'active', 'completed', 'failed', 'delayed', 'paused'];
 
       for (const state of states) {
