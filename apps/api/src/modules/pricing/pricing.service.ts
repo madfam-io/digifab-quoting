@@ -36,9 +36,9 @@ export class PricingService {
 
     // Basic calculation
     const volumeCm3 = geometryMetrics.volumeCm3 || 1;
-    const materialCost = new Decimal(volumeCm3).mul(material.density).mul(material.pricePerUom);
+    const materialCost = new Decimal(volumeCm3).mul(material.costPerUnit || 1).div(1000); // Convert to cost per cm³
     const machineHours = volumeCm3 / 60; // Simplified: 60 cm³/hour
-    const machineCost = new Decimal(machineHours).mul(machine.hourlyRate);
+    const machineCost = new Decimal(machineHours).mul(machine.hourlyRate || 500);
     
     const unitPrice = materialCost.plus(machineCost).mul(1.5); // 50% markup
     const totalPrice = unitPrice.mul(quantity);
@@ -64,11 +64,12 @@ export class PricingService {
   async getMaterials(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
-      active: true,
     };
 
     if (process) {
-      where.process = process;
+      where.processTypes = {
+        has: process,
+      };
     }
 
     return this.prisma.material.findMany({
@@ -80,11 +81,10 @@ export class PricingService {
   async getMachines(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
-      active: true,
     };
 
     if (process) {
-      where.process = process;
+      where.processType = process;
     }
 
     return this.prisma.machine.findMany({
@@ -96,7 +96,6 @@ export class PricingService {
   async getProcessOptions(tenantId: string, process?: ProcessType) {
     const where: any = {
       tenantId,
-      active: true,
     };
 
     if (process) {
@@ -105,6 +104,10 @@ export class PricingService {
 
     return this.prisma.processOption.findMany({
       where,
+      orderBy: [
+        { type: 'asc' },
+        { name: 'asc' },
+      ],
     });
   }
 }

@@ -2,16 +2,31 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { FileUpload } from '@/components/upload/FileUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { apiClient } from '@/lib/api-client';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function NewQuotePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const { toast } = useToast();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+
+  // Redirect to login if not authenticated
+  if (status === 'loading') {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!session) {
+    router.push('/auth/login');
+    return null;
+  }
 
   const handleFilesUploaded = async (fileIds: string[]) => {
     setUploadedFiles(fileIds);
@@ -19,34 +34,25 @@ export default function NewQuotePage() {
 
     try {
       // Create quote
-      const quoteResponse = await fetch('/api/quotes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth header
+      const quote = await apiClient.post('/quotes', {
+        currency: 'MXN',
+        objective: {
+          cost: 0.5,
+          lead: 0.3,
+          green: 0.2,
         },
-        body: JSON.stringify({
-          currency: 'MXN',
-          objective: {
-            cost: 0.5,
-            lead: 0.3,
-            green: 0.2,
-          },
-        }),
       });
-
-      if (!quoteResponse.ok) {
-        throw new Error('Failed to create quote');
-      }
-
-      const quote = await quoteResponse.json();
 
       // Navigate to quote configuration
       router.push(`/quote/${quote.id}/configure?files=${fileIds.join(',')}`);
     } catch (error) {
       console.error('Error creating quote:', error);
       setIsCreatingQuote(false);
-      // TODO: Show error toast
+      toast({
+        title: 'Error',
+        description: 'Failed to create quote. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

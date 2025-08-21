@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -6,7 +6,8 @@ import { randomBytes } from 'crypto';
 
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthTokens, JWTPayload, User } from '@madfam/shared';
+import { AuthTokens, JWTPayload, User, UserRole } from '@madfam/shared';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -85,6 +86,74 @@ export class AuthService {
     await this.prisma.session.deleteMany({
       where: { token },
     });
+  }
+
+  async register(registerDto: RegisterDto): Promise<AuthTokens & { user: User }> {
+    // Check if user already exists
+    const existingUser = await this.usersService.findByEmail(registerDto.email);
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    // Validate tenant if provided
+    let tenantId = registerDto.tenantId;
+    if (!tenantId) {
+      // For MVP, use a default tenant or create one
+      const defaultTenant = await this.prisma.tenant.findFirst({
+        where: { domain: 'default' },
+      });
+      
+      if (!defaultTenant) {
+        // Create default tenant for MVP
+        const tenant = await this.prisma.tenant.create({
+          data: {
+            name: registerDto.company,
+            domain: 'default',
+            settings: {},
+          },
+        });
+        tenantId = tenant.id;
+      } else {
+        tenantId = defaultTenant.id;
+      }
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email: registerDto.email,
+        passwordHash,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        phone: registerDto.phone,
+        role: UserRole.CUSTOMER,
+        tenantId,
+        emailVerified: false,
+      },
+    });
+
+    // Create customer record
+    await this.prisma.customer.create({
+      data: {
+        userId: user.id,
+        tenantId,
+        company: registerDto.company,
+        billingAddress: {},
+        shippingAddress: {},
+      },
+    });
+
+    // Generate tokens and login
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    const tokens = await this.login(userWithoutPassword as User);
+
+    return {
+      ...tokens,
+      user: userWithoutPassword as User,
+    };
   }
 
   private async generateTokens(user: User): Promise<AuthTokens> {

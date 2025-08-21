@@ -6,8 +6,9 @@ import { Upload, X, FileIcon, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@madfam/ui';
+import { cn } from '@/lib/utils';
 import { FileType, FILE_SIZE_LIMITS } from '@madfam/shared';
+import { apiClient } from '@/lib/api-client';
 
 interface UploadedFile {
   id: string;
@@ -72,24 +73,17 @@ export function FileUpload({
       updateFileStatus(uploadFile.id, 'uploading', 0);
 
       // Get presigned URL from API
-      const presignResponse = await fetch('/api/files/presign', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth header
-        },
-        body: JSON.stringify({
-          filename: uploadFile.file.name,
-          type: getFileType(uploadFile.file.name),
-          size: uploadFile.file.size,
-        }),
+      const presignData = await apiClient.post<{
+        uploadUrl: string;
+        uploadFields: Record<string, string>;
+        fileId: string;
+      }>('/files/presign', {
+        filename: uploadFile.file.name,
+        type: getFileType(uploadFile.file.name),
+        size: uploadFile.file.size,
       });
 
-      if (!presignResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-
-      const { uploadUrl, uploadFields, fileId } = await presignResponse.json();
+      const { uploadUrl, uploadFields, fileId } = presignData;
 
       // Create form data for S3 upload
       const formData = new FormData();
@@ -122,13 +116,7 @@ export function FileUpload({
       });
 
       // Confirm upload with API
-      await fetch(`/api/files/${fileId}/confirm`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth header
-        },
-      });
+      await apiClient.post(`/files/${fileId}/confirm`);
 
       updateFileStatus(uploadFile.id, 'success', 100, undefined, fileId);
     } catch (error) {
