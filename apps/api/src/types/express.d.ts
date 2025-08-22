@@ -1,9 +1,9 @@
-import { User } from '@madfam/shared';
+import { User as MadfamUser } from '@madfam/shared';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: User;
+      user?: MadfamUser;
     }
   }
 }

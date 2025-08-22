@@ -181,7 +181,7 @@ export class QuotesService {
         name: dto.name || file.originalName,
         processCode: dto.process,
         quantity: dto.quantity,
-        selections: dto.options,
+        selections: dto.options as any,
       },
     });
 
@@ -211,7 +211,7 @@ export class QuotesService {
     if (dto.objective) {
       await this.prisma.quote.update({
         where: { id: quoteId },
-        data: { objective: dto.objective },
+        data: { objective: dto.objective as any },
       });
     }
 
@@ -234,13 +234,17 @@ export class QuotesService {
           quoteItem = await this.addItem(tenantId, quoteId, item);
         }
 
+        if (!quoteItem) {
+          throw new Error(`Quote item not found for id: ${item.id}`);
+        }
+
         // Try to get cached pricing result first
         const cacheKey = {
-          fileHash: quoteItem.files[0]?.hash || '',
-          service: quoteItem.process,
-          material: quoteItem.selections?.material || 'default',
+          fileHash: (quoteItem as any).files?.[0]?.hash || '',
+          service: quoteItem.processCode,
+          material: (quoteItem.selections as any)?.material || 'default',
           quantity: quoteItem.quantity,
-          options: quoteItem.selections,
+          options: quoteItem.selections as Record<string, any> | undefined,
         };
 
         const pricingResult = await this.quoteCacheService.getOrCalculateQuote(
@@ -274,7 +278,7 @@ export class QuotesService {
         );
 
         // Update quote item with results
-        const updatedItem = quoteItem ? await this.prisma.quoteItem.update({
+        const updatedItem = await this.prisma.quoteItem.update({
           where: { id: quoteItem.id },
           data: {
             unitPrice: pricingResult.pricing.unitCost,
@@ -283,15 +287,13 @@ export class QuotesService {
             costBreakdown: {
               machine: pricingResult.manufacturing.machineCost,
               material: pricingResult.manufacturing.materialCost,
-            },
-            sustainability: {},
+            } as any,
+            sustainability: {} as any,
             flags: [],
           },
-        }) : null;
+        });
 
-        if (updatedItem) {
-          calculatedItems.push(updatedItem);
-        }
+        calculatedItems.push(updatedItem);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         errors.push({
@@ -310,7 +312,7 @@ export class QuotesService {
       data: {
         status: errors.length > 0 ? QuoteStatus.NEEDS_REVIEW : QuoteStatus.AUTO_QUOTED,
         totals,
-        sustainability: this.calculateSustainabilitySummary(calculatedItems),
+        sustainability: this.calculateSustainabilitySummary(calculatedItems) as any,
       },
       include: {
         items: {

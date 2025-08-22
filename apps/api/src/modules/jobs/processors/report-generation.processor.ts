@@ -510,9 +510,7 @@ export class ReportGenerationProcessor {
     doc.fontSize(12)
       .text(`Subtotal: ${quote.currency} ${quote.subtotal}`)
       .text(`Tax: ${quote.currency} ${quote.tax}`)
-      .text(`Total: ${quote.currency} ${quote.total}`, { 
-        font: 'Helvetica-Bold' 
-      });
+      .text(`Total: ${quote.currency} ${quote.total}`);
   }
 
   private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: any, options: any): void {
@@ -534,8 +532,11 @@ export class ReportGenerationProcessor {
     doc.moveDown();
 
     // Billing information
-    doc.fontSize(12)
-      .text('Bill To:', { font: 'Helvetica-Bold' })
+    // Set font before text
+    doc.font('Helvetica-Bold')
+      .fontSize(12)
+      .text('Bill To:')
+      .font('Helvetica')
       .text(invoice.customer.name)
       .text(invoice.customer.email)
       .text(invoice.customer.address || '')
@@ -551,10 +552,11 @@ export class ReportGenerationProcessor {
 
     // Total
     doc.fontSize(14)
+      .font('Helvetica-Bold')
       .text(`Total Due: ${invoice.currency} ${invoice.total}`, {
-        align: 'right',
-        font: 'Helvetica-Bold',
-      });
+        align: 'right'
+      })
+      .font('Helvetica');
   }
 
   private addAnalyticsContent(doc: InstanceType<typeof PDFDocument>, data: any, _options: any): void {

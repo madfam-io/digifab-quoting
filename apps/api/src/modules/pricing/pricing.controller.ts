@@ -5,12 +5,12 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse, ApiUnauthorizedResponse, ApiHeader } from '@nestjs/swagger';
 import { PricingService } from './pricing.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProcessType } from '@madfam/shared';
 import { UnauthorizedResponseDto } from '../../common/dto/api-response.dto';
+import { AuthenticatedRequest } from '../../types/auth-request';
 
 @ApiTags('pricing')
 @Controller('pricing')
@@ -81,10 +81,10 @@ export class PricingController {
     }
   })
   getMaterials(
-    @Request() req: ExpressRequest,
+    @Request() req: AuthenticatedRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getMaterials(req.user!.tenantId, process);
+    return this.pricingService.getMaterials(req.user.tenantId, process);
   }
 
   @Get('machines')
@@ -147,10 +147,10 @@ export class PricingController {
     }
   })
   getMachines(
-    @Request() req: ExpressRequest,
+    @Request() req: AuthenticatedRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getMachines(req.user!.tenantId, process);
+    return this.pricingService.getMachines(req.user.tenantId, process);
   }
 
   @Get('process-options')
@@ -249,9 +249,9 @@ export class PricingController {
     }
   })
   getProcessOptions(
-    @Request() req: ExpressRequest,
+    @Request() req: AuthenticatedRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getProcessOptions(req.user!.tenantId, process);
+    return this.pricingService.getProcessOptions(req.user.tenantId, process);
   }
 }
