@@ -119,7 +119,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async enableShutdownHooks(app: INestApplication) {
-    this.$on('beforeExit' as never, async () => {
+    // Prisma 5.0+ no longer supports beforeExit hook for library engine
+    // Instead, we handle shutdown directly with NestJS lifecycle hooks
+    process.on('beforeExit', async () => {
       await app.close();
     });
   }
