@@ -30,7 +30,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const context = this.tenantContext.getContext();
+    
+    // Try to get context, but don't fail if it's not available
+    let context: any;
+    try {
+      context = this.tenantContext.getContext();
+    } catch (error) {
+      // No context available, that's ok for some endpoints
+      context = null;
+    }
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';

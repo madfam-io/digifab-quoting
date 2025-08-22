@@ -33,7 +33,7 @@ export class TenantContextService {
    */
   getCurrentTenantId(): string {
     const context = this.getContext();
-    if (!context?.tenantId) {
+    if (!context?.tenantId || context.tenantId === '') {
       throw new Error('No tenant context available');
     }
     return context.tenantId;

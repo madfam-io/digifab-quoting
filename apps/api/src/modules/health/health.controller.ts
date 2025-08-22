@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RedisService } from '../redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('health')
 @Controller('health')
@@ -11,6 +12,7 @@ export class HealthController {
     private readonly prismaService: PrismaService,
   ) {}
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Health check' })
   check() {
     return {
@@ -21,6 +23,7 @@ export class HealthController {
   }
 
   @Get('ready')
+  @Public()
   @ApiOperation({ summary: 'Readiness check' })
   async ready() {
     const checks = {
@@ -53,6 +56,7 @@ export class HealthController {
   }
 
   @Get('detailed')
+  @Public()
   @ApiOperation({ summary: 'Detailed health check with cache statistics' })
   async detailed() {
     const redisStats = this.redisService.getStatistics();

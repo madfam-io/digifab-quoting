@@ -20,7 +20,15 @@ export class LoggingInterceptor implements NestInterceptor {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
-    const tenantContext = this.tenantContext.getContext();
+    
+    // Try to get context, but don't fail if it's not available
+    let tenantContext: any;
+    try {
+      tenantContext = this.tenantContext.getContext();
+    } catch (error) {
+      // No context available
+      tenantContext = null;
+    }
 
     const { method, url, body, query, params } = request;
     const userAgent = request.get('user-agent') || '';

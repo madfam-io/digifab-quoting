@@ -12,6 +12,7 @@ export class TenantContextMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
+    console.log('[TenantMiddleware] Processing:', req.method, req.path);
     try {
       // Generate request ID
       const requestId = req.headers['x-request-id'] as string || randomUUID();
@@ -66,6 +67,16 @@ export class TenantContextMiddleware implements NestMiddleware {
       // For public endpoints (health, login), we don't require tenant
       const isPublicEndpoint = this.isPublicEndpoint(req.path);
       
+      // Temporary logging
+      if (req.path.includes('health')) {
+        console.log('[DEBUG] Health endpoint check:', {
+          path: req.path,
+          isPublicEndpoint,
+          tenantId,
+          headers: req.headers
+        });
+      }
+      
       if (!tenantId && !isPublicEndpoint) {
         // For MVP, use default tenant if none specified
         const defaultTenant = await this.prisma.tenant.findFirst({
@@ -76,13 +87,14 @@ export class TenantContextMiddleware implements NestMiddleware {
           tenantId = defaultTenant.id;
           tenantCode = defaultTenant.code;
         } else {
+          console.log('[TenantMiddleware] No default tenant found, throwing error');
           throw new UnauthorizedException('Tenant context required');
         }
       }
 
-      // Create the context
+      // Create the context (even if tenantId is null for public endpoints)
       const context = {
-        tenantId: tenantId!,
+        tenantId: tenantId || '',
         tenantCode,
         domain,
         userId: user?.id,
@@ -93,10 +105,11 @@ export class TenantContextMiddleware implements NestMiddleware {
       // Attach context to request for decorators
       (req as any).tenantContext = context;
 
+      // Add request ID to response headers
+      res.setHeader('X-Request-Id', requestId);
+      
       // Run the request in tenant context
       this.tenantContext.run(context, () => {
-        // Add request ID to response headers
-        res.setHeader('X-Request-Id', requestId);
         next();
       });
     } catch (error) {
@@ -107,13 +120,12 @@ export class TenantContextMiddleware implements NestMiddleware {
   private isPublicEndpoint(path: string): boolean {
     const publicPaths = [
       '/health',
-      '/api/health',
-      '/api/v1/health',
-      '/api/v1/auth/login',
-      '/api/v1/auth/register',
-      '/api/v1/auth/refresh',
+      '/auth/login',
+      '/auth/register', 
+      '/auth/refresh',
     ];
     
-    return publicPaths.some(p => path.startsWith(p));
+    // Check if the path contains any of the public paths
+    return publicPaths.some(p => path.includes(p));
   }
 }

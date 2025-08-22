@@ -38,8 +38,17 @@ export class CacheService {
     const data = await options.fetchFn();
     
     // Store in cache
+    let tenantId: string | undefined;
+    if (options.tenantSpecific) {
+      try {
+        tenantId = this.tenantContext.getTenantId();
+      } catch (error) {
+        // No tenant context available
+      }
+    }
+    
     const metadata = {
-      tenantId: options.tenantSpecific ? this.tenantContext.getTenantId() : undefined,
+      tenantId,
       version: options.version,
     };
     
@@ -222,9 +231,14 @@ export class CacheService {
    */
   private buildKey(key: string, tenantSpecific = false): string {
     if (tenantSpecific) {
-      const tenantId = this.tenantContext.getTenantId();
-      if (tenantId) {
-        return `tenant:${tenantId}:${key}`;
+      try {
+        const tenantId = this.tenantContext.getTenantId();
+        if (tenantId) {
+          return `tenant:${tenantId}:${key}`;
+        }
+      } catch (error) {
+        // No tenant context available, use key without tenant prefix
+        this.logger.debug('No tenant context available for key building');
       }
     }
     return key;
