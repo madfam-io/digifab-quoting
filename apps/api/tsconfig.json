@@ -21,6 +21,14 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["src/*"]
-    }
-  }
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"]
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/examples/**"
+  ]
 }

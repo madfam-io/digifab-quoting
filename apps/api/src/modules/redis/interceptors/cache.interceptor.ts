@@ -34,7 +34,7 @@ export class CacheInterceptor implements NestInterceptor {
     const cacheKey = this.generateCacheKey(context, options);
 
     // Try to get from cache
-    const cached = await this.cacheService.redisService.get(cacheKey);
+    const cached = await this.cacheService.get(cacheKey);
     if (cached !== null) {
       return of(cached);
     }
@@ -43,7 +43,7 @@ export class CacheInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(async (data) => {
         if (data !== null && data !== undefined) {
-          await this.cacheService.redisService.set(
+          await this.cacheService.set(
             cacheKey,
             data,
             options.ttl,

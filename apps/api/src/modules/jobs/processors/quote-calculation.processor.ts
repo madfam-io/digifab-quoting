@@ -9,7 +9,6 @@ import {
 } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { QuotesService } from '@/modules/quotes/quotes.service';
 import { PricingService } from '@/modules/pricing/pricing.service';
 import { Decimal } from 'decimal.js';
 import { getErrorMessage, toError } from '@/common/utils/error-handling';
@@ -53,7 +52,6 @@ export class QuoteCalculationProcessor {
   constructor(
     private readonly logger: LoggerService,
     private readonly prisma: PrismaService,
-    private readonly quotesService: QuotesService,
     private readonly pricingService: PricingService,
   ) {}
 
@@ -70,7 +68,7 @@ export class QuoteCalculationProcessor {
       });
 
       // Check if job was cancelled
-      if (job.data['cancelled']) {
+      if ((job.data as any)['cancelled']) {
         throw new Error('Job was cancelled');
       }
 
@@ -98,7 +96,7 @@ export class QuoteCalculationProcessor {
       const progressPerItem = 50 / items.length;
 
       for (const item of items) {
-        if (job.data['cancelled']) {
+        if ((job.data as any)['cancelled']) {
           throw new Error('Job was cancelled');
         }
 
@@ -123,7 +121,7 @@ export class QuoteCalculationProcessor {
       // Calculate quote summary
       const summary = await this.calculateQuoteSummary(
         calculatedItems,
-        rushOrder,
+        rushOrder || false,
         currency,
         pricingConfig,
       );
@@ -271,7 +269,7 @@ export class QuoteCalculationProcessor {
     const unanalyzedFiles = files.filter(f => !f.fileAnalysis);
     if (unanalyzedFiles.length > 0) {
       throw new Error(
-        `Files not analyzed: ${unanalyzedFiles.map(f => f.fileName).join(', ')}`,
+        `Files not analyzed: ${unanalyzedFiles.map(f => f.filename).join(', ')}`,
       );
     }
   }
@@ -313,7 +311,7 @@ export class QuoteCalculationProcessor {
     }
 
     // Calculate base costs
-    const volume = fileAnalysis.volume || 0;
+    const volume = fileAnalysis.volume ? new Decimal(fileAnalysis.volume.toString()).toNumber() : 0;
     const materialCost = new Decimal(volume)
       .mul(material.density?.toString() || '1')
       .mul(material.costPerKg?.toString() || '0')

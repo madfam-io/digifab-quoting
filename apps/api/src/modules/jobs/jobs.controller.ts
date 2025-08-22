@@ -27,6 +27,7 @@ import { Tenant } from '@/modules/tenant/decorators/tenant.decorator';
 import { 
   JobType, 
   JobStatus,
+  JobData,
   QueueMetrics,
 } from './interfaces/job.interface';
 import { 
@@ -191,8 +192,8 @@ export class JobsController {
   @ApiOperation({ summary: 'Get jobs by tenant' })
   @ApiQuery({ name: 'type', enum: JobType, required: false })
   @ApiQuery({ name: 'status', enum: JobStatus, required: false })
-  @ApiQuery({ name: 'limit', type: Number, required: false, default: 100 })
-  @ApiQuery({ name: 'offset', type: Number, required: false, default: 0 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 100 })
+  @ApiQuery({ name: 'offset', type: Number, required: false, example: 0 })
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Jobs retrieved',

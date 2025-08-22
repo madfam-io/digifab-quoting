@@ -64,8 +64,8 @@ export class QuotesController {
   })
   create(@Request() req: ExpressRequest, @Body() createQuoteDto: CreateQuoteDto) {
     return this.quotesService.create(
-      req.user.tenantId,
-      req.user.id,
+      req.user!.tenantId,
+      req.user!.id,
       createQuoteDto,
     );
   }
@@ -125,7 +125,7 @@ export class QuotesController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    return this.quotesService.findAll(req.user.tenantId, {
+    return this.quotesService.findAll(req.user!.tenantId, {
       status,
       customerId,
       page: page ? parseInt(page) : undefined,
@@ -153,7 +153,7 @@ export class QuotesController {
     type: NotFoundResponseDto 
   })
   findOne(@Request() req: ExpressRequest, @Param('id') id: string) {
-    return this.quotesService.findOne(req.user.tenantId, id);
+    return this.quotesService.findOne(req.user!.tenantId, id);
   }
 
   @Patch(':id')
@@ -163,7 +163,7 @@ export class QuotesController {
     @Param('id') id: string,
     @Body() updateQuoteDto: UpdateQuoteDto,
   ) {
-    return this.quotesService.update(req.user.tenantId, id, updateQuoteDto);
+    return this.quotesService.update(req.user!.tenantId, id, updateQuoteDto);
   }
 
   @Post(':id/items')
@@ -196,7 +196,7 @@ export class QuotesController {
     @Body() addQuoteItemDto: AddQuoteItemDto,
   ) {
     return this.quotesService.addItem(
-      req.user.tenantId,
+      req.user!.tenantId,
       quoteId,
       addQuoteItemDto,
     );
@@ -238,7 +238,7 @@ export class QuotesController {
     @Body() calculateQuoteDto: CalculateQuoteDto,
   ) {
     return this.quotesService.calculate(
-      req.user.tenantId,
+      req.user!.tenantId,
       id,
       calculateQuoteDto,
     );
@@ -275,14 +275,14 @@ export class QuotesController {
     type: ValidationErrorResponseDto 
   })
   approve(@Request() req: ExpressRequest, @Param('id') id: string) {
-    return this.quotesService.approve(req.user.tenantId, id, req.user.id);
+    return this.quotesService.approve(req.user!.tenantId, id, req.user!.id);
   }
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel quote' })
   cancel(@Request() req: ExpressRequest, @Param('id') id: string) {
-    return this.quotesService.cancel(req.user.tenantId, id);
+    return this.quotesService.cancel(req.user!.tenantId, id);
   }
 
   @Get(':id/pdf')

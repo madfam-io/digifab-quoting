@@ -11,7 +11,7 @@ import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { S3 } from 'aws-sdk';
 import { ConfigService } from '@nestjs/config';
-import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import * as ExcelJS from 'exceljs';
 import { createWriteStream } from 'fs';
 import { join } from 'path';
@@ -142,17 +142,16 @@ export class ReportGenerationProcessor {
         duration: Date.now() - startTime,
       };
     } catch (error) {
-      this.logger.error(`Report generation failed`, error, {
-        jobId: job.id,
-        reportType,
-        entityId,
-      });
+      this.logger.error(
+        `Report generation failed - Job: ${job.id}, Type: ${reportType}, Entity: ${entityId}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
 
       return {
         success: false,
         error: {
           code: 'REPORT_GENERATION_FAILED',
-          message: error.message || 'Report generation failed',
+          message: error instanceof Error ? error.message : 'Report generation failed',
           details: error,
         },
         duration: Date.now() - startTime,
@@ -179,11 +178,10 @@ export class ReportGenerationProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<ReportGenerationJobData>, err: Error) {
-    this.logger.error(`Report generation job ${job.id} failed`, err, {
-      reportType: job.data.reportType,
-      entityId: job.data.entityId,
-      attempts: job.attemptsMade,
-    });
+    this.logger.error(
+      `Report generation job ${job.id} failed - Type: ${job.data.reportType}, Entity: ${job.data.entityId}, Attempts: ${job.attemptsMade}`,
+      err
+    );
   }
 
   private async updateProgress(
@@ -246,7 +244,6 @@ export class ReportGenerationProcessor {
               },
             },
             customer: true,
-            tenant: true,
           },
         });
 
@@ -264,7 +261,6 @@ export class ReportGenerationProcessor {
               },
             },
             customer: true,
-            tenant: true,
           },
         });
 
@@ -473,7 +469,7 @@ export class ReportGenerationProcessor {
     return titles[language || 'en'][reportType];
   }
 
-  private addQuoteContent(doc: PDFDocument, quote: any, options: any): void {
+  private addQuoteContent(doc: InstanceType<typeof PDFDocument>, quote: any, options: any): void {
     // Customer information
     doc.fontSize(14).text('Customer Information', { underline: true });
     doc.fontSize(12)
@@ -519,7 +515,7 @@ export class ReportGenerationProcessor {
       });
   }
 
-  private addOrderContent(doc: PDFDocument, order: any, options: any): void {
+  private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: any, options: any): void {
     // Similar to quote but with order-specific fields
     this.addQuoteContent(doc, order.quote, options);
     
@@ -532,7 +528,7 @@ export class ReportGenerationProcessor {
       .text(`Delivery Status: ${order.status}`);
   }
 
-  private addInvoiceContent(doc: PDFDocument, invoice: any, _options: any): void {
+  private addInvoiceContent(doc: InstanceType<typeof PDFDocument>, invoice: any, _options: any): void {
     // Invoice header
     doc.fontSize(16).text(`INVOICE #${invoice.number}`, { align: 'right' });
     doc.moveDown();
@@ -561,7 +557,7 @@ export class ReportGenerationProcessor {
       });
   }
 
-  private addAnalyticsContent(doc: PDFDocument, data: any, _options: any): void {
+  private addAnalyticsContent(doc: InstanceType<typeof PDFDocument>, data: any, _options: any): void {
     doc.fontSize(14).text('Report Period', { underline: true })
       .fontSize(12)
       .text(`From: ${new Date(data.criteria.startDate).toLocaleDateString()}`)

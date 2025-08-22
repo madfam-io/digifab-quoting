@@ -51,7 +51,7 @@ export class TenantContextMiddleware implements NestMiddleware {
             OR: [
               tenantCode ? { code: tenantCode } : null,
               domain ? { domain: domain } : null,
-            ].filter(Boolean),
+            ].filter(Boolean) as any[],
             active: true,
           },
         });

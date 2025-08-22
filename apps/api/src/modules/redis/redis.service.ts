@@ -11,7 +11,7 @@ import {
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis | null = null;
-  private readonly defaultTTL = 3600; // 1 hour default
+  // private readonly defaultTTL = 3600; // 1 hour default - unused for now
   private statistics: CacheStatistics = {
     hits: 0,
     misses: 0,
@@ -55,7 +55,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.client.connect();
     } catch (error) {
-      this.logger.error('Failed to connect to Redis', error);
+      this.logger.error('Failed to connect to Redis', error instanceof Error ? error : new Error(String(error)));
       // Continue without Redis - graceful degradation
     }
   }
@@ -113,7 +113,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.updateHitRate();
       return entry.data;
     } catch (error) {
-      this.logger.error(`Error getting cache key ${key}`, error);
+      this.logger.error(`Error getting cache key ${key}`, error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
       return null;
     }
@@ -152,7 +152,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.statistics.sets++;
       return true;
     } catch (error) {
-      this.logger.error(`Error setting cache key ${key}`, error);
+      this.logger.error(`Error setting cache key ${key}`, error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
       return false;
     }
@@ -171,7 +171,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.statistics.deletes += result;
       return result;
     } catch (error) {
-      this.logger.error(`Error deleting cache key(s) ${key}`, error);
+      this.logger.error(`Error deleting cache key(s) ${key}`, error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
       return 0;
     }
@@ -190,7 +190,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       
       return await this.delete(keys);
     } catch (error) {
-      this.logger.error(`Error deleting cache pattern ${pattern}`, error);
+      this.logger.error(`Error deleting cache pattern ${pattern}`, error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
       return 0;
     }
@@ -207,7 +207,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       const result = await this.client.exists(key);
       return result === 1;
     } catch (error) {
-      this.logger.error(`Error checking cache key existence ${key}`, error);
+      this.logger.error(`Error checking cache key existence ${key}`, error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }
@@ -222,7 +222,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       return await this.client.ttl(key);
     } catch (error) {
-      this.logger.error(`Error getting TTL for cache key ${key}`, error);
+      this.logger.error(`Error getting TTL for cache key ${key}`, error instanceof Error ? error : new Error(String(error)));
       return -1;
     }
   }
@@ -238,7 +238,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       const result = await this.client.expire(key, ttl);
       return result === 1;
     } catch (error) {
-      this.logger.error(`Error setting expiry for cache key ${key}`, error);
+      this.logger.error(`Error setting expiry for cache key ${key}`, error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }
@@ -254,7 +254,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       await this.client.flushall();
       this.logger.warn('All cache flushed');
     } catch (error) {
-      this.logger.error('Error flushing cache', error);
+      this.logger.error('Error flushing cache', error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
     }
   }
@@ -296,9 +296,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       throw new Error('Redis client not initialized');
     }
     try {
-      return await this.client.call(command, ...args);
+      return await this.client.call(command, ...args) as T;
     } catch (error) {
-      this.logger.error(`Error executing Redis command ${command}`, error);
+      this.logger.error(`Error executing Redis command ${command}`, error instanceof Error ? error : new Error(String(error)));
       this.statistics.errors++;
       throw error;
     }

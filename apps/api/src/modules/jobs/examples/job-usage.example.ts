@@ -15,7 +15,7 @@ export class QuoteControllerExample {
 
   @Post(':quoteId/analyze-files')
   async analyzeQuoteFiles(
-    @Param('quoteId') quoteId: string,
+    @Param('quoteId') _quoteId: string,
     @Body() body: { files: Array<{ fileId: string; fileUrl: string; fileName: string; fileType: string }> },
   ) {
     const jobs = [];

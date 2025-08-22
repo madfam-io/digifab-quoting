@@ -33,7 +33,7 @@ export const Tenant = createParamDecorator(
  * ```
  */
 export const TenantId = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
+  (_data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     return request.tenantContext?.tenantId;
   },

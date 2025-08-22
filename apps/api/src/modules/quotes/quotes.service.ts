@@ -1,8 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { FilesService } from '../files/files.service';
 import { PricingService } from '../pricing/pricing.service';
-import { CacheService } from '../redis/cache.service';
 import { QuoteCacheService } from '../redis/quote-cache.service';
 import { Cacheable, CacheInvalidate } from '../redis/decorators/cache.decorator';
 import { 
@@ -24,9 +22,7 @@ import { Decimal } from 'decimal.js';
 export class QuotesService {
   constructor(
     private prisma: PrismaService,
-    private _filesService: FilesService,
     private pricingService: PricingService,
-    private _cacheService: CacheService,
     private quoteCacheService: QuoteCacheService,
   ) {}
 
@@ -195,7 +191,13 @@ export class QuotesService {
       data: { quoteItemId: quoteItem.id },
     });
 
-    return quoteItem;
+    // Return the item with relations loaded
+    return this.prisma.quoteItem.findUnique({
+      where: { id: quoteItem.id },
+      include: {
+        files: true,
+      },
+    }) as Promise<PrismaQuoteItem>;
   }
 
   async calculate(
@@ -272,7 +274,7 @@ export class QuotesService {
         );
 
         // Update quote item with results
-        const updatedItem = await this.prisma.quoteItem.update({
+        const updatedItem = quoteItem ? await this.prisma.quoteItem.update({
           where: { id: quoteItem.id },
           data: {
             unitPrice: pricingResult.pricing.unitCost,
@@ -285,9 +287,11 @@ export class QuotesService {
             sustainability: {},
             flags: [],
           },
-        });
+        }) : null;
 
-        calculatedItems.push(updatedItem);
+        if (updatedItem) {
+          calculatedItems.push(updatedItem);
+        }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         errors.push({

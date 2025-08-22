@@ -245,7 +245,7 @@ export class FileAnalysisProcessor {
       };
     } catch (error) {
       // If worker service is unavailable, provide basic analysis
-      this.logger.warn('Worker service unavailable, using fallback analysis', error);
+      this.logger.warn(`Worker service unavailable, using fallback analysis: ${error instanceof Error ? error.message : String(error)}`);
       
       return this.performBasicAnalysis(
         job.data.fileId,
@@ -265,9 +265,9 @@ export class FileAnalysisProcessor {
       fileId,
       geometry: {
         // These would be calculated by the worker service
-        volume: null,
-        surfaceArea: null,
-        boundingBox: null,
+        volume: undefined,
+        surfaceArea: undefined,
+        boundingBox: undefined,
         partCount: 1,
       },
       dfmAnalysis: {

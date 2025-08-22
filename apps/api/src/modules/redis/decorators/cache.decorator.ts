@@ -13,11 +13,11 @@ export const CACHE_INVALIDATE_METADATA = 'cache_invalidate_metadata';
  * @param options Cache options
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
-  return <T extends Function>(
+  return (
     target: Object, 
     propertyKey: string | symbol, 
-    descriptor: TypedPropertyDescriptor<T>
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor | void => {
     SetMetadata(CACHE_OPTIONS_METADATA, options || {})(target, propertyKey, descriptor);
     
     const originalMethod = descriptor.value as Function;
@@ -60,11 +60,11 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to invalidate
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
-  return <T extends Function>(
+  return (
     target: Object, 
     propertyKey: string | symbol, 
-    descriptor: TypedPropertyDescriptor<T>
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor | void => {
     SetMetadata(CACHE_INVALIDATE_METADATA, patterns)(target, propertyKey, descriptor);
     
     const originalMethod = descriptor.value as Function;
@@ -92,11 +92,11 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  * @param options Cache options
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
-  return <T extends Function>(
+  return (
     target: Object, 
     propertyKey: string | symbol, 
-    descriptor: TypedPropertyDescriptor<T>
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value as Function;
     
     if (!originalMethod) return descriptor;
@@ -130,11 +130,11 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to evict
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
-  return <T extends Function>(
-    target: Object, 
-    propertyKey: string | symbol, 
-    descriptor: TypedPropertyDescriptor<T>
-  ): TypedPropertyDescriptor<T> | void => {
+  return (
+    _target: Object, 
+    _propertyKey: string | symbol, 
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value as Function;
     
     if (!originalMethod) return descriptor;

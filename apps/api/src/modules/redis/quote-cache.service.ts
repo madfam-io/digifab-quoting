@@ -36,7 +36,7 @@ export interface CachedQuoteResult {
 export class QuoteCacheService {
   private readonly QUOTE_CACHE_TTL = 3600; // 1 hour
   private readonly PRICING_CACHE_TTL = 1800; // 30 minutes
-  private readonly CONFIG_CACHE_TTL = 900; // 15 minutes
+  // private readonly CONFIG_CACHE_TTL = 900; // 15 minutes - unused for now
 
   constructor(
     private readonly cacheService: CacheService,
@@ -132,7 +132,11 @@ export class QuoteCacheService {
     const results = new Map<string, CachedQuoteResult | null>();
     
     // Use pipeline for efficient batch operations
-    const pipeline = this.redisService.getClient().pipeline();
+    const client = this.redisService.getClient();
+    if (!client) {
+      return results;
+    }
+    const pipeline = client.pipeline();
     const cacheKeys = keys.map(key => this.generateQuoteCacheKey(key));
     
     cacheKeys.forEach(key => {
@@ -155,7 +159,7 @@ export class QuoteCacheService {
         }
       });
     } catch (error) {
-      this.logger.error('Error in batch get quotes', error);
+      this.logger.error('Error in batch get quotes', error instanceof Error ? error : new Error(String(error)));
     }
     
     return results;
@@ -187,8 +191,16 @@ export class QuoteCacheService {
     totalPricingConfigs: number;
     averageTTL: number;
   }> {
-    const quoteKeys = await this.redisService.getClient().keys('*:quote:*');
-    const pricingKeys = await this.redisService.getClient().keys('*:pricing:*');
+    const client = this.redisService.getClient();
+    if (!client) {
+      return {
+        totalQuotes: 0,
+        totalPricingConfigs: 0,
+        averageTTL: 0,
+      };
+    }
+    const quoteKeys = await client.keys('*:quote:*');
+    const pricingKeys = await client.keys('*:pricing:*');
     
     let totalTTL = 0;
     let validKeys = 0;

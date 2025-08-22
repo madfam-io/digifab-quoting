@@ -149,6 +149,20 @@ export class CacheService {
   }
 
   /**
+   * Get value from cache
+   */
+  async get<T>(key: string): Promise<T | null> {
+    return await this.redisService.get<T>(key);
+  }
+
+  /**
+   * Set value in cache
+   */
+  async set<T>(key: string, value: T, ttl?: number, metadata?: any): Promise<void> {
+    await this.redisService.set(key, value, ttl, metadata);
+  }
+
+  /**
    * Cache quote calculation result
    */
   async cacheQuoteCalculation(

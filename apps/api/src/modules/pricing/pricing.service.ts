@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
-import { CacheService } from '../redis/cache.service';
 import { Cacheable } from '../redis/decorators/cache.decorator';
 import { ProcessType } from '@madfam/shared';
 import { Decimal } from 'decimal.js';
@@ -10,8 +8,6 @@ import { Decimal } from 'decimal.js';
 export class PricingService {
   constructor(
     private prisma: PrismaService,
-    private _configService: ConfigService,
-    private _cacheService: CacheService,
   ) {}
 
   async calculateQuoteItem(

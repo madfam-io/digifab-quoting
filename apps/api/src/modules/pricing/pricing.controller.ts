@@ -84,7 +84,7 @@ export class PricingController {
     @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getMaterials(req.user.tenantId, process);
+    return this.pricingService.getMaterials(req.user!.tenantId, process);
   }
 
   @Get('machines')
@@ -150,7 +150,7 @@ export class PricingController {
     @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getMachines(req.user.tenantId, process);
+    return this.pricingService.getMachines(req.user!.tenantId, process);
   }
 
   @Get('process-options')
@@ -252,6 +252,6 @@ export class PricingController {
     @Request() req: ExpressRequest,
     @Query('process') process?: ProcessType,
   ) {
-    return this.pricingService.getProcessOptions(req.user.tenantId, process);
+    return this.pricingService.getProcessOptions(req.user!.tenantId, process);
   }
 }
