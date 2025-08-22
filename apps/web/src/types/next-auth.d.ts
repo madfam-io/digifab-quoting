@@ -10,6 +10,7 @@ declare module 'next-auth' {
       tenantId: string;
     } & DefaultSession['user'];
     accessToken: string;
+    error?: string;
   }
 
   interface User {
@@ -32,5 +33,6 @@ declare module 'next-auth/jwt' {
     tenantId: string;
     accessToken: string;
     refreshToken: string;
+    error?: string;
   }
 }

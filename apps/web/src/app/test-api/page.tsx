@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 
 export default function TestApiPage() {
-  const [status, setStatus] = useState<Record<string, any>>({});
+  const [status, setStatus] = useState<Record<string, {
+    status?: number;
+    statusText?: string;
+    ok?: boolean;
+    url: string;
+    error?: string;
+  }>>({});
 
   useEffect(() => {
     const testEndpoints = async () => {
@@ -13,7 +19,13 @@ export default function TestApiPage() {
         { name: 'Direct API Health', url: 'http://localhost:4000/api/v1/health', method: 'GET' },
       ];
 
-      const results: Record<string, any> = {};
+      const results: Record<string, {
+        status?: number;
+        statusText?: string;
+        ok?: boolean;
+        url: string;
+        error?: string;
+      }> = {};
 
       for (const endpoint of endpoints) {
         try {
