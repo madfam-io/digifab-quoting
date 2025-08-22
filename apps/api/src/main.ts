@@ -10,13 +10,18 @@ import { TenantContextService } from './modules/tenant/tenant-context.service';
 import { LoggerService } from './common/logger/logger.service';
 
 async function bootstrap() {
+  // Add console log to debug startup
+  console.log('[API] Starting NestJS application...');
+  
   const app = await NestFactory.create(AppModule, {
-    logger: false, // We'll use our custom logger
+    logger: ['log', 'error', 'warn'], // Enable basic logging during startup
   });
 
   // Get services
   const tenantContext = app.get(TenantContextService);
-  const loggerService = app.get(LoggerService);
+  
+  // LoggerService is transient scoped, so we need to resolve it
+  const loggerService = await app.resolve(LoggerService);
   loggerService.setContext('Main');
 
   // Set custom logger
@@ -101,8 +106,10 @@ async function bootstrap() {
   await prismaService.enableShutdownHooks(app);
 
   const port = process.env.PORT || 4000;
+  console.log(`[API] Starting server on port ${port}...`);
   await app.listen(port);
   
+  console.log(`[API] Server started successfully!`);
   loggerService.log(`API server running on http://localhost:${port}`);
   loggerService.log(`Swagger docs available at http://localhost:${port}/api/docs`);
   loggerService.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
