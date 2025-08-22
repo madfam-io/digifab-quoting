@@ -2,7 +2,7 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthTokens } from '@madfam/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const authOptions: NextAuthOptions = {
   providers: [
@@ -20,7 +20,10 @@ const authOptions: NextAuthOptions = {
         try {
           const response = await fetch(`${API_URL}/api/v1/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Tenant-Code': 'default'
+            },
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,

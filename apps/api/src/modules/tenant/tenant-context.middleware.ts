@@ -12,7 +12,6 @@ export class TenantContextMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    console.log('[TenantMiddleware] Processing:', req.method, req.path);
     try {
       // Generate request ID
       const requestId = req.headers['x-request-id'] as string || randomUUID();
@@ -67,15 +66,6 @@ export class TenantContextMiddleware implements NestMiddleware {
       // For public endpoints (health, login), we don't require tenant
       const isPublicEndpoint = this.isPublicEndpoint(req.path);
       
-      // Temporary logging
-      if (req.path.includes('health')) {
-        console.log('[DEBUG] Health endpoint check:', {
-          path: req.path,
-          isPublicEndpoint,
-          tenantId,
-          headers: req.headers
-        });
-      }
       
       if (!tenantId && !isPublicEndpoint) {
         // For MVP, use default tenant if none specified
@@ -87,7 +77,6 @@ export class TenantContextMiddleware implements NestMiddleware {
           tenantId = defaultTenant.id;
           tenantCode = defaultTenant.code;
         } else {
-          console.log('[TenantMiddleware] No default tenant found, throwing error');
           throw new UnauthorizedException('Tenant context required');
         }
       }

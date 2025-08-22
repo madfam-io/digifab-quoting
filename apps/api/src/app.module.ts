@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 import configuration from './config/configuration';
+import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TenantContextMiddleware } from './modules/tenant/tenant-context.middleware';
@@ -44,6 +45,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
     HealthModule,
     JobsModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,

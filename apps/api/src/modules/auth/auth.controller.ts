@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiConflictResponse, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -8,6 +8,7 @@ import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, RefreshTokenResponseDto } from './dto/refresh-token.dto';
 import { UnauthorizedResponseDto, ValidationErrorResponseDto, ConflictResponseDto } from '../../common/dto/api-response.dto';
 import { User } from '@madfam/shared';
+import { Public } from './decorators/public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -117,5 +118,51 @@ export class AuthController {
   async logout(@Request() req: any) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     await this.authService.logout(token);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('session')
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Get current user session',
+    description: 'Returns the current authenticated user information' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Current user session data'
+  })
+  @ApiUnauthorizedResponse({ 
+    description: 'Invalid or missing authentication token',
+    type: UnauthorizedResponseDto 
+  })
+  async getSession(@Request() req: any) {
+    const user = req.user as User;
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles: user.roles,
+        tenantId: user.tenantId
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Post('_log')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ 
+    summary: 'Log authentication events',
+    description: 'Used by frontend to log authentication-related events for analytics' 
+  })
+  @ApiResponse({ 
+    status: 204, 
+    description: 'Event logged successfully' 
+  })
+  async logEvent(@Body() _eventData: any) {
+    // This is a placeholder for frontend analytics
+    // In production, you might want to send this to your analytics service
+    return;
   }
 }

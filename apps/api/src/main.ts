@@ -47,8 +47,10 @@ async function bootstrap() {
     }),
   );
 
-  // API prefix
-  app.setGlobalPrefix('api/v1');
+  // API prefix with exclusions for root routes
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['/', 'api'],
+  });
 
   // Swagger documentation
   const config = new DocumentBuilder()
@@ -109,7 +111,7 @@ async function bootstrap() {
   console.log(`[API] Starting server on port ${port}...`);
   await app.listen(port);
   
-  console.log(`[API] Server started successfully!`);
+  console.log(`[API] Server started successfully on port ${port}!`);
   loggerService.log(`API server running on http://localhost:${port}`);
   loggerService.log(`Swagger docs available at http://localhost:${port}/api/docs`);
   loggerService.log(`Environment: ${process.env.NODE_ENV || 'development'}`);

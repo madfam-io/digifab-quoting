@@ -16,7 +16,7 @@ import { RequirePermissions, Permission } from '../auth/guards/permissions.guard
 import { ForbiddenResponseDto } from '../../common/dto/api-response.dto';
 
 @ApiTags('audit')
-@Controller('api/v1/audit')
+@Controller('audit')
 @InternalOnly()
 @ApiBearerAuth()
 @ApiHeader({

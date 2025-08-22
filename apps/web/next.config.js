@@ -4,14 +4,14 @@ const { i18n } = require('./next-i18next.config');
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@madfam/shared', '@madfam/ui'],
-  i18n,
+  // i18n, // Disabled for now as it's not being used
   images: {
     domains: ['localhost', 's3.amazonaws.com'],
   },
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
+        source: '/api/:path((?!auth).*)',
         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/:path*`,
       },
     ];

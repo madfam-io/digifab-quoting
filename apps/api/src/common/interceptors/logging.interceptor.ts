@@ -64,7 +64,7 @@ export class LoggingInterceptor implements NestInterceptor {
               userId: tenantContext?.userId,
               requestId: tenantContext?.requestId,
               responseTime,
-              responseSize: JSON.stringify(data).length,
+              responseSize: data ? JSON.stringify(data).length : 0,
             },
           );
         },
