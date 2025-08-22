@@ -24,6 +24,8 @@ import { Audit } from '../audit/audit.interceptor';
 import { AuditAction, AuditEntity } from '../audit/audit.service';
 import { ValidationErrorResponseDto, NotFoundResponseDto, UnauthorizedResponseDto } from '../../common/dto/api-response.dto';
 import { AuthenticatedRequest } from '../../types/auth-request';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
 
 @ApiTags('quotes')
 @Controller('quotes')
@@ -87,49 +89,18 @@ export class QuotesController {
     description: 'Filter by customer ID',
     example: '123e4567-e89b-12d3-a456-426614174000' 
   })
-  @ApiQuery({ 
-    name: 'page', 
-    required: false, 
-    type: Number,
-    description: 'Page number (1-based)',
-    example: 1 
-  })
-  @ApiQuery({ 
-    name: 'pageSize', 
-    required: false, 
-    type: Number,
-    description: 'Items per page',
-    example: 20 
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of quotes',
-    schema: {
-      allOf: [
-        { $ref: '#/components/schemas/PaginatedResponseDto' },
-        {
-          properties: {
-            items: {
-              type: 'array',
-              items: { $ref: '#/components/schemas/QuoteResponseDto' }
-            }
-          }
-        }
-      ]
-    }
-  })
+  @ApiPaginatedResponse(QuoteResponseDto)
   findAll(
     @Request() req: AuthenticatedRequest,
+    @Query() pagination: PaginationDto,
     @Query('status') status?: QuoteStatus,
     @Query('customerId') customerId?: string,
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
   ) {
     return this.quotesService.findAll(req.user.tenantId, {
       status,
       customerId,
-      page: page ? parseInt(page) : undefined,
-      pageSize: pageSize ? parseInt(pageSize) : undefined,
+      page: pagination.page,
+      limit: pagination.limit,
     });
   }
 

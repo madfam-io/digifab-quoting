@@ -1,30 +1,55 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import numpy as np
 from datetime import datetime
 import logging
 import os
+import asyncio
 from dotenv import load_dotenv
+import redis
+import json
+import traceback
+
+# Import our geometry analyzer
+from geometry_analyzer import GeometryAnalyzer, GeometryMetrics as GeometryMetricsData, DFMIssue as DFMIssueData
 
 # Load environment variables
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
+# Initialize Redis connection
+try:
+    redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
+    redis_client.ping()
+    logger.info("Connected to Redis")
+except Exception as e:
+    logger.warning(f"Redis connection failed: {e}. Running without cache.")
+    redis_client = None
 
 app = FastAPI(
     title="MADFAM Geometry Processing Worker",
-    description="Service for analyzing 3D models and 2D drawings",
+    description="Service for analyzing 3D models and 2D drawings for digital fabrication",
     version="1.0.0"
 )
 
+# Initialize geometry analyzer
+analyzer = GeometryAnalyzer()
+
+# Pydantic models for API
 class GeometryAnalysisRequest(BaseModel):
     file_url: str
     file_type: str
     process_type: str
     options: Dict[str, Any] = {}
+    job_id: Optional[str] = None
 
 class BoundingBox(BaseModel):
     x: float
@@ -38,6 +63,10 @@ class GeometryMetrics(BaseModel):
     length_cut_mm: Optional[float] = None
     holes_count: Optional[int] = None
     overhang_area: Optional[float] = None
+    wall_thickness_min: Optional[float] = None
+    wall_thickness_avg: Optional[float] = None
+    triangle_count: Optional[int] = None
+    is_watertight: Optional[bool] = None
 
 class DFMIssue(BaseModel):
     type: str
@@ -50,187 +79,38 @@ class GeometryAnalysisResponse(BaseModel):
     issues: List[DFMIssue]
     risk_score: int
     processing_time_ms: int
+    cached: bool = False
 
 @app.get("/")
 def read_root():
-    return {"status": "healthy", "service": "geometry-worker", "timestamp": datetime.utcnow()}
+    return {
+        "status": "healthy",
+        "service": "geometry-worker",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow(),
+        "capabilities": ["stl", "step", "iges", "dxf"]
+    }
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "timestamp": datetime.utcnow()}
+    checks = {
+        "status": "ok",
+        "timestamp": datetime.utcnow(),
+        "redis": "connected" if redis_client else "disconnected",
+        "s3": "configured" if os.getenv("AWS_ACCESS_KEY_ID") else "not configured"
+    }
+    
+    # Overall health
+    if checks["redis"] == "disconnected":
+        checks["status"] = "degraded"
+    
+    return checks
 
-@app.post("/analyze", response_model=GeometryAnalysisResponse)
-async def analyze_geometry(request: GeometryAnalysisRequest):
-    """
-    Analyze geometry file and return metrics and DFM issues.
-    """
-    start_time = datetime.utcnow()
-    
-    try:
-        # For MVP, return mock data based on file type and process
-        logger.info(f"Analyzing {request.file_type} for {request.process_type}")
-        
-        if request.file_type == "stl":
-            metrics = analyze_stl_mock(request)
-        elif request.file_type in ["step", "iges"]:
-            metrics = analyze_step_mock(request)
-        elif request.file_type == "dxf":
-            metrics = analyze_dxf_mock(request)
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported file type: {request.file_type}")
-        
-        # Calculate DFM issues
-        issues = calculate_dfm_issues(metrics, request.process_type)
-        
-        # Calculate risk score
-        risk_score = calculate_risk_score(issues)
-        
-        # Calculate processing time
-        processing_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-        
-        return GeometryAnalysisResponse(
-            metrics=metrics,
-            issues=issues,
-            risk_score=risk_score,
-            processing_time_ms=processing_time_ms
-        )
-        
-    except Exception as e:
-        logger.error(f"Error analyzing geometry: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+def get_cache_key(request: GeometryAnalysisRequest) -> str:
+    """Generate cache key for request."""
+    return f"geometry:{request.file_type}:{request.process_type}:{hash(request.file_url)}"
 
-def analyze_stl_mock(request: GeometryAnalysisRequest) -> GeometryMetrics:
-    """Mock STL analysis for MVP."""
-    # Generate realistic random values
-    np.random.seed(hash(request.file_url) % 2**32)
-    
-    # Bounding box (mm)
-    bbox_x = np.random.uniform(10, 200)
-    bbox_y = np.random.uniform(10, 200)
-    bbox_z = np.random.uniform(5, 150)
-    
-    # Volume and surface area
-    volume_cm3 = bbox_x * bbox_y * bbox_z / 1000 * np.random.uniform(0.3, 0.8)
-    surface_area_cm2 = 2 * (bbox_x * bbox_y + bbox_x * bbox_z + bbox_y * bbox_z) / 100
-    
-    # Process-specific metrics
-    overhang_area = None
-    if request.process_type in ["3d_fff", "3d_sla"]:
-        # Calculate potential overhang area
-        overhang_area = surface_area_cm2 * np.random.uniform(0, 0.3)
-    
-    return GeometryMetrics(
-        volume_cm3=round(volume_cm3, 2),
-        surface_area_cm2=round(surface_area_cm2, 2),
-        bbox_mm=BoundingBox(x=round(bbox_x, 1), y=round(bbox_y, 1), z=round(bbox_z, 1)),
-        overhang_area=round(overhang_area, 2) if overhang_area else None
-    )
-
-def analyze_step_mock(request: GeometryAnalysisRequest) -> GeometryMetrics:
-    """Mock STEP/IGES analysis for MVP."""
-    np.random.seed(hash(request.file_url) % 2**32)
-    
-    # Typically CNC parts
-    bbox_x = np.random.uniform(20, 300)
-    bbox_y = np.random.uniform(20, 300)
-    bbox_z = np.random.uniform(10, 100)
-    
-    volume_cm3 = bbox_x * bbox_y * bbox_z / 1000 * np.random.uniform(0.4, 0.9)
-    surface_area_cm2 = 2 * (bbox_x * bbox_y + bbox_x * bbox_z + bbox_y * bbox_z) / 100
-    
-    # CNC-specific metrics
-    holes_count = np.random.randint(0, 20) if request.process_type == "cnc_3axis" else None
-    
-    return GeometryMetrics(
-        volume_cm3=round(volume_cm3, 2),
-        surface_area_cm2=round(surface_area_cm2, 2),
-        bbox_mm=BoundingBox(x=round(bbox_x, 1), y=round(bbox_y, 1), z=round(bbox_z, 1)),
-        holes_count=holes_count
-    )
-
-def analyze_dxf_mock(request: GeometryAnalysisRequest) -> GeometryMetrics:
-    """Mock DXF analysis for MVP."""
-    np.random.seed(hash(request.file_url) % 2**32)
-    
-    # 2D parts for laser cutting
-    bbox_x = np.random.uniform(50, 600)
-    bbox_y = np.random.uniform(50, 600)
-    bbox_z = float(request.options.get("material_thickness", 3))  # mm
-    
-    volume_cm3 = bbox_x * bbox_y * bbox_z / 1000
-    surface_area_cm2 = bbox_x * bbox_y / 100
-    
-    # Laser-specific metrics
-    length_cut_mm = (2 * (bbox_x + bbox_y)) + np.random.uniform(100, 1000)
-    
-    return GeometryMetrics(
-        volume_cm3=round(volume_cm3, 2),
-        surface_area_cm2=round(surface_area_cm2, 2),
-        bbox_mm=BoundingBox(x=round(bbox_x, 1), y=round(bbox_y, 1), z=round(bbox_z, 1)),
-        length_cut_mm=round(length_cut_mm, 1)
-    )
-
-def calculate_dfm_issues(metrics: GeometryMetrics, process_type: str) -> List[DFMIssue]:
-    """Calculate DFM issues based on geometry and process."""
-    issues = []
-    
-    if process_type == "3d_fff":
-        # Check for thin walls
-        min_dimension = min(metrics.bbox_mm.x, metrics.bbox_mm.y, metrics.bbox_mm.z)
-        if min_dimension < 1.0:
-            issues.append(DFMIssue(
-                type="thin_wall",
-                severity="high",
-                description="Part has walls thinner than 1mm which may not print reliably"
-            ))
-        
-        # Check for overhangs
-        if metrics.overhang_area and metrics.overhang_area > metrics.surface_area_cm2 * 0.2:
-            issues.append(DFMIssue(
-                type="overhang",
-                severity="medium",
-                description="Significant overhangs detected, support material recommended"
-            ))
-    
-    elif process_type == "3d_sla":
-        # Check for trapped volumes
-        if metrics.volume_cm3 > 100:
-            issues.append(DFMIssue(
-                type="drainage",
-                severity="medium",
-                description="Large volume may trap uncured resin, consider drainage holes"
-            ))
-    
-    elif process_type == "cnc_3axis":
-        # Check aspect ratio
-        aspect_ratio = max(metrics.bbox_mm.x, metrics.bbox_mm.y) / metrics.bbox_mm.z
-        if aspect_ratio > 10:
-            issues.append(DFMIssue(
-                type="aspect_ratio",
-                severity="medium",
-                description="High aspect ratio may cause vibration during machining"
-            ))
-        
-        # Check for deep holes
-        if metrics.holes_count and metrics.holes_count > 10:
-            issues.append(DFMIssue(
-                type="deep_features",
-                severity="low",
-                description="Multiple holes detected, ensure proper chip evacuation"
-            ))
-    
-    elif process_type == "laser_2d":
-        # Check for small features
-        if metrics.length_cut_mm and metrics.length_cut_mm > 5000:
-            issues.append(DFMIssue(
-                type="complex_path",
-                severity="low",
-                description="Complex cutting path may increase processing time"
-            ))
-    
-    return issues
-
-def calculate_risk_score(issues: List[DFMIssue]) -> int:
+def calculate_risk_score(issues: List[DFMIssueData]) -> int:
     """Calculate overall risk score from DFM issues."""
     severity_scores = {"low": 10, "medium": 30, "high": 50}
     
@@ -241,6 +121,195 @@ def calculate_risk_score(issues: List[DFMIssue]) -> int:
     # Normalize to 0-100 scale
     return min(100, total_score)
 
+@app.post("/analyze", response_model=GeometryAnalysisResponse)
+async def analyze_geometry(request: GeometryAnalysisRequest, background_tasks: BackgroundTasks):
+    """
+    Analyze geometry file and return metrics and DFM issues.
+    """
+    start_time = datetime.utcnow()
+    
+    # Check cache first
+    cache_key = get_cache_key(request)
+    if redis_client:
+        try:
+            cached_result = redis_client.get(cache_key)
+            if cached_result:
+                logger.info(f"Cache hit for {cache_key}")
+                result = json.loads(cached_result)
+                result["cached"] = True
+                return GeometryAnalysisResponse(**result)
+        except Exception as e:
+            logger.warning(f"Cache read error: {e}")
+    
+    try:
+        logger.info(f"Analyzing {request.file_type} file for {request.process_type}")
+        
+        # Download file
+        temp_file_path = None
+        try:
+            temp_file_path = analyzer.download_file(request.file_url)
+            
+            # Analyze based on file type
+            if request.file_type.lower() == "stl":
+                metrics_data, issues_data = analyzer.analyze_stl(temp_file_path, request.process_type)
+            elif request.file_type.lower() in ["step", "stp", "iges", "igs"]:
+                metrics_data, issues_data = analyzer.analyze_step(temp_file_path, request.process_type)
+            elif request.file_type.lower() == "dxf":
+                material_thickness = request.options.get("material_thickness", 3.0)
+                metrics_data, issues_data = analyzer.analyze_dxf(
+                    temp_file_path, request.process_type, material_thickness
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unsupported file type: {request.file_type}"
+                )
+            
+        finally:
+            # Clean up temporary file
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+        
+        # Convert internal data structures to API models
+        metrics = GeometryMetrics(**metrics_data.to_dict())
+        issues = [DFMIssue(**issue.to_dict()) for issue in issues_data]
+        
+        # Calculate risk score
+        risk_score = calculate_risk_score(issues_data)
+        
+        # Calculate processing time
+        processing_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        
+        # Prepare response
+        response_data = {
+            "metrics": metrics,
+            "issues": issues,
+            "risk_score": risk_score,
+            "processing_time_ms": processing_time_ms,
+            "cached": False
+        }
+        
+        # Cache the result
+        if redis_client:
+            background_tasks.add_task(
+                cache_result,
+                cache_key,
+                response_data,
+                ttl=3600  # 1 hour cache
+            )
+        
+        # If job_id provided, update job status
+        if request.job_id and redis_client:
+            background_tasks.add_task(
+                update_job_status,
+                request.job_id,
+                "completed",
+                response_data
+            )
+        
+        return GeometryAnalysisResponse(**response_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing geometry: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        # Update job status to failed if job_id provided
+        if request.job_id and redis_client:
+            background_tasks.add_task(
+                update_job_status,
+                request.job_id,
+                "failed",
+                {"error": str(e)}
+            )
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+        )
+
+def cache_result(cache_key: str, data: dict, ttl: int):
+    """Cache analysis result in Redis."""
+    try:
+        # Convert Pydantic models to dict for serialization
+        cache_data = {
+            "metrics": data["metrics"].dict(),
+            "issues": [issue.dict() for issue in data["issues"]],
+            "risk_score": data["risk_score"],
+            "processing_time_ms": data["processing_time_ms"],
+            "cached": data["cached"]
+        }
+        redis_client.setex(cache_key, ttl, json.dumps(cache_data))
+        logger.info(f"Cached result for {cache_key}")
+    except Exception as e:
+        logger.error(f"Cache write error: {e}")
+
+def update_job_status(job_id: str, status: str, data: dict):
+    """Update job status in Redis."""
+    try:
+        job_key = f"job:{job_id}"
+        job_data = {
+            "status": status,
+            "updated_at": datetime.utcnow().isoformat(),
+            "result": data
+        }
+        redis_client.setex(job_key, 86400, json.dumps(job_data))  # 24 hour TTL
+        logger.info(f"Updated job {job_id} status to {status}")
+    except Exception as e:
+        logger.error(f"Job status update error: {e}")
+
+@app.post("/analyze/batch")
+async def analyze_batch(requests: List[GeometryAnalysisRequest]):
+    """
+    Analyze multiple geometry files in parallel.
+    """
+    tasks = []
+    for req in requests:
+        tasks.append(analyze_geometry(req, BackgroundTasks()))
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Format results
+    batch_results = []
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            batch_results.append({
+                "index": i,
+                "status": "failed",
+                "error": str(result)
+            })
+        else:
+            batch_results.append({
+                "index": i,
+                "status": "success",
+                "result": result
+            })
+    
+    return {"results": batch_results}
+
+@app.get("/job/{job_id}")
+async def get_job_status(job_id: str):
+    """Get job status from Redis."""
+    if not redis_client:
+        raise HTTPException(status_code=503, detail="Job tracking not available")
+    
+    job_key = f"job:{job_id}"
+    job_data = redis_client.get(job_key)
+    
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    return json.loads(job_data)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    workers = int(os.getenv("WORKERS", 4))
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        workers=workers,
+        reload=os.getenv("NODE_ENV") == "development"
+    )

@@ -1,47 +1,102 @@
-export default () => ({
-  port: parseInt(process.env.PORT || '4000', 10),
-  database: {
-    url: process.env.DATABASE_URL,
-  },
-  redis: {
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-  },
-  jwt: {
-    secret: process.env.JWT_SECRET,
-    accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
-    refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
-  },
-  aws: {
-    region: process.env.AWS_REGION || 'us-east-1',
-    s3: {
-      bucket: process.env.S3_BUCKET,
-      region: process.env.S3_REGION || process.env.AWS_REGION,
+import { validateEnv } from './env.validation';
+
+export default () => {
+  // Validate environment variables on startup
+  const validatedConfig = validateEnv(process.env);
+  
+  return {
+    env: validatedConfig.NODE_ENV,
+    port: validatedConfig.PORT,
+    
+    database: {
+      url: validatedConfig.DATABASE_URL,
     },
-    kms: {
-      keyId: process.env.KMS_KEY_ID,
+    
+    redis: {
+      url: validatedConfig.REDIS_URL,
     },
-    sqs: {
-      queueUrl: process.env.SQS_QUEUE_URL,
+    
+    jwt: {
+      secret: validatedConfig.JWT_SECRET,
+      accessTokenExpiry: validatedConfig.JWT_EXPIRES_IN,
+      refreshTokenExpiry: validatedConfig.REFRESH_TOKEN_EXPIRES_IN,
     },
-  },
-  stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY,
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-  },
-  email: {
-    from: process.env.EMAIL_FROM || 'noreply@madfam.app',
-    sesRegion: process.env.SES_REGION || process.env.AWS_REGION,
-  },
-  defaults: {
-    currency: process.env.DEFAULT_CURRENCY || 'MXN',
-    locale: process.env.DEFAULT_LOCALE || 'es',
-    quoteValidityDays: parseInt(process.env.QUOTE_VALIDITY_DAYS || '14', 10),
-  },
-  fx: {
-    provider: process.env.FX_PROVIDER || 'openexchangerates',
-    apiKey: process.env.FX_API_KEY,
-  },
-  worker: {
-    geometryServiceUrl: process.env.GEOMETRY_SERVICE_URL || 'http://localhost:8000',
-  },
-});
+    
+    cors: {
+      origins: validatedConfig.ALLOWED_ORIGINS.split(','),
+    },
+    
+    aws: {
+      region: validatedConfig.AWS_REGION,
+      s3: {
+        bucket: validatedConfig.S3_BUCKET,
+        region: validatedConfig.AWS_REGION,
+        accessKeyId: validatedConfig.S3_ACCESS_KEY_ID,
+        secretAccessKey: validatedConfig.S3_SECRET_ACCESS_KEY,
+      },
+      kms: {
+        keyId: validatedConfig.KMS_KEY_ID,
+      },
+    },
+    
+    stripe: {
+      secretKey: validatedConfig.STRIPE_SECRET_KEY,
+      webhookSecret: validatedConfig.STRIPE_WEBHOOK_SECRET,
+    },
+    
+    currency: {
+      default: validatedConfig.DEFAULT_CURRENCY,
+      supported: validatedConfig.SUPPORTED_CURRENCIES.split(','),
+      fxSource: validatedConfig.FX_SOURCE,
+      openExchangeRatesApiKey: validatedConfig.OPENEXCHANGERATES_API_KEY,
+    },
+    
+    localization: {
+      defaultLocale: validatedConfig.DEFAULT_LOCALE,
+      supportedLocales: validatedConfig.DEFAULT_LOCALES.split(','),
+    },
+    
+    email: {
+      from: 'innovacionesmadfam@proton.me',
+      smtp: {
+        host: validatedConfig.SMTP_HOST,
+        port: validatedConfig.SMTP_PORT,
+        user: validatedConfig.SMTP_USER,
+        pass: validatedConfig.SMTP_PASS,
+      },
+    },
+    
+    worker: {
+      geometryServiceUrl: validatedConfig.WORKER_SERVICE_URL,
+    },
+    
+    rateLimit: {
+      ttl: validatedConfig.RATE_LIMIT_TTL,
+      max: validatedConfig.RATE_LIMIT_MAX,
+    },
+    
+    logging: {
+      level: validatedConfig.LOG_LEVEL,
+      format: validatedConfig.LOG_FORMAT,
+    },
+    
+    features: {
+      supplierPortal: validatedConfig.ENABLE_SUPPLIER_PORTAL,
+      sustainabilityScoring: validatedConfig.ENABLE_SUSTAINABILITY_SCORING,
+      ndaTracking: validatedConfig.ENABLE_NDA_TRACKING,
+    },
+    
+    defaults: {
+      currency: validatedConfig.DEFAULT_CURRENCY,
+      locale: validatedConfig.DEFAULT_LOCALE,
+      quoteValidityDays: validatedConfig.QUOTE_VALIDITY_DAYS,
+      minOrderValueMXN: validatedConfig.MIN_ORDER_VALUE_MXN,
+      maxFileSizeMB: validatedConfig.MAX_FILE_SIZE_MB,
+    },
+    
+    fx: {
+      provider: validatedConfig.FX_SOURCE,
+      apiKey: validatedConfig.OPENEXCHANGERATES_API_KEY,
+    },
+  };
+};

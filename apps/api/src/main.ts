@@ -2,12 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as compression from 'compression';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TenantContextService } from './modules/tenant/tenant-context.service';
 import { LoggerService } from './common/logger/logger.service';
+import { validateEnvironment } from './config/validate-env';
+
+// Validate environment variables before starting the application
+validateEnvironment();
 
 async function bootstrap() {
   // Add console log to debug startup
@@ -30,9 +35,21 @@ async function bootstrap() {
   // Security
   app.use(helmet());
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'],
     credentials: true,
   });
+
+  // Compression
+  app.use(compression({
+    threshold: 0,
+    level: 6,
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  }));
 
   // Global filters and interceptors
   app.useGlobalFilters(new AllExceptionsFilter(tenantContext));
@@ -93,11 +110,11 @@ async function bootstrap() {
     .addTag('audit', 'Audit log access')
     .addTag('cache', 'Cache management')
     .addTag('admin', 'Administrative operations')
-    .setContact('MADFAM Support', 'https://madfam.com', 'support@madfam.com')
-    .setLicense('Proprietary', 'https://madfam.com/license')
+    .setContact('MADFAM Support', 'https://madfam.io', 'innovacionesmadfam@proton.me')
+    .setLicense('Proprietary', 'https://madfam.io/license')
     .addServer('http://localhost:4000', 'Local Development')
-    .addServer('https://api.staging.madfam.com', 'Staging')
-    .addServer('https://api.madfam.com', 'Production')
+    .addServer('https://api.staging.cotiza.studio', 'Staging')
+    .addServer('https://api.cotiza.studio', 'Production')
     .build();
   
   const document = SwaggerModule.createDocument(app, config);

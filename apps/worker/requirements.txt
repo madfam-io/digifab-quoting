@@ -12,3 +12,6 @@ python-dotenv==1.0.1
 scipy==1.12.0
 meshio==5.3.5
 ezdxf==1.1.4
+requests==2.31.0
+networkx==3.2.1
+rtree==1.2.0

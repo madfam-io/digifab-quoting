@@ -17,6 +17,8 @@ import { AddQuoteItemDto } from './dto/add-quote-item.dto';
 import { CalculateQuoteDto } from './dto/calculate-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { Decimal } from 'decimal.js';
+import { createPaginatedResponse, getPrismaSkipTake } from '../../common/utils/pagination.util';
+import { PaginatedDto } from '../../common/dto/paginated.dto';
 
 @Injectable()
 export class QuotesService {
@@ -57,12 +59,12 @@ export class QuotesService {
       customerId?: string;
       status?: QuoteStatus;
       page?: number;
-      pageSize?: number;
+      limit?: number;
     },
-  ) {
+  ): Promise<PaginatedDto<PrismaQuote>> {
     const page = filters.page || 1;
-    const pageSize = filters.pageSize || 20;
-    const skip = (page - 1) * pageSize;
+    const limit = filters.limit || 20;
+    const { skip, take } = getPrismaSkipTake({ page, limit });
 
     const where = {
       tenantId,
@@ -70,7 +72,7 @@ export class QuotesService {
       ...(filters.status && { status: filters.status as string }),  // Cast enum to string for Prisma
     };
 
-    const [items, total] = await Promise.all([
+    const [data, total] = await Promise.all([
       this.prisma.quote.findMany({
         where,
         include: {
@@ -84,19 +86,13 @@ export class QuotesService {
           },
         },
         skip,
-        take: pageSize,
+        take,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.quote.count({ where }),
     ]);
 
-    return {
-      items,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    };
+    return createPaginatedResponse({ data, total }, { page, limit });
   }
 
   @Cacheable({ prefix: 'quote:detail', ttl: 300 }) // Cache for 5 minutes

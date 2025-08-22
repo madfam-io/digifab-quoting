@@ -85,14 +85,19 @@ terraform destroy
 - **Auth**: NextAuth with JWT and refresh tokens
 - **Payments**: Stripe for card payments
 
-### Project Structure (expected)
+### Project Structure
 ```
 /
-├── frontend/           # Next.js frontend application
-├── backend/            # NestJS API server
-├── worker/            # Python geometry analysis service
+├── apps/               # Application workspaces
+│   ├── api/           # NestJS API server (port 4000)
+│   ├── web/           # Next.js frontend application (port 3002)
+│   ├── worker/        # Python geometry analysis service
+│   └── admin/         # Admin dashboard (placeholder)
+├── packages/          # Shared packages
+│   ├── pricing-engine/ # Core pricing calculations
+│   ├── shared/        # Shared types and schemas
+│   └── ui/            # Shared UI components
 ├── infrastructure/    # Terraform modules
-├── shared/            # Shared types and utilities
 └── docker-compose.yml # Local development orchestration
 ```
 
