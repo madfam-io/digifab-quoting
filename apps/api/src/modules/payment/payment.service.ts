@@ -1,0 +1,316 @@
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { StripeService } from './stripe.service';
+import { ConfigService } from '@nestjs/config';
+import { PaymentStatus, OrderStatus, QuoteStatus } from '@madfam/shared';
+// import { OrdersService } from '../orders/orders.service'; // Removed to avoid circular dependency
+import Stripe from 'stripe';
+
+@Injectable()
+export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
+  private readonly frontendUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private stripe: StripeService,
+    private configService: ConfigService,
+  ) {
+    this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3002');
+  }
+
+  async createPaymentSession(quoteId: string, tenantId: string) {
+    const quote = await this.prisma.quote.findFirst({
+      where: { id: quoteId, tenantId },
+      include: {
+        customer: true,
+        quoteItems: {
+          include: {
+            part: true,
+          },
+        },
+      },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    if (quote.status !== QuoteStatus.APPROVED) {
+      throw new BadRequestException('Quote must be approved before payment');
+    }
+
+    // Calculate line items for Stripe
+    const lineItems = quote.quoteItems.map(item => ({
+      name: item.part.name,
+      description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
+      amount: Math.round(item.unitPrice * 100), // Convert to cents
+      currency: quote.currency.toLowerCase(),
+      quantity: item.quantity,
+    }));
+
+    // Create checkout session
+    const session = await this.stripe.createCheckoutSession({
+      quoteId: quote.id,
+      customerEmail: quote.customer.email,
+      lineItems,
+      successUrl: `${this.frontendUrl}/quotes/${quote.id}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${this.frontendUrl}/quotes/${quote.id}`,
+      metadata: {
+        tenantId,
+        customerId: quote.customerId,
+      },
+    });
+
+    // Create payment intent record
+    await this.prisma.paymentIntent.create({
+      data: {
+        stripePaymentIntentId: session.payment_intent as string,
+        stripeSessionId: session.id,
+        amount: quote.totalPrice,
+        currency: quote.currency,
+        status: PaymentStatus.PENDING,
+        quoteId: quote.id,
+        tenantId,
+      },
+    });
+
+    return {
+      sessionId: session.id,
+      paymentUrl: session.url,
+    };
+  }
+
+  async handleWebhookEvent(event: Stripe.Event, tenantId: string) {
+    this.logger.log(`Processing webhook event: ${event.type}`);
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, tenantId);
+        break;
+      
+      case 'payment_intent.succeeded':
+        await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent, tenantId);
+        break;
+      
+      case 'payment_intent.payment_failed':
+        await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent, tenantId);
+        break;
+      
+      default:
+        this.logger.log(`Unhandled event type: ${event.type}`);
+    }
+  }
+
+  private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, tenantId: string) {
+    const paymentIntent = await this.prisma.paymentIntent.findUnique({
+      where: { stripeSessionId: session.id },
+      include: { quote: true },
+    });
+
+    if (!paymentIntent) {
+      this.logger.warn(`Payment intent not found for session ${session.id}`);
+      return;
+    }
+
+    // Create order from quote directly using Prisma
+    // This avoids circular dependency with OrdersService
+    const order = await this.createOrderFromQuote(
+      paymentIntent.quoteId,
+      tenantId,
+      {
+        stripeSessionId: session.id,
+        stripePaymentIntentId: session.payment_intent as string,
+      }
+    );
+
+    this.logger.log(`Order ${order.id} created from quote ${paymentIntent.quoteId}`);
+  }
+
+  private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent, tenantId: string) {
+    await this.prisma.paymentIntent.updateMany({
+      where: {
+        stripePaymentIntentId: paymentIntent.id,
+        tenantId,
+      },
+      data: {
+        status: PaymentStatus.PAID,
+        paidAt: new Date(),
+      },
+    });
+
+    // Update order status
+    const order = await this.prisma.order.findFirst({
+      where: {
+        paymentIntents: {
+          some: {
+            stripePaymentIntentId: paymentIntent.id,
+          },
+        },
+        tenantId,
+      },
+    });
+
+    if (order) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.CONFIRMED,
+          paymentStatus: PaymentStatus.PAID,
+        },
+      });
+
+      // Update quote status
+      await this.prisma.quote.updateMany({
+        where: {
+          id: order.quoteId,
+          tenantId,
+        },
+        data: {
+          status: QuoteStatus.ORDERED,
+        },
+      });
+    }
+  }
+
+  private async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent, tenantId: string) {
+    await this.prisma.paymentIntent.updateMany({
+      where: {
+        stripePaymentIntentId: paymentIntent.id,
+        tenantId,
+      },
+      data: {
+        status: PaymentStatus.FAILED,
+        errorMessage: paymentIntent.last_payment_error?.message,
+      },
+    });
+
+    // Update order status if exists
+    const order = await this.prisma.order.findFirst({
+      where: {
+        paymentIntents: {
+          some: {
+            stripePaymentIntentId: paymentIntent.id,
+          },
+        },
+        tenantId,
+      },
+    });
+
+    if (order) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.PAYMENT_FAILED,
+          paymentStatus: PaymentStatus.FAILED,
+        },
+      });
+    }
+  }
+
+  async getPaymentStatus(quoteId: string, tenantId: string) {
+    const paymentIntents = await this.prisma.paymentIntent.findMany({
+      where: {
+        quoteId,
+        tenantId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 1,
+    });
+
+    if (paymentIntents.length === 0) {
+      return null;
+    }
+
+    const paymentIntent = paymentIntents[0];
+    
+    // Refresh status from Stripe if pending
+    if (paymentIntent.status === PaymentStatus.PENDING && paymentIntent.stripePaymentIntentId) {
+      const stripeIntent = await this.stripe.retrievePaymentIntent(paymentIntent.stripePaymentIntentId);
+      
+      if (stripeIntent.status === 'succeeded') {
+        await this.handlePaymentIntentSucceeded(stripeIntent, tenantId);
+      }
+    }
+
+    return {
+      status: paymentIntent.status,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency,
+      paidAt: paymentIntent.paidAt,
+    };
+  }
+
+  private async createOrderFromQuote(
+    quoteId: string, 
+    tenantId: string,
+    paymentInfo?: {
+      stripeSessionId?: string;
+      stripePaymentIntentId?: string;
+    }
+  ) {
+    // Basic order creation logic - simplified version
+    const quote = await this.prisma.quote.findFirst({
+      where: { id: quoteId, tenantId },
+      include: {
+        quoteItems: true,
+        customer: true,
+      },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    // Check if order already exists
+    const existingOrder = await this.prisma.order.findFirst({
+      where: { quoteId, tenantId },
+    });
+
+    if (existingOrder) {
+      return existingOrder;
+    }
+
+    // Create order number
+    const orderNumber = `ORD-${Date.now()}`; // Simple order number generation
+
+    // Create the order
+    const order = await this.prisma.order.create({
+      data: {
+        orderNumber,
+        quoteId,
+        customerId: quote.customerId,
+        status: OrderStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: quote.subtotal,
+        tax: quote.tax,
+        shipping: quote.shipping,
+        totalAmount: quote.totalPrice,
+        currency: quote.currency,
+        tenantId,
+      },
+    });
+
+    // Link payment intent if provided
+    if (paymentInfo?.stripePaymentIntentId) {
+      await this.prisma.paymentIntent.update({
+        where: {
+          stripePaymentIntentId: paymentInfo.stripePaymentIntentId,
+        },
+        data: {
+          orderId: order.id,
+        },
+      });
+    }
+
+    // Update quote status
+    await this.prisma.quote.update({
+      where: { id: quoteId },
+      data: { status: QuoteStatus.ORDERED },
+    });
+
+    return order;
+  }
+}

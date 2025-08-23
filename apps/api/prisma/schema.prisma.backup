@@ -1,0 +1,598 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== CORE MODELS ====================
+
+model Tenant {
+  id                  String   @id @default(cuid())
+  name                String
+  code                String   @unique
+  domain              String?  @unique
+  defaultCurrency     String   @default("MXN")
+  supportedCurrencies String[] @default(["MXN", "USD"])
+  defaultLocale       String   @default("es")
+  supportedLocales    String[] @default(["es", "en"])
+  features            Json     @default("{}")
+  settings            Json     @default("{}")
+  branding            Json     @default("{}")
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  users          User[]
+  customers      Customer[]
+  materials      Material[]
+  machines       Machine[]
+  processOptions ProcessOption[]
+  quotes         Quote[]
+  auditLogs      AuditLog[]
+  ndaAcceptances NDAAcceptance[]
+  discountRules  DiscountRule[]
+  shippingRates  ShippingRate[]
+  pricingRules   PricingRule[]
+  margins        Margin[]
+
+  @@index([code])
+  @@index([domain])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  tenantId      String
+  email         String    @unique
+  passwordHash  String?
+  firstName     String?
+  lastName      String?
+  name          String?
+  phone         String?
+  role          String    @default("customer")
+  roles         String[]  @default(["customer"])
+  active        Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  quotes         Quote[]
+  auditLogs      AuditLog[]
+  ndaAcceptances NDAAcceptance[]
+  sessions       Session[]
+  customer       Customer?
+  orders         Order[]
+  invoices       Invoice[]
+
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  tenantId        String
+  userId          String   @unique
+  company         String
+  billingAddress  Json     @default("{}")
+  shippingAddress Json     @default("{}")
+  taxId           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+}
+
+// ==================== QUOTING MODELS ====================
+
+model Quote {
+  id             String    @id @default(cuid())
+  tenantId       String
+  customerId     String?
+  number         String    @unique
+  status         String    @default("draft")
+  currency       String    @default("MXN")
+  objective      Json      @default("{\"cost\": 0.5, \"lead\": 0.3, \"green\": 0.2}")
+  validityUntil  DateTime
+  validUntil     DateTime?
+  subtotal       Decimal?  @db.Decimal(10, 2)
+  tax            Decimal?  @db.Decimal(10, 2)
+  total          Decimal?  @db.Decimal(10, 2)
+  totals         Json?
+  sustainability Json?
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  customer       User?           @relation(fields: [customerId], references: [id])
+  items          QuoteItem[]
+  paymentIntents PaymentIntent[]
+  auditLogs      AuditLog[]
+  orders         Order[]
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QuoteItem {
+  id             String   @id @default(cuid())
+  quoteId        String
+  fileId         String?
+  name           String
+  processCode    String
+  materialId     String?
+  processId      String?
+  quantity       Int
+  unitPrice      Decimal? @db.Decimal(10, 2)
+  totalPrice     Decimal? @db.Decimal(10, 2)
+  leadTime       Int?
+  leadDays       Int?
+  selections     Json
+  costBreakdown  Json?
+  sustainability Json?
+  flags          String[] @default([])
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  quote               Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  files               File[]
+  material            Material?              @relation(fields: [materialId], references: [id])
+  manufacturingProcess ManufacturingProcess?  @relation(fields: [processId], references: [id])
+  dfmReport           DFMReport?
+  supplierBids        SupplierBid[]
+
+  @@index([quoteId])
+  @@index([fileId])
+  @@index([processCode])
+}
+
+model File {
+  id              String   @id @default(cuid())
+  tenantId        String
+  quoteItemId     String?
+  filename        String
+  originalName    String
+  type            String
+  size            Int
+  path            String
+  hash            String
+  version         Int      @default(1)
+  ndaAcceptanceId String?
+  metadata        Json     @default("{}")
+  status          String   @default("PENDING")
+  analysisResult  Json?
+  analyzedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  quoteItems    QuoteItem[]
+  ndaAcceptance NDAAcceptance? @relation(fields: [ndaAcceptanceId], references: [id])
+  fileAnalysis  FileAnalysis?
+
+  @@index([tenantId])
+  @@index([quoteItemId])
+  @@index([hash])
+  @@index([status])
+}
+
+model DFMReport {
+  id          String   @id @default(cuid())
+  quoteItemId String   @unique
+  metrics     Json
+  issues      Json     @default("[]")
+  riskScore   Int
+  createdAt   DateTime @default(now())
+
+  // Relations
+  quoteItem QuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+}
+
+// ==================== PRICING & CATALOG MODELS ====================
+
+model Material {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  process              String
+  name                 String
+  code                 String
+  density              Decimal   @db.Decimal(6, 3)
+  co2eFactor           Decimal   @db.Decimal(6, 3)
+  costUom              String    @default("kg")
+  pricePerUom          Decimal   @db.Decimal(10, 2)
+  costPerUnit          Decimal   @db.Decimal(10, 2)
+  costPerKg            Decimal?  @db.Decimal(10, 2)
+  recycledPercent      Decimal?  @db.Decimal(5, 2)
+  properties           Json      @default("{}")
+  active               Boolean   @default(true)
+  versionEffectiveFrom DateTime  @default(now())
+  versionEffectiveTo   DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  quoteItems QuoteItem[]
+
+  @@unique([tenantId, code, versionEffectiveFrom])
+  @@index([tenantId])
+  @@index([process])
+  @@index([active])
+}
+
+model ManufacturingProcess {
+  id           String   @id @default(cuid())
+  tenantId     String
+  code         String
+  name         String
+  category     String
+  setupCost    Decimal? @db.Decimal(10, 2)
+  hourlyRate   Decimal? @db.Decimal(10, 2)
+  minOrderQty  Int?
+  maxPartSize  Json?
+  capabilities Json     @default("{}")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  quoteItems QuoteItem[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([category])
+  @@index([active])
+}
+
+model Machine {
+  id           String   @id @default(cuid())
+  tenantId     String
+  process      String
+  model        String
+  name         String
+  powerW       Int
+  hourlyRate   Decimal  @db.Decimal(10, 2)
+  setupMinutes Int
+  specs        Json
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([process])
+  @@index([active])
+}
+
+model ProcessOption {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  process            String
+  optionsSchema      Json
+  marginFloorPercent Decimal  @db.Decimal(5, 2)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, process])
+  @@index([process])
+}
+
+model PricingRule {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  process    String
+  formula    String
+  parameters Json
+  conditions Json     @default("[]")
+  priority   Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([process])
+  @@index([active])
+  @@index([priority])
+}
+
+model Margin {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  type               String   @default("default")
+  process            String?
+  marginPercent      Decimal  @db.Decimal(5, 2)
+  floorPercent       Decimal  @db.Decimal(5, 2)
+  targetPercent      Decimal  @db.Decimal(5, 2)
+  maxDiscountPercent Decimal  @db.Decimal(5, 2)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, type, process])
+  @@index([tenantId])
+  @@index([active])
+}
+
+model DiscountRule {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  scope      String // quote, item, customer
+  formula    String
+  thresholds Json
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([scope])
+  @@index([active])
+}
+
+model ShippingRate {
+  id           String   @id @default(cuid())
+  tenantId     String
+  carrier      String
+  serviceCode  String
+  serviceName  String
+  leadDays     Int
+  priceFormula String
+  zones        Json     @default("[]")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([carrier])
+  @@index([active])
+}
+
+// ==================== SUPPLIER MODELS (P1) ====================
+
+model SupplierBid {
+  id          String   @id @default(cuid())
+  tenantId    String
+  quoteItemId String
+  supplierId  String
+  price       Decimal  @db.Decimal(10, 2)
+  leadDays    Int
+  co2e        Decimal  @db.Decimal(6, 3)
+  selected    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  quoteItem QuoteItem @relation(fields: [quoteItemId], references: [id])
+
+  @@index([quoteItemId])
+  @@index([supplierId])
+}
+
+// ==================== PAYMENT MODELS ====================
+
+model PaymentIntent {
+  id          String   @id @default(cuid())
+  tenantId    String
+  quoteId     String
+  provider    String   @default("stripe")
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String
+  status      String
+  externalRef String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@index([tenantId])
+  @@index([quoteId])
+  @@index([externalRef])
+}
+
+// ==================== COMPLIANCE & AUDIT MODELS ====================
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  tenantId String
+  actorId  String?
+  entity   String
+  entityId String
+  action   String
+  before   Json?
+  after    Json?
+  metadata Json     @default("{}")
+  at       DateTime @default(now())
+
+  // Relations
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  actor   User?   @relation(fields: [actorId], references: [id])
+  Quote   Quote?  @relation(fields: [quoteId], references: [id])
+  quoteId String?
+
+  @@index([tenantId])
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([at])
+}
+
+model NDAAcceptance {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  email     String
+  ip        String
+  userAgent String
+  version   String
+  at        DateTime @default(now())
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+  files  File[]
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([at])
+}
+
+// ==================== SYSTEM MODELS ====================
+
+model FXRate {
+  id       String   @id @default(cuid())
+  base     String
+  quote    String
+  rate     Decimal  @db.Decimal(10, 6)
+  asOf     DateTime
+  source   String   @default("openexchangerates")
+  tenantId String?
+
+  @@unique([base, quote, asOf])
+  @@index([asOf])
+}
+
+// ==================== JOB QUEUE MODELS ====================
+
+model FileAnalysis {
+  id               String   @id @default(cuid())
+  fileId           String   @unique
+  tenantId         String
+  volume           Decimal? @db.Decimal(10, 3)
+  surfaceArea      Decimal? @db.Decimal(10, 3)
+  boundingBoxX     Decimal? @db.Decimal(10, 3)
+  boundingBoxY     Decimal? @db.Decimal(10, 3)
+  boundingBoxZ     Decimal? @db.Decimal(10, 3)
+  partCount        Int      @default(1)
+  triangleCount    Int?
+  dfmScore         Int      @default(100)
+  dfmIssues        Json     @default("[]")
+  manufacturable   Boolean  @default(true)
+  hasUndercuts     Boolean  @default(false)
+  hasThinWalls     Boolean  @default(false)
+  hasSmallFeatures Boolean  @default(false)
+  complexity       String   @default("simple")
+  processingTime   Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  file File @relation(fields: [fileId], references: [id])
+
+  @@index([tenantId])
+  @@index([fileId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String
+  entityId    String
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  status      String   @default("PENDING")
+  generatedAt DateTime?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([entityId])
+  @@index([status])
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  tenantId      String
+  number        String   @unique
+  quoteId       String
+  customerId    String
+  status        String   @default("PENDING")
+  paymentStatus String   @default("PENDING")
+  totalPaid     Decimal  @db.Decimal(10, 2)
+  currency      String
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  quote     Quote     @relation(fields: [quoteId], references: [id])
+  customer  User      @relation(fields: [customerId], references: [id])
+  invoices  Invoice[]
+
+  @@index([tenantId])
+  @@index([quoteId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  tenantId   String
+  number     String   @unique
+  orderId    String
+  customerId String
+  currency   String
+  total      Decimal  @db.Decimal(10, 2)
+  dueDate    DateTime
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  order    Order @relation(fields: [orderId], references: [id])
+  customer User  @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([customerId])
+}

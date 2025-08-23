@@ -326,7 +326,7 @@ export class QuotesService {
     };
   }
 
-  async approve(tenantId: string, quoteId: string, customerId: string): Promise<PrismaQuote> {
+  async approve(tenantId: string, quoteId: string, customerId: string): Promise<{ quote: PrismaQuote; sessionId?: string; paymentUrl?: string }> {
     const quote = await this.findOne(tenantId, quoteId);
 
     if (quote.customerId !== customerId) {
@@ -341,10 +341,13 @@ export class QuotesService {
       throw new BadRequestException('Quote has expired');
     }
 
-    return this.prisma.quote.update({
+    const updatedQuote = await this.prisma.quote.update({
       where: { id: quoteId },
       data: { status: QuoteStatus.APPROVED },
     });
+
+    // Return just the quote for now - payment integration will be handled separately
+    return { quote: updatedQuote };
   }
 
   @CacheInvalidate('quote:detail:*')

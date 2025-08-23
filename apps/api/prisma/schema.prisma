@@ -27,7 +27,6 @@ model Tenant {
 
   // Relations
   users          User[]
-  customers      Customer[]
   materials      Material[]
   machines       Machine[]
   processOptions ProcessOption[]
@@ -38,6 +37,8 @@ model Tenant {
   shippingRates  ShippingRate[]
   pricingRules   PricingRule[]
   margins        Margin[]
+  customers      Customer[]
+  apiKeys        ApiKey[]
 
   @@index([code])
   @@index([domain])
@@ -93,6 +94,8 @@ model Customer {
   id              String   @id @default(cuid())
   tenantId        String
   userId          String   @unique
+  email           String?
+  name            String?
   company         String
   billingAddress  Json     @default("{}")
   shippingAddress Json     @default("{}")
@@ -121,7 +124,9 @@ model Quote {
   validUntil     DateTime?
   subtotal       Decimal?  @db.Decimal(10, 2)
   tax            Decimal?  @db.Decimal(10, 2)
+  shipping       Decimal   @default(0) @db.Decimal(10, 2)
   total          Decimal?  @db.Decimal(10, 2)
+  totalPrice     Decimal?  @db.Decimal(10, 2)
   totals         Json?
   sustainability Json?
   metadata       Json      @default("{}")
@@ -146,8 +151,11 @@ model QuoteItem {
   id             String   @id @default(cuid())
   quoteId        String
   fileId         String?
+  partId         String?
   name           String
+  process        String
   processCode    String
+  material       String
   materialId     String?
   processId      String?
   quantity       Int
@@ -166,10 +174,12 @@ model QuoteItem {
   // Relations
   quote               Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   files               File[]
-  material            Material?              @relation(fields: [materialId], references: [id])
+  part                File?                  @relation("QuoteItemPart", fields: [partId], references: [id])
+  materialObj         Material?              @relation(fields: [materialId], references: [id])
   manufacturingProcess ManufacturingProcess?  @relation(fields: [processId], references: [id])
   dfmReport           DFMReport?
   supplierBids        SupplierBid[]
+  orderItems          OrderItem[]
 
   @@index([quoteId])
   @@index([fileId])
@@ -195,9 +205,11 @@ model File {
   createdAt       DateTime @default(now())
 
   // Relations
-  quoteItems    QuoteItem[]
-  ndaAcceptance NDAAcceptance? @relation(fields: [ndaAcceptanceId], references: [id])
-  fileAnalysis  FileAnalysis?
+  quoteItems     QuoteItem[]
+  quoteItemParts QuoteItem[]    @relation("QuoteItemPart")
+  orderItems     OrderItem[]
+  ndaAcceptance  NDAAcceptance? @relation(fields: [ndaAcceptanceId], references: [id])
+  fileAnalysis   FileAnalysis?
 
   @@index([tenantId])
   @@index([quoteItemId])
@@ -418,24 +430,33 @@ model SupplierBid {
 // ==================== PAYMENT MODELS ====================
 
 model PaymentIntent {
-  id          String   @id @default(cuid())
-  tenantId    String
-  quoteId     String
-  provider    String   @default("stripe")
-  amount      Decimal  @db.Decimal(10, 2)
-  currency    String
-  status      String
-  externalRef String?
-  metadata    Json     @default("{}")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  tenantId              String
+  quoteId               String
+  orderId               String?
+  provider              String    @default("stripe")
+  amount                Decimal   @db.Decimal(10, 2)
+  currency              String
+  status                String
+  externalRef           String?
+  stripePaymentIntentId String?   @unique
+  stripeSessionId       String?   @unique
+  paidAt                DateTime?
+  errorMessage          String?
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
-  quote Quote @relation(fields: [quoteId], references: [id])
+  quote  Quote  @relation(fields: [quoteId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
 
   @@index([tenantId])
   @@index([quoteId])
+  @@index([orderId])
   @@index([externalRef])
+  @@index([stripePaymentIntentId])
+  @@index([stripeSessionId])
 }
 
 // ==================== COMPLIANCE & AUDIT MODELS ====================
@@ -499,6 +520,46 @@ model FXRate {
   @@index([asOf])
 }
 
+// ==================== API KEY MODELS ====================
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  tenantId   String
+  name       String
+  keyHash    String
+  keyPrefix  String    // First 8 chars for identification
+  scopes     Json      @default("[]")
+  rateLimit  Int?      // Requests per hour
+  isActive   Boolean   @default(true)
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  tenant Tenant        @relation(fields: [tenantId], references: [id])
+  usage  ApiKeyUsage[]
+
+  @@index([tenantId])
+  @@index([keyPrefix])
+  @@index([isActive])
+}
+
+model ApiKeyUsage {
+  id        String   @id @default(cuid())
+  apiKeyId  String
+  ipAddress String
+  endpoint  String
+  timestamp DateTime @default(now())
+
+  // Relations
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id])
+
+  @@index([apiKeyId])
+  @@index([timestamp])
+}
+
 // ==================== JOB QUEUE MODELS ====================
 
 model FileAnalysis {
@@ -551,28 +612,62 @@ model Report {
 }
 
 model Order {
-  id            String   @id @default(cuid())
-  tenantId      String
-  number        String   @unique
-  quoteId       String
-  customerId    String
-  status        String   @default("PENDING")
-  paymentStatus String   @default("PENDING")
-  totalPaid     Decimal  @db.Decimal(10, 2)
-  currency      String
-  metadata      Json     @default("{}")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  tenantId            String
+  orderNumber         String    @unique
+  quoteId             String
+  customerId          String
+  status              String    @default("PENDING")
+  paymentStatus       String    @default("PENDING")
+  subtotal            Decimal   @db.Decimal(10, 2)
+  tax                 Decimal   @db.Decimal(10, 2)
+  shipping            Decimal   @default(0) @db.Decimal(10, 2)
+  totalAmount         Decimal   @db.Decimal(10, 2)
+  totalPaid           Decimal   @default(0) @db.Decimal(10, 2)
+  currency            String
+  productionStartedAt DateTime?
+  completedAt         DateTime?
+  shippedAt           DateTime?
+  metadata            Json      @default("{}")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   // Relations
-  quote     Quote     @relation(fields: [quoteId], references: [id])
-  customer  User      @relation(fields: [customerId], references: [id])
-  invoices  Invoice[]
+  quote          Quote           @relation(fields: [quoteId], references: [id])
+  customer       User            @relation(fields: [customerId], references: [id])
+  orderItems     OrderItem[]
+  invoices       Invoice[]
+  paymentIntents PaymentIntent[]
 
   @@index([tenantId])
   @@index([quoteId])
   @@index([customerId])
   @@index([status])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  partId        String
+  quoteItemId   String?
+  tenantId      String
+  quantity      Int
+  process       String
+  material      String
+  finishOptions Json     @default("{}")
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  subtotal      Decimal  @db.Decimal(10, 2)
+  leadTimeDays  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  part      File       @relation(fields: [partId], references: [id])
+  quoteItem QuoteItem? @relation(fields: [quoteItemId], references: [id])
+
+  @@index([orderId])
+  @@index([tenantId])
 }
 
 model Invoice {

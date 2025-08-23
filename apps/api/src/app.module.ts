@@ -20,6 +20,8 @@ import { PricingModule } from './modules/pricing/pricing.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { JobsModule } from './modules/jobs/jobs.module';
     AdminModule,
     HealthModule,
     JobsModule,
+    PaymentModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

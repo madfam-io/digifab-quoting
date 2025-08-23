@@ -17,6 +17,13 @@ import { FilesModule } from '@/modules/files/files.module';
 import { QuotesModule } from '@/modules/quotes/quotes.module';
 import { PricingModule } from '@/modules/pricing/pricing.module';
 
+// Import report generation services
+import { ReportDataLoaderService } from './services/report-data-loader.service';
+import { PdfReportGeneratorService } from './services/pdf-report-generator.service';
+import { ExcelReportGeneratorService } from './services/excel-report-generator.service';
+import { CsvReportGeneratorService } from './services/csv-report-generator.service';
+import { ReportUploaderService } from './services/report-uploader.service';
+
 @Module({
   imports: [
     ConfigModule,
@@ -114,6 +121,12 @@ import { PricingModule } from '@/modules/pricing/pricing.module';
     QuoteCalculationProcessor,
     EmailNotificationProcessor,
     ReportGenerationProcessor,
+    // Report generation services
+    ReportDataLoaderService,
+    PdfReportGeneratorService,
+    ExcelReportGeneratorService,
+    CsvReportGeneratorService,
+    ReportUploaderService,
   ],
   exports: [JobsService],
 })

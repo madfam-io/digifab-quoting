@@ -20,6 +20,7 @@ async function bootstrap() {
   
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn'], // Enable basic logging during startup
+    rawBody: true, // Enable raw body for Stripe webhooks
   });
 
   // Get services

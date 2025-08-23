@@ -15,3 +15,4 @@ ezdxf==1.1.4
 requests==2.31.0
 networkx==3.2.1
 rtree==1.2.0
+gmsh==4.11.1

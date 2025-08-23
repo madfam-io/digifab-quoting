@@ -1,5 +1,33 @@
-import { ProcessType, GeometryMetrics, Material, Machine, QuoteItemSelections } from '@madfam/shared';
+import { ProcessType, GeometryMetrics as BaseGeometryMetrics, Material as BaseMaterial, Machine, QuoteItemSelections } from '@madfam/shared';
 import { Decimal } from 'decimal.js';
+
+// Extended geometry metrics for pricing calculations
+export interface GeometryMetrics extends BaseGeometryMetrics {
+  // Additional properties for specific processes
+  perimeterMm?: number; // For 2D laser cutting
+  cutLengthMm?: number; // For laser cutting
+  pierceCount?: number; // For laser cutting
+  features?: {
+    holes?: number;
+    pockets?: number;
+    surfaces?: number;
+    threads?: number;
+    thinWalls?: boolean;
+    wallThickness?: number;
+  }; // For CNC machining
+  nestingEfficiency?: number; // For sheet optimization
+  complexity?: 'low' | 'medium' | 'high';
+  cornerCount?: number;
+  requiresRepositioning?: boolean;
+}
+
+// Extended material interface for pricing calculations
+export interface Material extends BaseMaterial {
+  // Additional properties for specific processes
+  thickness?: number; // For sheet materials (laser, waterjet)
+  reflectivity?: 'low' | 'medium' | 'high'; // For laser cutting
+  organicMaterial?: boolean; // For laser cutting organic materials
+}
 
 export interface PricingInput {
   process: ProcessType;
@@ -45,6 +73,7 @@ export interface CostBreakdown {
   labor: Decimal;
   overhead: Decimal;
   margin: Decimal;
+  tooling?: Decimal;
   discount?: Decimal;
 }
 
@@ -54,6 +83,12 @@ export interface SustainabilityResult {
   energyKwh: Decimal;
   recycledPercent: number;
   wastePercent: number;
+  co2e: {
+    material: number;
+    energy: number;
+    logistics: number;
+    total: number;
+  };
 }
 
 export interface ProcessingTime {

@@ -9,6 +9,8 @@ import logging
 from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
+import ezdxf
+from ezdxf.acc import USE_C_EXT
 
 logger = logging.getLogger(__name__)
 
@@ -267,14 +269,144 @@ class GeometryAnalyzer:
         return issues
     
     def analyze_step(self, file_path: str, process_type: str) -> Tuple[GeometryMetrics, List[DFMIssue]]:
-        """Analyze STEP/IGES files (placeholder for future CAD kernel integration)."""
-        # For now, use mesh conversion if possible
+        """Analyze STEP/IGES files using gmsh for meshing."""
         try:
-            mesh = trimesh.load(file_path)
-            return self.analyze_stl(file_path, process_type)
-        except:
-            # Fallback to mock data with reasonable estimates
-            return self._analyze_step_mock(file_path, process_type)
+            import gmsh
+            
+            # Initialize gmsh
+            gmsh.initialize()
+            gmsh.option.setNumber("General.Terminal", 0)  # Disable terminal output
+            
+            try:
+                # Import the STEP/IGES file
+                gmsh.model.occ.importShapes(file_path)
+                gmsh.model.occ.synchronize()
+                
+                # Get model bounds
+                bbox = gmsh.model.getBoundingBox(-1, -1)
+                bbox_x = bbox[3] - bbox[0]
+                bbox_y = bbox[4] - bbox[1] 
+                bbox_z = bbox[5] - bbox[2]
+                
+                # Get volume and surface area
+                volumes = gmsh.model.occ.getEntities(3)  # 3D entities
+                total_volume = 0.0
+                total_surface_area = 0.0
+                
+                for dim, tag in volumes:
+                    mass_props = gmsh.model.occ.getMass(dim, tag)
+                    total_volume += mass_props
+                
+                # Get surfaces
+                surfaces = gmsh.model.occ.getEntities(2)  # 2D entities
+                holes_count = 0
+                small_features = []
+                
+                for dim, tag in surfaces:
+                    area = gmsh.model.occ.getMass(dim, tag)
+                    total_surface_area += area
+                    
+                    # Check for small surfaces (potential holes)
+                    if area < 100:  # mm²
+                        small_features.append(area)
+                        if area < 50:  # Likely a hole
+                            holes_count += 1
+                
+                # Convert units
+                volume_cm3 = total_volume / 1000
+                surface_area_cm2 = total_surface_area / 100
+                
+                # Generate mesh to get more detailed analysis
+                gmsh.model.mesh.generate(2)
+                
+                # Extract edges for CNC feature detection
+                edges = gmsh.model.occ.getEntities(1)  # 1D entities
+                sharp_edges = 0
+                for dim, tag in edges:
+                    # Check for sharp corners (simplified)
+                    sharp_edges += 1
+                
+                metrics = GeometryMetrics(
+                    volume_cm3=round(volume_cm3, 2),
+                    surface_area_cm2=round(surface_area_cm2, 2),
+                    bbox_mm=BoundingBox(
+                        x=round(bbox_x, 1),
+                        y=round(bbox_y, 1),
+                        z=round(bbox_z, 1)
+                    ),
+                    holes_count=holes_count if process_type == "cnc_3axis" else None
+                )
+                
+                # Calculate DFM issues
+                issues = self._calculate_step_dfm_issues(metrics, small_features, sharp_edges, process_type)
+                
+                return metrics, issues
+                
+            finally:
+                gmsh.finalize()
+                
+        except Exception as e:
+            logger.error(f"Error analyzing STEP with gmsh: {str(e)}")
+            # Try trimesh as fallback
+            try:
+                mesh = trimesh.load(file_path)
+                return self.analyze_stl(file_path, process_type)
+            except:
+                # Final fallback to mock data
+                return self._analyze_step_mock(file_path, process_type)
+    
+    def _calculate_step_dfm_issues(self, metrics: GeometryMetrics, small_features: List[float], 
+                                   sharp_edges: int, process_type: str) -> List[DFMIssue]:
+        """Calculate DFM issues for STEP files (CNC focused)."""
+        issues = []
+        
+        if process_type == "cnc_3axis":
+            # Check for thin walls
+            min_thickness = 1.0  # mm for aluminum
+            if metrics.bbox_mm.z < min_thickness * 3:
+                issues.append(DFMIssue(
+                    type="thin_walls",
+                    severity="high",
+                    description=f"Part thickness ({metrics.bbox_mm.z:.1f}mm) may be too thin for stable CNC machining"
+                ))
+            
+            # Check aspect ratio
+            aspect_ratio = max(metrics.bbox_mm.x, metrics.bbox_mm.y) / metrics.bbox_mm.z
+            if aspect_ratio > 10:
+                issues.append(DFMIssue(
+                    type="high_aspect_ratio",
+                    severity="medium",
+                    description=f"High aspect ratio ({aspect_ratio:.1f}:1) may cause workpiece deflection during machining"
+                ))
+            
+            # Check for small features
+            if small_features:
+                min_feature = min(small_features)
+                if min_feature < 50:  # mm²
+                    issues.append(DFMIssue(
+                        type="small_features",
+                        severity="medium",
+                        description=f"Small features detected (min: {min_feature:.1f}mm²) may require special tooling"
+                    ))
+            
+            # Check for deep holes
+            if metrics.holes_count and metrics.holes_count > 0:
+                if metrics.bbox_mm.z > 20:  # Deep part with holes
+                    issues.append(DFMIssue(
+                        type="deep_holes",
+                        severity="medium",
+                        description=f"Deep holes in thick material may require special drilling operations"
+                    ))
+            
+            # Check sharp internal corners
+            if sharp_edges > 50:
+                issues.append(DFMIssue(
+                    type="sharp_corners",
+                    severity="low",
+                    description="Many sharp internal corners detected. Consider adding fillets for easier machining"
+                ))
+        
+        return issues
     
     def _analyze_step_mock(self, file_path: str, process_type: str) -> Tuple[GeometryMetrics, List[DFMIssue]]:
         """Mock STEP analysis until CAD kernel is integrated."""
@@ -324,11 +456,195 @@ class GeometryAnalyzer:
         
         return metrics, issues
     
+    def _calculate_dxf_dfm_issues(self, metrics: GeometryMetrics, small_features: List[float], 
+                                   entity_count: int, process_type: str) -> List[DFMIssue]:
+        """Calculate DFM issues specific to DXF/laser cutting."""
+        issues = []
+        
+        # Check for small features
+        if small_features:
+            min_feature = min(small_features)
+            count = len(small_features)
+            issues.append(DFMIssue(
+                type="small_features",
+                severity="medium" if min_feature > 0.5 else "high",
+                description=f"Design contains {count} features smaller than 1mm (smallest: {min_feature:.2f}mm)"
+            ))
+        
+        # Check cutting complexity
+        if metrics.length_cut_mm > 5000:
+            issues.append(DFMIssue(
+                type="complex_cutting_path",
+                severity="low",
+                description=f"Long cutting path ({metrics.length_cut_mm:.0f}mm) will increase processing time"
+            ))
+        
+        # Check for very thin cuts (kerf width issues)
+        if metrics.bbox_mm.x < 2 or metrics.bbox_mm.y < 2:
+            issues.append(DFMIssue(
+                type="thin_geometry",
+                severity="high",
+                description="Part dimensions too small for reliable laser cutting"
+            ))
+        
+        # Check entity count (file complexity)
+        if entity_count > 1000:
+            issues.append(DFMIssue(
+                type="high_complexity",
+                severity="medium",
+                description=f"High entity count ({entity_count}) may slow processing"
+            ))
+        
+        # Material-specific checks
+        if process_type == "laser_2d":
+            # Check aspect ratio for warping
+            aspect_ratio = max(metrics.bbox_mm.x, metrics.bbox_mm.y) / min(metrics.bbox_mm.x, metrics.bbox_mm.y)
+            if aspect_ratio > 20:
+                issues.append(DFMIssue(
+                    type="high_aspect_ratio",
+                    severity="low",
+                    description=f"High aspect ratio ({aspect_ratio:.1f}:1) may cause warping in thin materials"
+                ))
+        
+        return issues
+    
     def analyze_dxf(self, file_path: str, process_type: str, material_thickness: float = 3.0) -> Tuple[GeometryMetrics, List[DFMIssue]]:
-        """Analyze DXF files for laser cutting (placeholder)."""
-        # For now, use mock data
-        # Future: integrate ezdxf or similar library
-        return self._analyze_dxf_mock(file_path, process_type, material_thickness)
+        """Analyze DXF files for laser cutting."""
+        try:
+            # Load DXF document
+            doc = ezdxf.readfile(file_path)
+            msp = doc.modelspace()
+            
+            # Extract all entities and calculate metrics
+            total_length = 0.0
+            min_x = min_y = float('inf')
+            max_x = max_y = float('-inf')
+            small_features = []
+            entity_count = 0
+            
+            for entity in msp:
+                entity_count += 1
+                
+                if entity.dxftype() == 'LINE':
+                    start = entity.dxf.start
+                    end = entity.dxf.end
+                    length = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
+                    total_length += length
+                    
+                    # Track small features
+                    if length < 1.0:  # mm
+                        small_features.append(length)
+                    
+                    # Update bounding box
+                    min_x = min(min_x, start[0], end[0])
+                    min_y = min(min_y, start[1], end[1])
+                    max_x = max(max_x, start[0], end[0])
+                    max_y = max(max_y, start[1], end[1])
+                    
+                elif entity.dxftype() == 'CIRCLE':
+                    center = entity.dxf.center
+                    radius = entity.dxf.radius
+                    circumference = 2 * np.pi * radius
+                    total_length += circumference
+                    
+                    # Track small circles
+                    if radius < 0.5:  # mm
+                        small_features.append(radius * 2)
+                    
+                    # Update bounding box
+                    min_x = min(min_x, center[0] - radius)
+                    min_y = min(min_y, center[1] - radius)
+                    max_x = max(max_x, center[0] + radius)
+                    max_y = max(max_y, center[1] + radius)
+                    
+                elif entity.dxftype() == 'ARC':
+                    center = entity.dxf.center
+                    radius = entity.dxf.radius
+                    start_angle = np.radians(entity.dxf.start_angle)
+                    end_angle = np.radians(entity.dxf.end_angle)
+                    angle_span = abs(end_angle - start_angle)
+                    arc_length = radius * angle_span
+                    total_length += arc_length
+                    
+                    # Update bounding box (simplified)
+                    min_x = min(min_x, center[0] - radius)
+                    min_y = min(min_y, center[1] - radius)
+                    max_x = max(max_x, center[0] + radius)
+                    max_y = max(max_y, center[1] + radius)
+                    
+                elif entity.dxftype() == 'LWPOLYLINE' or entity.dxftype() == 'POLYLINE':
+                    # Calculate polyline length
+                    points = list(entity.points())
+                    for i in range(len(points) - 1):
+                        p1 = points[i]
+                        p2 = points[i + 1]
+                        segment_length = np.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+                        total_length += segment_length
+                        
+                        if segment_length < 1.0:
+                            small_features.append(segment_length)
+                        
+                        # Update bounding box
+                        min_x = min(min_x, p1[0], p2[0])
+                        min_y = min(min_y, p1[1], p2[1])
+                        max_x = max(max_x, p1[0], p2[0])
+                        max_y = max(max_y, p1[1], p2[1])
+                    
+                    # Check if closed
+                    if entity.dxf.flags & 1:  # closed polyline
+                        p1 = points[-1]
+                        p2 = points[0]
+                        segment_length = np.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+                        total_length += segment_length
+                
+                elif entity.dxftype() == 'SPLINE':
+                    # Approximate spline length
+                    try:
+                        points = list(entity.control_points)
+                        for i in range(len(points) - 1):
+                            p1 = points[i]
+                            p2 = points[i + 1]
+                            segment_length = np.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+                            total_length += segment_length * 1.2  # Rough approximation
+                            
+                            # Update bounding box
+                            min_x = min(min_x, p1[0], p2[0])
+                            min_y = min(min_y, p1[1], p2[1])
+                            max_x = max(max_x, p1[0], p2[0])
+                            max_y = max(max_y, p1[1], p2[1])
+                    except:
+                        pass  # Skip if spline processing fails
+            
+            # Calculate bounding box
+            bbox_x = max_x - min_x if max_x > min_x else 100.0  # Default if no entities
+            bbox_y = max_y - min_y if max_y > min_y else 100.0
+            bbox_z = material_thickness
+            
+            # Calculate area (simplified - actual area would need proper polygon analysis)
+            area_mm2 = bbox_x * bbox_y * 0.7  # Assume 70% material utilization
+            volume_cm3 = (area_mm2 * bbox_z) / 1000
+            surface_area_cm2 = area_mm2 / 100
+            
+            metrics = GeometryMetrics(
+                volume_cm3=round(volume_cm3, 2),
+                surface_area_cm2=round(surface_area_cm2, 2),
+                bbox_mm=BoundingBox(
+                    x=round(bbox_x, 1),
+                    y=round(bbox_y, 1),
+                    z=round(bbox_z, 1)
+                ),
+                length_cut_mm=round(total_length, 1)
+            )
+            
+            # Calculate DFM issues
+            issues = self._calculate_dxf_dfm_issues(metrics, small_features, entity_count, process_type)
+            
+            return metrics, issues
+            
+        except Exception as e:
+            logger.error(f"Error analyzing DXF: {str(e)}")
+            # Fallback to mock if parsing fails
+            return self._analyze_dxf_mock(file_path, process_type, material_thickness)
     
     def _analyze_dxf_mock(self, file_path: str, process_type: str, material_thickness: float) -> Tuple[GeometryMetrics, List[DFMIssue]]:
         """Mock DXF analysis until DXF parser is integrated."""

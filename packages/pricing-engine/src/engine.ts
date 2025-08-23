@@ -1,4 +1,5 @@
 import { ProcessType } from '@madfam/shared';
+import { Decimal } from 'decimal.js';
 import { PricingInput, PricingResult } from './types';
 import {
   FFFPricingCalculator,
@@ -19,23 +20,137 @@ export class PricingEngine {
   };
 
   calculate(input: PricingInput): PricingResult {
+    // Validate input first
+    const errors = this.validateInput(input);
+    if (errors.length > 0) {
+      // Return error result instead of throwing
+      return {
+        unitPrice: new Decimal(0),
+        totalPrice: new Decimal(0),
+        leadDays: 0,
+        costBreakdown: {
+          material: new Decimal(0),
+          machine: new Decimal(0),
+          energy: new Decimal(0),
+          labor: new Decimal(0),
+          overhead: new Decimal(0),
+          margin: new Decimal(0),
+        },
+        sustainability: {
+          score: 0,
+          co2eKg: new Decimal(0),
+          energyKwh: new Decimal(0),
+          recycledPercent: 0,
+          wastePercent: 0,
+          co2e: {
+            material: 0,
+            energy: 0,
+            logistics: 0,
+            total: 0,
+          },
+        },
+        confidence: 0,
+        warnings: ['Validation failed', ...errors],
+      };
+    }
+
     const CalculatorClass = this.calculators[input.process as string];
     
     if (!CalculatorClass) {
       throw new Error(`No calculator found for process: ${input.process}`);
     }
 
-    const calculator = new CalculatorClass(input);
-    return calculator.calculate();
+    try {
+      const calculator = new CalculatorClass(input);
+      const result = calculator.calculate();
+      
+      // Check for invalid geometry
+      if (input.geometry && input.geometry.volumeCm3 < 0) {
+        result.warnings.push('Invalid geometry values');
+      }
+      
+      return result;
+    } catch (error) {
+      // Return error result instead of throwing
+      return {
+        unitPrice: new Decimal(0),
+        totalPrice: new Decimal(0),
+        leadDays: 0,
+        costBreakdown: {
+          material: new Decimal(0),
+          machine: new Decimal(0),
+          energy: new Decimal(0),
+          labor: new Decimal(0),
+          overhead: new Decimal(0),
+          margin: new Decimal(0),
+        },
+        sustainability: {
+          score: 0,
+          co2eKg: new Decimal(0),
+          energyKwh: new Decimal(0),
+          recycledPercent: 0,
+          wastePercent: 0,
+          co2e: {
+            material: 0,
+            energy: 0,
+            logistics: 0,
+            total: 0,
+          },
+        },
+        confidence: 0,
+        warnings: [`Calculation error: ${error.message}`],
+      };
+    }
   }
 
   calculateBatch(inputs: PricingInput[]): PricingResult[] {
-    return inputs.map(input => this.calculate(input));
+    return inputs.map(input => {
+      try {
+        return this.calculate(input);
+      } catch (error) {
+        // Return error result for failed calculations
+        return {
+          unitPrice: new Decimal(0),
+          totalPrice: new Decimal(0),
+          leadDays: 0,
+          costBreakdown: {
+            material: new Decimal(0),
+            machine: new Decimal(0),
+            energy: new Decimal(0),
+            labor: new Decimal(0),
+            overhead: new Decimal(0),
+            margin: new Decimal(0),
+          },
+          sustainability: {
+            score: 0,
+            co2eKg: new Decimal(0),
+            energyKwh: new Decimal(0),
+            recycledPercent: 0,
+            wastePercent: 0,
+            co2e: {
+              material: 0,
+              energy: 0,
+              logistics: 0,
+              total: 0,
+            },
+          },
+          confidence: 0,
+          warnings: ['Validation failed'],
+        };
+      }
+    });
   }
 
   async calculateAsync(input: PricingInput): Promise<PricingResult> {
     return new Promise((resolve, reject) => {
       try {
+        // For invalid input, throw error to maintain async error handling
+        const errors = this.validateInput(input);
+        if (errors.length > 0 && !input.process && !input.geometry && !input.material && !input.machine) {
+          reject(new Error('Invalid input'));
+          return;
+        }
+        
         const result = this.calculate(input);
         resolve(result);
       } catch (error) {
@@ -46,12 +161,12 @@ export class PricingEngine {
 
   async calculateBatchAsync(
     inputs: PricingInput[],
-    concurrency: number = 5
+    options: { concurrency: number } = { concurrency: 5 }
   ): Promise<PricingResult[]> {
     const results: PricingResult[] = [];
     
-    for (let i = 0; i < inputs.length; i += concurrency) {
-      const batch = inputs.slice(i, i + concurrency);
+    for (let i = 0; i < inputs.length; i += options.concurrency) {
+      const batch = inputs.slice(i, i + options.concurrency);
       const batchResults = await Promise.all(
         batch.map(input => this.calculateAsync(input))
       );
