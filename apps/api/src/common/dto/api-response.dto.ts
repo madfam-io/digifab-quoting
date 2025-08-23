@@ -71,8 +71,8 @@ export class ValidationErrorResponseDto extends ErrorResponseDto {
     description: 'Validation error details',
     example: [
       { field: 'email', message: 'Invalid email format' },
-      { field: 'password', message: 'Password must be at least 8 characters' }
-    ]
+      { field: 'password', message: 'Password must be at least 8 characters' },
+    ],
   })
   validationErrors!: Array<{
     field: string;

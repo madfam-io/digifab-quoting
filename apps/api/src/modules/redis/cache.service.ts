@@ -25,7 +25,7 @@ export class CacheService {
    */
   async getOrSet<T>(options: CacheAsideOptions<T>): Promise<T> {
     const cacheKey = this.buildKey(options.key, options.tenantSpecific);
-    
+
     // Try to get from cache
     const cached = await this.redisService.get<T>(cacheKey);
     if (cached !== null) {
@@ -36,7 +36,7 @@ export class CacheService {
     // Cache miss - fetch data
     this.logger.debug(`Cache miss for key: ${cacheKey}`);
     const data = await options.fetchFn();
-    
+
     // Store in cache
     let tenantId: string | undefined;
     if (options.tenantSpecific) {
@@ -46,14 +46,14 @@ export class CacheService {
         // No tenant context available
       }
     }
-    
+
     const metadata = {
       tenantId,
       version: options.version,
     };
-    
+
     await this.redisService.set(cacheKey, data, options.ttl, metadata);
-    
+
     return data;
   }
 
@@ -86,10 +86,10 @@ export class CacheService {
    * Cache pricing rules with TTL
    */
   async cachePricingRules(
-    service: string, 
-    material: string, 
+    service: string,
+    material: string,
     rules: any,
-    ttl = 3600 // 1 hour default
+    ttl = 3600, // 1 hour default
   ): Promise<void> {
     const key = this.buildKey(`pricing:rules:${service}:${material}`, true);
     await this.redisService.set(key, rules, ttl);
@@ -133,9 +133,9 @@ export class CacheService {
    * Cache user session data
    */
   async cacheUserSession(
-    userId: string, 
-    sessionData: any, 
-    ttl = 900 // 15 minutes
+    userId: string,
+    sessionData: any,
+    ttl = 900, // 15 minutes
   ): Promise<void> {
     const key = this.buildKey(`session:${userId}`, true);
     await this.redisService.set(key, sessionData, ttl);
@@ -178,7 +178,7 @@ export class CacheService {
     fileHash: string,
     configuration: any,
     result: any,
-    ttl = 3600 // 1 hour
+    ttl = 3600, // 1 hour
   ): Promise<void> {
     const key = this.generateQuoteKey(fileHash, configuration);
     await this.redisService.set(key, result, ttl);
@@ -187,10 +187,7 @@ export class CacheService {
   /**
    * Get cached quote calculation
    */
-  async getCachedQuoteCalculation(
-    fileHash: string,
-    configuration: any
-  ): Promise<any | null> {
+  async getCachedQuoteCalculation(fileHash: string, configuration: any): Promise<any | null> {
     const key = this.generateQuoteKey(fileHash, configuration);
     return await this.redisService.get(key);
   }
@@ -200,11 +197,11 @@ export class CacheService {
    */
   async warmUpCache(): Promise<void> {
     this.logger.log('Starting cache warm-up');
-    
+
     try {
       // This method can be extended to pre-load frequently accessed data
       // For now, it's a placeholder for future implementation
-      
+
       this.logger.log('Cache warm-up completed');
     } catch (error) {
       this.logger.error('Error during cache warm-up', error as any);
@@ -217,7 +214,7 @@ export class CacheService {
   async getHealthStatus() {
     const isConnected = this.redisService.isConnected();
     const statistics = this.redisService.getStatistics();
-    
+
     return {
       status: isConnected ? 'healthy' : 'unhealthy',
       connected: isConnected,

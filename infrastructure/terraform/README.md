@@ -91,6 +91,7 @@ The following environment variables are automatically configured:
 ## Cost Optimization
 
 ### Production Environment (Estimated Monthly Cost)
+
 - **VPC & Networking**: ~$100 (NAT Gateways)
 - **ECS Fargate**: ~$300 (3 API + 2 Worker tasks)
 - **RDS PostgreSQL**: ~$200 (db.t3.large Multi-AZ)
@@ -117,6 +118,7 @@ The following environment variables are automatically configured:
 ## Monitoring & Alerts
 
 ### Key Metrics
+
 - **API Response Time**: < 200ms p95
 - **Database CPU**: < 70%
 - **Redis Memory**: < 80%
@@ -125,6 +127,7 @@ The following environment variables are automatically configured:
 ### CloudWatch Dashboards
 
 Create custom dashboards for:
+
 - Application performance
 - Infrastructure health
 - Cost tracking
@@ -133,12 +136,14 @@ Create custom dashboards for:
 ## Disaster Recovery
 
 ### Backup Strategy
+
 - **RDS**: Automated daily backups with 30-day retention
 - **S3**: Versioning enabled with cross-region replication
 - **Redis**: Daily snapshots with 5-day retention
 - **Code**: Stored in Git with tags for each deployment
 
 ### Recovery Procedures
+
 1. **Database Failure**: Promote read replica or restore from backup
 2. **Region Failure**: Deploy to alternate region using same Terraform
 3. **Data Corruption**: Restore from S3 versioning or RDS snapshots
@@ -146,6 +151,7 @@ Create custom dashboards for:
 ## Maintenance
 
 ### Regular Tasks
+
 - Review CloudWatch logs and metrics
 - Update container images
 - Apply security patches
@@ -153,6 +159,7 @@ Create custom dashboards for:
 - Test disaster recovery procedures
 
 ### Terraform State Management
+
 - State is stored in S3 with versioning
 - Use `terraform state` commands carefully
 - Always backup state before major changes
@@ -189,6 +196,7 @@ terraform destroy
 ## Support
 
 For infrastructure issues:
+
 - Check CloudWatch logs first
 - Review Terraform state
 - Contact DevOps team

@@ -3,15 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PricingService } from '../pricing/pricing.service';
 import { QuoteCacheService } from '../redis/quote-cache.service';
 import { Cacheable, CacheInvalidate } from '../redis/decorators/cache.decorator';
-import { 
-  Quote as PrismaQuote,
-  QuoteItem as PrismaQuoteItem,
-} from '@prisma/client';
-import { 
-  QuoteStatus,
-  Currency,
-  ProcessType,
-} from '@madfam/shared';
+import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem } from '@prisma/client';
+import { QuoteStatus, Currency, ProcessType } from '@madfam/shared';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AddQuoteItemDto } from './dto/add-quote-item.dto';
 import { CalculateQuoteDto } from './dto/calculate-quote.dto';
@@ -28,11 +21,7 @@ export class QuotesService {
     private quoteCacheService: QuoteCacheService,
   ) {}
 
-  async create(
-    tenantId: string,
-    customerId: string,
-    dto: CreateQuoteDto,
-  ): Promise<PrismaQuote> {
+  async create(tenantId: string, customerId: string, dto: CreateQuoteDto): Promise<PrismaQuote> {
     const validityDays = 14; // TODO: Get from tenant config
     const validityUntil = new Date();
     validityUntil.setDate(validityUntil.getDate() + validityDays);
@@ -69,7 +58,7 @@ export class QuotesService {
     const where = {
       tenantId,
       ...(filters.customerId && { customerId: filters.customerId }),
-      ...(filters.status && { status: filters.status as string }),  // Cast enum to string for Prisma
+      ...(filters.status && { status: filters.status as string }), // Cast enum to string for Prisma
     };
 
     const [data, total] = await Promise.all([
@@ -127,11 +116,7 @@ export class QuotesService {
   }
 
   @CacheInvalidate('quote:detail:*')
-  async update(
-    tenantId: string,
-    id: string,
-    dto: UpdateQuoteDto,
-  ): Promise<PrismaQuote> {
+  async update(tenantId: string, id: string, dto: UpdateQuoteDto): Promise<PrismaQuote> {
     const quote = await this.findOne(tenantId, id);
 
     if (quote.status !== QuoteStatus.DRAFT && quote.status !== QuoteStatus.SUBMITTED) {
@@ -147,11 +132,7 @@ export class QuotesService {
     });
   }
 
-  async addItem(
-    tenantId: string,
-    quoteId: string,
-    dto: AddQuoteItemDto,
-  ): Promise<PrismaQuoteItem> {
+  async addItem(tenantId: string, quoteId: string, dto: AddQuoteItemDto): Promise<PrismaQuoteItem> {
     const quote = await this.findOne(tenantId, quoteId);
 
     if (quote.status !== QuoteStatus.DRAFT) {
@@ -196,11 +177,7 @@ export class QuotesService {
     }) as Promise<PrismaQuoteItem>;
   }
 
-  async calculate(
-    tenantId: string,
-    quoteId: string,
-    dto: CalculateQuoteDto,
-  ): Promise<any> {
+  async calculate(tenantId: string, quoteId: string, dto: CalculateQuoteDto): Promise<any> {
     const quote = await this.findOne(tenantId, quoteId);
 
     // Update objective if provided
@@ -326,7 +303,11 @@ export class QuotesService {
     };
   }
 
-  async approve(tenantId: string, quoteId: string, customerId: string): Promise<{ quote: PrismaQuote; sessionId?: string; paymentUrl?: string }> {
+  async approve(
+    tenantId: string,
+    quoteId: string,
+    customerId: string,
+  ): Promise<{ quote: PrismaQuote; sessionId?: string; paymentUrl?: string }> {
     const quote = await this.findOne(tenantId, quoteId);
 
     if (quote.customerId !== customerId) {
@@ -403,10 +384,8 @@ export class QuotesService {
       new Decimal(0),
     );
 
-    const avgScore = items.reduce(
-      (sum, item) => sum + (item.sustainability?.score || 0),
-      0,
-    ) / items.length;
+    const avgScore =
+      items.reduce((sum, item) => sum + (item.sustainability?.score || 0), 0) / items.length;
 
     const totalEnergyKwh = items.reduce(
       (sum, item) => sum.plus(new Decimal(item.sustainability?.energyKwh || 0)),
@@ -425,11 +404,11 @@ export class QuotesService {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    
+
     // Get the count of quotes for this tenant in the current month
     const startOfMonth = new Date(year, now.getMonth(), 1);
     const endOfMonth = new Date(year, now.getMonth() + 1, 0, 23, 59, 59, 999);
-    
+
     const count = await this.prisma.quote.count({
       where: {
         tenantId,
@@ -439,7 +418,7 @@ export class QuotesService {
         },
       },
     });
-    
+
     // Generate quote number in format: Q-YYYY-MM-XXXX
     const sequence = String(count + 1).padStart(4, '0');
     return `Q-${year}-${month}-${sequence}`;

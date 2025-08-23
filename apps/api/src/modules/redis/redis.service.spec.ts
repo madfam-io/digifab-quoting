@@ -153,11 +153,7 @@ describe('RedisService', () => {
 
       const result = await service.set('test:key', { test: 'data' }, 300);
       expect(result).toBe(true);
-      expect(mockRedisClient.setex).toHaveBeenCalledWith(
-        'test:key',
-        300,
-        expect.any(String),
-      );
+      expect(mockRedisClient.setex).toHaveBeenCalledWith('test:key', 300, expect.any(String));
       expect(service.getStatistics().sets).toBe(1);
     });
 
@@ -209,10 +205,12 @@ describe('RedisService', () => {
   describe('statistics', () => {
     it('should calculate hit rate correctly', async () => {
       // Generate some hits and misses
-      mockRedisClient.get.mockResolvedValueOnce(JSON.stringify({
-        data: 'test',
-        metadata: { createdAt: Date.now() },
-      }));
+      mockRedisClient.get.mockResolvedValueOnce(
+        JSON.stringify({
+          data: 'test',
+          metadata: { createdAt: Date.now() },
+        }),
+      );
       mockRedisClient.get.mockResolvedValueOnce(null);
       mockRedisClient.get.mockResolvedValueOnce(null);
 
@@ -229,7 +227,7 @@ describe('RedisService', () => {
     it('should reset statistics', () => {
       service.resetStatistics();
       const stats = service.getStatistics();
-      
+
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
       expect(stats.sets).toBe(0);

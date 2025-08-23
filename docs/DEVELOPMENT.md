@@ -9,7 +9,7 @@ This guide covers setting up your development environment, understanding the cod
 ### Required Software
 
 - **Node.js**: v18.17.0 or higher
-- **npm**: v9.0.0 or higher  
+- **npm**: v9.0.0 or higher
 - **Python**: v3.9 or higher
 - **PostgreSQL**: v14 or higher
 - **Redis**: v6.2 or higher
@@ -63,7 +63,7 @@ cp .env.example .env
 # API environment
 cp apps/api/.env.example apps/api/.env
 
-# Web environment  
+# Web environment
 cp apps/web/.env.example apps/web/.env
 
 # Worker environment
@@ -75,6 +75,7 @@ cp apps/worker/.env.example apps/worker/.env
 Edit the `.env` files with your local configuration:
 
 **Root `.env`:**
+
 ```env
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/madfam_quoting
@@ -82,6 +83,7 @@ REDIS_URL=redis://localhost:6379
 ```
 
 **API `.env`:**
+
 ```env
 # Database
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/madfam_quoting
@@ -120,6 +122,7 @@ ENABLE_WORKER_PROCESSING=true
 ```
 
 **Web `.env`:**
+
 ```env
 # API URL
 NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
@@ -165,7 +168,7 @@ npm run dev
 npm run dev -- --filter=@madfam/api
 
 # Terminal 2: Web
-npm run dev -- --filter=@madfam/web  
+npm run dev -- --filter=@madfam/web
 
 # Terminal 3: Worker
 cd apps/worker
@@ -256,6 +259,7 @@ feature/JIRA-123-feature-name
 ### Creating a Feature
 
 1. **Create feature branch:**
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -265,6 +269,7 @@ git checkout -b feature/JIRA-123-add-user-notifications
 2. **Make changes following conventions**
 
 3. **Commit with conventional commits:**
+
 ```bash
 git add .
 git commit -m "feat(api): add email notifications for quote updates
@@ -277,6 +282,7 @@ Closes JIRA-123"
 ```
 
 4. **Push and create PR:**
+
 ```bash
 git push origin feature/JIRA-123-add-user-notifications
 ```
@@ -320,7 +326,7 @@ async function createQuote(params: QuoteCreateParams): Promise<Quote> {
 
 // Use functional programming where appropriate
 const totalPrice = items
-  .map(item => item.unitPrice * item.quantity)
+  .map((item) => item.unitPrice * item.quantity)
   .reduce((sum, price) => sum + price, 0);
 ```
 
@@ -337,12 +343,12 @@ class GeometryMetrics:
     volume_cm3: float
     surface_area_cm2: float
     bbox_mm: Dict[str, float]
-    
+
     def validate(self) -> None:
         """Validate geometry metrics."""
         if self.volume_cm3 <= 0:
             raise ValueError("Volume must be positive")
-        
+
         if any(dim <= 0 for dim in self.bbox_mm.values()):
             raise ValueError("Bounding box dimensions must be positive")
 
@@ -397,16 +403,14 @@ describe('QuotesService', () => {
       expect(repository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: QuoteStatus.DRAFT,
-        })
+        }),
       );
     });
 
     it('should throw error for empty items', async () => {
       const input = { items: [] };
 
-      await expect(service.create(input)).rejects.toThrow(
-        'At least one item is required'
-      );
+      await expect(service.create(input)).rejects.toThrow('At least one item is required');
     });
   });
 });
@@ -432,7 +436,7 @@ describe('Quotes API (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
-    
+
     authToken = response.body.data.accessToken;
   });
 
@@ -442,12 +446,14 @@ describe('Quotes API (e2e)', () => {
         .post('/quotes')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          items: [{
-            fileId: 'file_123',
-            process: 'FFF',
-            material: 'PLA',
-            quantity: 10,
-          }],
+          items: [
+            {
+              fileId: 'file_123',
+              process: 'FFF',
+              material: 'PLA',
+              quantity: 10,
+            },
+          ],
         })
         .expect(201);
 
@@ -486,15 +492,15 @@ model Quote {
   id        String   @id @default(uuid())
   tenantId  String   @map("tenant_id")
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  
+
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
+
   // Fields
   status    QuoteStatus @default(DRAFT)
   items     QuoteItem[]
-  
+
   // Indexes for performance
   @@index([tenantId, status])
   @@index([createdAt])
@@ -507,6 +513,7 @@ model Quote {
 #### Creating a New Endpoint
 
 1. **Define DTO:**
+
 ```typescript
 // dto/create-material.dto.ts
 export class CreateMaterialDto {
@@ -532,6 +539,7 @@ export class CreateMaterialDto {
 ```
 
 2. **Implement Service:**
+
 ```typescript
 // materials.service.ts
 @Injectable()
@@ -543,7 +551,7 @@ export class MaterialsService {
 
   async create(dto: CreateMaterialDto): Promise<Material> {
     const tenantId = this.tenantContext.getTenantId();
-    
+
     // Check for duplicates
     const existing = await this.prisma.material.findFirst({
       where: {
@@ -567,6 +575,7 @@ export class MaterialsService {
 ```
 
 3. **Create Controller:**
+
 ```typescript
 // materials.controller.ts
 @Controller('materials')
@@ -607,7 +616,7 @@ interface QuoteCardProps {
 
 export function QuoteCard({ quote, onSelect }: QuoteCardProps) {
   return (
-    <Card 
+    <Card
       className="cursor-pointer hover:shadow-lg transition-shadow"
       onClick={() => onSelect?.(quote)}
     >
@@ -674,7 +683,7 @@ export function useQuotes(params?: QuoteListParams) {
 
 export function useCreateQuote() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: quotesApi.create,
     onSuccess: () => {
@@ -689,6 +698,7 @@ export function useCreateQuote() {
 ### API Debugging
 
 1. **Enable debug logging:**
+
 ```typescript
 // main.ts
 const app = await NestFactory.create(AppModule, {
@@ -697,6 +707,7 @@ const app = await NestFactory.create(AppModule, {
 ```
 
 2. **Use VS Code debugger:**
+
 ```json
 // .vscode/launch.json
 {
@@ -711,6 +722,7 @@ const app = await NestFactory.create(AppModule, {
 ```
 
 3. **Database query logging:**
+
 ```typescript
 // Enable Prisma query logging
 const prisma = new PrismaClient({
@@ -742,6 +754,7 @@ if (debug) {
 ### Database Optimization
 
 1. **Use proper indexes:**
+
 ```prisma
 model Quote {
   // Composite indexes for common queries
@@ -751,6 +764,7 @@ model Quote {
 ```
 
 2. **Avoid N+1 queries:**
+
 ```typescript
 // Bad
 const quotes = await prisma.quote.findMany();
@@ -769,6 +783,7 @@ const quotes = await prisma.quote.findMany({
 ```
 
 3. **Use pagination:**
+
 ```typescript
 const quotes = await prisma.quote.findMany({
   skip: (page - 1) * pageSize,
@@ -780,6 +795,7 @@ const quotes = await prisma.quote.findMany({
 ### Frontend Optimization
 
 1. **Code splitting:**
+
 ```typescript
 const QuoteWizard = dynamic(() => import('./QuoteWizard'), {
   loading: () => <QuoteWizardSkeleton />,
@@ -787,6 +803,7 @@ const QuoteWizard = dynamic(() => import('./QuoteWizard'), {
 ```
 
 2. **Image optimization:**
+
 ```typescript
 import Image from 'next/image';
 
@@ -800,6 +817,7 @@ import Image from 'next/image';
 ```
 
 3. **Memoization:**
+
 ```typescript
 const expensiveCalculation = useMemo(() => {
   return calculateTotalPrice(items);

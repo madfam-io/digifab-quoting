@@ -42,21 +42,24 @@ export function FileUpload({
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const acceptedExtensions = acceptedFileTypes.flatMap(type => FILE_EXTENSIONS[type]);
-  const accept = acceptedExtensions.reduce((acc, ext) => {
-    acc[`application/${ext.substring(1)}`] = [ext];
-    return acc;
-  }, {} as Record<string, string[]>);
+  const acceptedExtensions = acceptedFileTypes.flatMap((type) => FILE_EXTENSIONS[type]);
+  const accept = acceptedExtensions.reduce(
+    (acc, ext) => {
+      acc[`application/${ext.substring(1)}`] = [ext];
+      return acc;
+    },
+    {} as Record<string, string[]>,
+  );
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const newFiles: UploadedFile[] = acceptedFiles.map(file => ({
+    const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
       id: Math.random().toString(36).substring(7),
       file,
       progress: 0,
       status: 'pending' as const,
     }));
 
-    setFiles(prev => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles]);
     setIsUploading(true);
 
     // Upload files sequentially
@@ -120,7 +123,12 @@ export function FileUpload({
 
       updateFileStatus(uploadFile.id, 'success', 100, undefined, fileId);
     } catch (error) {
-      updateFileStatus(uploadFile.id, 'error', 0, error instanceof Error ? error.message : 'Upload failed');
+      updateFileStatus(
+        uploadFile.id,
+        'error',
+        0,
+        error instanceof Error ? error.message : 'Upload failed',
+      );
     }
   };
 
@@ -131,21 +139,19 @@ export function FileUpload({
     error?: string,
     fileId?: string,
   ) => {
-    setFiles(prev =>
-      prev.map(f =>
-        f.id === id ? { ...f, status, progress, error, fileId } : f
-      )
+    setFiles((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, status, progress, error, fileId } : f)),
     );
   };
 
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
+    setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   const getFileType = (filename: string): FileType => {
     const extension = filename.split('.').pop()?.toLowerCase();
     for (const [type, extensions] of Object.entries(FILE_EXTENSIONS)) {
-      if (extensions.some(ext => ext.substring(1) === extension)) {
+      if (extensions.some((ext) => ext.substring(1) === extension)) {
         return type as FileType;
       }
     }
@@ -160,7 +166,7 @@ export function FileUpload({
     disabled: isUploading || files.length >= maxFiles,
   });
 
-  const successfulFiles = files.filter(f => f.status === 'success' && f.fileId);
+  const successfulFiles = files.filter((f) => f.status === 'success' && f.fileId);
 
   return (
     <div className="space-y-4">
@@ -189,7 +195,7 @@ export function FileUpload({
 
       {files.length > 0 && (
         <div className="space-y-2">
-          {files.map(file => (
+          {files.map((file) => (
             <Card key={file.id} className="p-4">
               <div className="flex items-center gap-4">
                 <FileIcon className="w-8 h-8 text-muted-foreground flex-shrink-0" />
@@ -224,7 +230,7 @@ export function FileUpload({
 
       {successfulFiles.length > 0 && (
         <Button
-          onClick={() => onFilesUploaded(successfulFiles.map(f => f.fileId || ''))}
+          onClick={() => onFilesUploaded(successfulFiles.map((f) => f.fileId || ''))}
           className="w-full"
         >
           Continuar con {successfulFiles.length} archivo{successfulFiles.length !== 1 && 's'}

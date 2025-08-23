@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsObject, IsOptional, IsNumber, IsString, IsArray, Min, Max, IsBoolean, Matches } from 'class-validator';
+import {
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsNumber,
+  IsString,
+  IsArray,
+  Min,
+  Max,
+  IsBoolean,
+  Matches,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { JobType, JobStatus, JobOptions } from '../interfaces/job.interface';
 
@@ -17,9 +28,9 @@ export class JobOptionsDto implements JobOptions {
   @Max(10)
   attempts?: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Backoff configuration',
-    example: { type: 'exponential', delay: 5000 }
+    example: { type: 'exponential', delay: 5000 },
   })
   @IsOptional()
   @IsObject()
@@ -85,12 +96,14 @@ export class RecurringJobDto {
   @IsObject()
   data!: Record<string, any>;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Cron expression for scheduling',
-    example: '0 0 * * *' // Daily at midnight
+    example: '0 0 * * *', // Daily at midnight
   })
   @IsString()
-  @Matches(/^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/)
+  @Matches(
+    /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/,
+  )
   cronExpression!: string;
 
   @ApiPropertyOptional({ description: 'Job processing options' })
@@ -197,17 +210,17 @@ export class QueueStatusDto {
 }
 
 export class CleanJobsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Grace period in milliseconds',
-    example: 86400000 // 24 hours
+    example: 86400000, // 24 hours
   })
   @IsNumber()
   @Min(0)
   grace!: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Job statuses to clean',
-    default: ['completed', 'failed']
+    default: ['completed', 'failed'],
   })
   @IsOptional()
   @IsArray()
@@ -271,9 +284,9 @@ export class QuoteCalculationJobDto {
 }
 
 export class EmailNotificationJobDto {
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ['quote-ready', 'quote-accepted', 'quote-expired', 'order-shipped'],
-    description: 'Email notification type' 
+    description: 'Email notification type',
   })
   @IsEnum(['quote-ready', 'quote-accepted', 'quote-expired', 'order-shipped'])
   type!: 'quote-ready' | 'quote-accepted' | 'quote-expired' | 'order-shipped';
@@ -302,9 +315,9 @@ export class EmailNotificationJobDto {
 }
 
 export class ReportGenerationJobDto {
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ['quote', 'order', 'invoice', 'analytics'],
-    description: 'Report type to generate' 
+    description: 'Report type to generate',
   })
   @IsEnum(['quote', 'order', 'invoice', 'analytics'])
   reportType!: 'quote' | 'order' | 'invoice' | 'analytics';
@@ -313,9 +326,9 @@ export class ReportGenerationJobDto {
   @IsString()
   entityId!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ['pdf', 'excel', 'csv'],
-    description: 'Report output format' 
+    description: 'Report output format',
   })
   @IsEnum(['pdf', 'excel', 'csv'])
   format!: 'pdf' | 'excel' | 'csv';

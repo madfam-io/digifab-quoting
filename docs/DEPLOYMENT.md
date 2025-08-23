@@ -12,25 +12,25 @@ graph TB
         USERS[Users]
         CF[CloudFront CDN]
     end
-    
+
     subgraph "AWS VPC"
         subgraph "Public Subnet"
             ALB[Application Load Balancer]
             NAT[NAT Gateway]
         end
-        
+
         subgraph "Private Subnet"
             ECS[ECS Fargate Cluster]
             RDS[(RDS PostgreSQL)]
             REDIS[(ElastiCache Redis)]
         end
-        
+
         subgraph "Storage"
             S3[S3 Buckets]
             ECR[ECR Registry]
         end
     end
-    
+
     USERS --> CF
     CF --> ALB
     ALB --> ECS
@@ -282,19 +282,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm test
-      
+
       - name: Run linting
         run: npm run lint
 
@@ -304,21 +304,21 @@ jobs:
     strategy:
       matrix:
         service: [api, web, worker]
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
+
       - name: Build and push Docker image
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -333,17 +333,17 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Deploy to ECS
         run: |
           # Update API service
@@ -351,22 +351,22 @@ jobs:
             --cluster madfam-prod \
             --service madfam-api \
             --force-new-deployment
-          
+
           # Update Worker service
           aws ecs update-service \
             --cluster madfam-prod \
             --service madfam-worker \
             --force-new-deployment
-      
+
       - name: Deploy Frontend
         run: |
           cd apps/web
           npm ci
           npm run build
-          
+
           # Sync to S3
           aws s3 sync out/ s3://madfam-web-prod/ --delete
-          
+
           # Invalidate CloudFront
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_ID }} \
@@ -500,12 +500,14 @@ aws logs put-retention-policy \
 ### Blue-Green Deployment
 
 1. **Create new task definition version**
+
 ```bash
 aws ecs register-task-definition \
   --cli-input-json file://task-definition-new.json
 ```
 
 2. **Update service with new task definition**
+
 ```bash
 aws ecs update-service \
   --cluster madfam-prod \
@@ -515,6 +517,7 @@ aws ecs update-service \
 ```
 
 3. **Monitor deployment**
+
 ```bash
 aws ecs describe-services \
   --cluster madfam-prod \
@@ -523,6 +526,7 @@ aws ecs describe-services \
 ```
 
 4. **Rollback if needed**
+
 ```bash
 aws ecs update-service \
   --cluster madfam-prod \

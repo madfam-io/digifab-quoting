@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { LoggerService } from '../logger/logger.service';
@@ -22,7 +17,7 @@ export class PerformanceInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(() => {
         const responseTime = Date.now() - now;
-        
+
         // Log slow requests (> 1 second)
         if (responseTime > 1000) {
           this.logger.warn(`Slow request detected: ${method} ${url}`, {

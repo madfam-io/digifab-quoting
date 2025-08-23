@@ -84,12 +84,12 @@ const quoteResult = await this.quoteCacheService.getOrCalculateQuote(
     service: 'FFF_PRINTING',
     material: 'PLA',
     quantity: 10,
-    options: { color: 'red', finish: 'glossy' }
+    options: { color: 'red', finish: 'glossy' },
   },
   async () => {
     // Calculate quote if not cached
     return await this.calculateQuote();
-  }
+  },
 );
 ```
 
@@ -109,23 +109,28 @@ await this.cacheService.extendUserSession(userId);
 ## Cache Keys Structure
 
 ### Tenant Isolation
+
 All tenant-specific data is automatically prefixed:
+
 ```
 tenant:{tenantId}:{your-key}
 ```
 
 ### Quote Cache Keys
+
 ```
 quote:file:{fileHash}:{service}:{material}:{quantity}:{optionsHash}
 ```
 
 ### Pricing Cache Keys
+
 ```
 pricing:rules:{service}:{material}
 pricing:{service}:{material}
 ```
 
 ### Session Cache Keys
+
 ```
 tenant:{tenantId}:session:{userId}
 ```
@@ -148,6 +153,7 @@ REDIS_URL=redis://localhost:6379
 ## Cache Invalidation Strategies
 
 ### Pattern-Based Invalidation
+
 ```typescript
 // Invalidate all quotes for a file
 await this.quoteCacheService.invalidateFileQuotes(fileHash);
@@ -160,6 +166,7 @@ await this.cacheService.invalidate('pricing:*');
 ```
 
 ### Event-Based Invalidation
+
 ```typescript
 @CacheInvalidate(['pricing:*', 'quotes:*'])
 async updatePricingRules() {
@@ -246,16 +253,19 @@ POST /cache/warmup
 ## Troubleshooting
 
 ### Low Hit Rate
+
 - Check if TTLs are too short
 - Verify key generation is consistent
 - Consider implementing cache warming
 
 ### High Memory Usage
+
 - Review TTL settings
 - Implement cache eviction policies
 - Monitor for memory leaks
 
 ### Connection Issues
+
 - Check Redis connection string
 - Verify network connectivity
 - Review Redis server logs
@@ -284,10 +294,10 @@ describe('CacheService', () => {
 
     // First call - cache miss
     await service.getOrSet({ key: 'test', fetchFn: async () => 'fresh' });
-    
+
     // Second call - cache hit
     const result = await service.getOrSet({ key: 'test', fetchFn: async () => 'fresh' });
-    
+
     expect(result).toEqual({ data: 'cached' });
     expect(mockRedis.set).toHaveBeenCalledTimes(1);
   });

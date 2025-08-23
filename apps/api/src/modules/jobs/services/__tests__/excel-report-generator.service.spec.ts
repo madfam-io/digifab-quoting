@@ -101,7 +101,9 @@ describe('ExcelReportGeneratorService', () => {
         },
       };
 
-      (ExcelJS.Workbook as jest.MockedClass<typeof ExcelJS.Workbook>).mockImplementation(() => mockWorkbook);
+      (ExcelJS.Workbook as jest.MockedClass<typeof ExcelJS.Workbook>).mockImplementation(
+        () => mockWorkbook,
+      );
     });
 
     it('should generate an Excel report for a quote', async () => {
@@ -113,7 +115,9 @@ describe('ExcelReportGeneratorService', () => {
       expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Quote Details');
       expect(mockWorksheet.mergeCells).toHaveBeenCalledWith('A1:F1');
       expect(mockWorksheet.getCell).toHaveBeenCalledWith('A1');
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('Generating Excel report'));
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('Generating Excel report'),
+      );
       expect(mockWorkbook.xlsx.writeFile).toHaveBeenCalledWith(expect.stringContaining('.xlsx'));
     });
 
@@ -183,9 +187,7 @@ describe('ExcelReportGeneratorService', () => {
           { status: 'accepted', _count: 10, _sum: { total: 10000 } },
           { status: 'pending', _count: 5, _sum: { total: 5000 } },
         ],
-        orders: [
-          { status: 'completed', _count: 8, _sum: { totalPaid: 8000 } },
-        ],
+        orders: [{ status: 'completed', _count: 8, _sum: { totalPaid: 8000 } }],
         revenue: [
           { period: '2024-01-01', order_count: 3, revenue: 3000 },
           { period: '2024-01-02', order_count: 5, revenue: 5000 },
@@ -207,11 +209,12 @@ describe('ExcelReportGeneratorService', () => {
 
       const rowCalls = mockWorksheet.getRow.mock.calls;
       expect(rowCalls.length).toBeGreaterThan(0);
-      
+
       // Verify that item details were added
-      const cellSetCalls = mockWorksheet.getRow.mock.results
-        .flatMap((result: any) => result.value.getCell.mock.calls);
-      
+      const cellSetCalls = mockWorksheet.getRow.mock.results.flatMap(
+        (result: any) => result.value.getCell.mock.calls,
+      );
+
       expect(cellSetCalls.length).toBeGreaterThan(0);
     });
 
@@ -260,9 +263,7 @@ describe('ExcelReportGeneratorService', () => {
         total: 1100,
         order: {
           quote: {
-            items: [
-              { name: 'Item 1', quantity: 1, unitPrice: 1000 },
-            ],
+            items: [{ name: 'Item 1', quantity: 1, unitPrice: 1000 }],
           },
         },
       };
@@ -284,17 +285,21 @@ describe('ExcelReportGeneratorService', () => {
         items: [],
       };
 
-      await expect(service.generateReport('quote', incompleteQuote, mockOptions))
-        .resolves.toHaveProperty('fileName');
-      
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('Excel report generated successfully'));
+      await expect(
+        service.generateReport('quote', incompleteQuote, mockOptions),
+      ).resolves.toHaveProperty('fileName');
+
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('Excel report generated successfully'),
+      );
     });
 
     it('should handle file write errors', async () => {
       mockWorkbook.xlsx.writeFile.mockRejectedValue(new Error('Write failed'));
 
-      await expect(service.generateReport('quote', mockQuoteData, mockOptions))
-        .rejects.toThrow('Write failed');
+      await expect(service.generateReport('quote', mockQuoteData, mockOptions)).rejects.toThrow(
+        'Write failed',
+      );
     });
 
     it('should set column widths', async () => {
@@ -305,7 +310,7 @@ describe('ExcelReportGeneratorService', () => {
 
       // Verify columns were configured
       expect(mockColumns.length).toBe(0); // Initially empty
-      
+
       // The service should iterate over columns and set width
       // This is done through forEach, so we verify the columns array was accessed
       expect(mockWorksheet.columns).toBeDefined();
@@ -342,8 +347,9 @@ describe('ExcelReportGeneratorService', () => {
         throw new Error('Workbook creation failed');
       });
 
-      await expect(service.generateReport('quote', {}, {}))
-        .rejects.toThrow('Workbook creation failed');
+      await expect(service.generateReport('quote', {}, {})).rejects.toThrow(
+        'Workbook creation failed',
+      );
     });
 
     it('should handle undefined analytics data arrays', async () => {
@@ -355,9 +361,10 @@ describe('ExcelReportGeneratorService', () => {
         // Missing quotes, orders, revenue arrays
       };
 
-      await expect(service.generateReport('analytics', mockAnalyticsData, {}))
-        .resolves.toHaveProperty('fileName');
-      
+      await expect(
+        service.generateReport('analytics', mockAnalyticsData, {}),
+      ).resolves.toHaveProperty('fileName');
+
       // Should create Summary sheet even with missing data
       expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Summary');
     });

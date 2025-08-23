@@ -117,33 +117,38 @@ CREATE INDEX IF NOT EXISTS "idx_quote_search" ON "Quote" USING GIN (to_tsvector(
 ## Index Purpose
 
 ### Foreign Key Indexes
+
 - All foreign key columns have indexes to improve JOIN performance
 - Composite indexes for common query patterns
 
 ### Query Optimization
+
 - Status fields indexed for filtering
 - Date fields indexed for sorting and range queries
 - Tenant ID indexed on all tables for multi-tenant isolation
 
 ### Text Search
+
 - GIN indexes for full-text search on customer names, material descriptions, and quote numbers
 
 ## Applying Indexes
 
 1. **During Development:**
+
    ```bash
    # Start your PostgreSQL database
    docker-compose up -d postgres
-   
+
    # Run the migration
    npm run db:migrate
    ```
 
 2. **Manual Application:**
+
    ```bash
    # Connect to your database
    psql -U postgres -d madfam_quoting
-   
+
    # Run the SQL commands above
    ```
 
@@ -155,8 +160,9 @@ CREATE INDEX IF NOT EXISTS "idx_quote_search" ON "Quote" USING GIN (to_tsvector(
 ## Monitoring Index Usage
 
 Check index usage with:
+
 ```sql
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,

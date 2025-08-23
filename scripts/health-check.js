@@ -12,26 +12,26 @@ const SERVICES = {
     name: 'API Server',
     url: 'http://localhost:4000/health',
     port: 4000,
-    critical: true
+    critical: true,
   },
   web: {
     name: 'Web Application',
     url: 'http://localhost:3002',
     port: 3002,
-    critical: true
+    critical: true,
   },
   postgres: {
     name: 'PostgreSQL',
     port: 5432,
     checkCommand: 'pg_isready -h localhost -p 5432',
-    critical: true
+    critical: true,
   },
   redis: {
     name: 'Redis',
     port: 6379,
     checkCommand: 'redis-cli ping',
-    critical: true
-  }
+    critical: true,
+  },
 };
 
 // Color codes
@@ -42,14 +42,14 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  cyan: '\x1b[36m'
+  cyan: '\x1b[36m',
 };
 
 // Check results
 const results = {
   healthy: [],
   unhealthy: [],
-  warnings: []
+  warnings: [],
 };
 
 // Utility functions
@@ -58,7 +58,7 @@ const log = {
   success: (msg) => console.log(`${colors.green}[✓]${colors.reset} ${msg}`),
   warning: (msg) => console.log(`${colors.yellow}[!]${colors.reset} ${msg}`),
   error: (msg) => console.error(`${colors.red}[✗]${colors.reset} ${msg}`),
-  header: (msg) => console.log(`\n${colors.bright}${colors.cyan}${msg}${colors.reset}`)
+  header: (msg) => console.log(`\n${colors.bright}${colors.cyan}${msg}${colors.reset}`),
 };
 
 // Check if port is open
@@ -66,21 +66,21 @@ function checkPort(port, host = 'localhost') {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     socket.setTimeout(2000);
-    
+
     socket.on('connect', () => {
       socket.destroy();
       resolve(true);
     });
-    
+
     socket.on('timeout', () => {
       socket.destroy();
       resolve(false);
     });
-    
+
     socket.on('error', () => {
       resolve(false);
     });
-    
+
     socket.connect(port, host);
   });
 }
@@ -90,22 +90,22 @@ function checkHttp(url, timeout = 5000) {
   return new Promise((resolve) => {
     const request = http.get(url, { timeout }, (res) => {
       const healthy = res.statusCode >= 200 && res.statusCode < 400;
-      
+
       let data = '';
-      res.on('data', chunk => data += chunk);
+      res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
         resolve({
           healthy,
           statusCode: res.statusCode,
-          body: data
+          body: data,
         });
       });
     });
-    
+
     request.on('error', () => {
       resolve({ healthy: false, error: true });
     });
-    
+
     request.on('timeout', () => {
       request.destroy();
       resolve({ healthy: false, timeout: true });
@@ -128,22 +128,22 @@ async function checkService(key, service) {
   const result = {
     name: service.name,
     healthy: false,
-    details: {}
+    details: {},
   };
-  
+
   try {
     // Check port first if specified
     if (service.port) {
       const portOpen = await checkPort(service.port);
       result.details.portOpen = portOpen;
-      
+
       if (!portOpen) {
         result.healthy = false;
         result.details.error = 'Port not accessible';
         return result;
       }
     }
-    
+
     // Check HTTP endpoint if specified
     if (service.url) {
       const httpResult = await checkHttp(service.url);
@@ -151,9 +151,9 @@ async function checkService(key, service) {
       result.details.http = {
         statusCode: httpResult.statusCode,
         timeout: httpResult.timeout,
-        error: httpResult.error
+        error: httpResult.error,
       };
-      
+
       // Parse health response if available
       if (httpResult.body) {
         try {
@@ -164,7 +164,7 @@ async function checkService(key, service) {
         }
       }
     }
-    
+
     // Check command if specified
     if (service.checkCommand) {
       const cmdResult = await checkCommand(service.checkCommand);
@@ -173,63 +173,65 @@ async function checkService(key, service) {
         result.details.error = cmdResult.error;
       }
     }
-    
+
     // Additional checks for specific services
     if (key === 'api' && result.healthy) {
       // Check API specific endpoints
       const endpoints = [
         { path: '/api', name: 'OpenAPI Docs' },
-        { path: '/api/v1/quotes', name: 'Quotes Endpoint' }
+        { path: '/api/v1/quotes', name: 'Quotes Endpoint' },
       ];
-      
+
       result.details.endpoints = {};
-      
+
       for (const endpoint of endpoints) {
         const endpointResult = await checkHttp(`http://localhost:4000${endpoint.path}`, 2000);
         result.details.endpoints[endpoint.name] = endpointResult.healthy;
       }
     }
-    
+
     if (key === 'postgres' && result.healthy) {
       // Check database connection
       try {
-        const { stdout } = await execAsync('cd apps/api && npx prisma db execute --stdin <<< "SELECT 1"', {
-          env: { ...process.env, NODE_ENV: 'development' }
-        });
+        const { stdout } = await execAsync(
+          'cd apps/api && npx prisma db execute --stdin <<< "SELECT 1"',
+          {
+            env: { ...process.env, NODE_ENV: 'development' },
+          },
+        );
         result.details.canExecuteQueries = true;
       } catch (err) {
         result.details.canExecuteQueries = false;
         result.details.queryError = err.message;
       }
     }
-    
   } catch (err) {
     result.healthy = false;
     result.details.error = err.message;
   }
-  
+
   return result;
 }
 
 // Check environment variables
 async function checkEnvironment() {
   log.header('Environment Check');
-  
+
   const requiredVars = [
     { name: 'DATABASE_URL', description: 'PostgreSQL connection string' },
     { name: 'REDIS_URL', description: 'Redis connection string' },
     { name: 'JWT_SECRET', description: 'JWT signing secret' },
-    { name: 'NEXTAUTH_SECRET', description: 'NextAuth session secret' }
+    { name: 'NEXTAUTH_SECRET', description: 'NextAuth session secret' },
   ];
-  
+
   const optionalVars = [
     { name: 'S3_BUCKET', description: 'S3 bucket for file uploads' },
     { name: 'STRIPE_KEY', description: 'Stripe API key' },
-    { name: 'DEFAULT_CURRENCY', description: 'Default currency (MXN)' }
+    { name: 'DEFAULT_CURRENCY', description: 'Default currency (MXN)' },
   ];
-  
+
   let allRequired = true;
-  
+
   for (const envVar of requiredVars) {
     if (process.env[envVar.name]) {
       log.success(`${envVar.name} is set`);
@@ -238,7 +240,7 @@ async function checkEnvironment() {
       allRequired = false;
     }
   }
-  
+
   for (const envVar of optionalVars) {
     if (process.env[envVar.name]) {
       log.success(`${envVar.name} is set`);
@@ -246,7 +248,7 @@ async function checkEnvironment() {
       log.warning(`${envVar.name} is not set (optional) - ${envVar.description}`);
     }
   }
-  
+
   return allRequired;
 }
 
@@ -256,7 +258,7 @@ async function checkDiskSpace() {
     const { stdout } = await execAsync('df -h . | tail -1');
     const parts = stdout.trim().split(/\s+/);
     const usage = parseInt(parts[4]);
-    
+
     if (usage > 90) {
       log.error(`Disk space critically low: ${usage}% used`);
       return false;
@@ -277,7 +279,7 @@ async function checkDiskSpace() {
 function checkNodeVersion() {
   const version = process.version;
   const major = parseInt(version.split('.')[0].substring(1));
-  
+
   if (major >= 18) {
     log.success(`Node.js version ${version} meets requirements`);
     return true;
@@ -291,23 +293,23 @@ function checkNodeVersion() {
 function generateReport() {
   console.log(`\n${colors.bright}Health Check Summary${colors.reset}`);
   console.log('═'.repeat(50));
-  
+
   // Overall status
-  const critical = results.unhealthy.filter(r => r.critical);
+  const critical = results.unhealthy.filter((r) => r.critical);
   const isHealthy = critical.length === 0;
-  
+
   if (isHealthy) {
     console.log(`\n${colors.bright}${colors.green}✓ System is HEALTHY${colors.reset}`);
   } else {
     console.log(`\n${colors.bright}${colors.red}✗ System is UNHEALTHY${colors.reset}`);
   }
-  
+
   // Service summary
   console.log(`\n${colors.cyan}Services:${colors.reset}`);
   console.log(`  Healthy: ${colors.green}${results.healthy.length}${colors.reset}`);
   console.log(`  Unhealthy: ${colors.red}${results.unhealthy.length}${colors.reset}`);
   console.log(`  Warnings: ${colors.yellow}${results.warnings.length}${colors.reset}`);
-  
+
   // Unhealthy services details
   if (results.unhealthy.length > 0) {
     console.log(`\n${colors.red}Unhealthy Services:${colors.reset}`);
@@ -318,7 +320,7 @@ function generateReport() {
       }
     }
   }
-  
+
   // Warnings
   if (results.warnings.length > 0) {
     console.log(`\n${colors.yellow}Warnings:${colors.reset}`);
@@ -326,26 +328,26 @@ function generateReport() {
       console.log(`  - ${warning}`);
     }
   }
-  
+
   // Recommendations
   if (!isHealthy) {
     console.log(`\n${colors.cyan}Recommendations:${colors.reset}`);
-    
-    if (results.unhealthy.some(s => s.name === 'PostgreSQL')) {
+
+    if (results.unhealthy.some((s) => s.name === 'PostgreSQL')) {
       console.log('  - Start PostgreSQL: brew services start postgresql@15');
     }
-    
-    if (results.unhealthy.some(s => s.name === 'Redis')) {
+
+    if (results.unhealthy.some((s) => s.name === 'Redis')) {
       console.log('  - Start Redis: brew services start redis');
     }
-    
-    if (results.unhealthy.some(s => s.name === 'API Server' || s.name === 'Web Application')) {
+
+    if (results.unhealthy.some((s) => s.name === 'API Server' || s.name === 'Web Application')) {
       console.log('  - Start development server: npm run dev');
     }
   }
-  
+
   console.log('\n' + '═'.repeat(50) + '\n');
-  
+
   // Exit code
   process.exit(isHealthy ? 0 : 1);
 }
@@ -354,35 +356,35 @@ function generateReport() {
 async function main() {
   console.log(`\n${colors.bright}${colors.blue}MADFAM System Health Check${colors.reset}`);
   console.log('═'.repeat(50));
-  
+
   // Load environment
   try {
     require('dotenv').config({ path: '.env.local' });
   } catch (err) {
     // Ignore if not found
   }
-  
+
   // System checks
   log.header('System Requirements');
   checkNodeVersion();
   await checkDiskSpace();
-  
+
   // Environment check
   const envHealthy = await checkEnvironment();
   if (!envHealthy) {
     results.warnings.push('Missing required environment variables');
   }
-  
+
   // Service checks
   log.header('Service Health');
-  
+
   for (const [key, service] of Object.entries(SERVICES)) {
     const result = await checkService(key, service);
-    
+
     if (result.healthy) {
       log.success(`${result.name} is healthy`);
       results.healthy.push(result);
-      
+
       // Show additional details for healthy services
       if (result.details.endpoints) {
         for (const [endpoint, healthy] of Object.entries(result.details.endpoints)) {
@@ -397,19 +399,19 @@ async function main() {
       log.error(`${result.name} is unhealthy`);
       results.unhealthy.push({
         ...result,
-        critical: service.critical
+        critical: service.critical,
       });
     }
   }
-  
+
   // Database migrations check
-  if (results.healthy.some(s => s.name === 'PostgreSQL')) {
+  if (results.healthy.some((s) => s.name === 'PostgreSQL')) {
     log.header('Database Status');
     try {
       const { stdout } = await execAsync('cd apps/api && npx prisma migrate status', {
-        env: { ...process.env, NODE_ENV: 'development' }
+        env: { ...process.env, NODE_ENV: 'development' },
       });
-      
+
       if (stdout.includes('up to date')) {
         log.success('Database migrations are up to date');
       } else {
@@ -425,22 +427,22 @@ async function main() {
       }
     }
   }
-  
+
   // Performance checks
   log.header('Performance Metrics');
-  
+
   // Check memory usage
   const memUsage = process.memoryUsage();
   const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
   log.info(`Node.js memory usage: ${memUsageMB}MB`);
-  
+
   // Check API response time if healthy
-  const apiHealthy = results.healthy.find(s => s.name === 'API Server');
+  const apiHealthy = results.healthy.find((s) => s.name === 'API Server');
   if (apiHealthy) {
     const start = Date.now();
     await checkHttp('http://localhost:4000/health');
     const responseTime = Date.now() - start;
-    
+
     if (responseTime < 100) {
       log.success(`API response time: ${responseTime}ms (excellent)`);
     } else if (responseTime < 500) {
@@ -450,7 +452,7 @@ async function main() {
       results.warnings.push(`API response time is slow: ${responseTime}ms`);
     }
   }
-  
+
   // Generate final report
   generateReport();
 }
@@ -460,12 +462,12 @@ module.exports = {
   checkService,
   checkPort,
   checkHttp,
-  SERVICES
+  SERVICES,
 };
 
 // Run if called directly
 if (require.main === module) {
-  main().catch(err => {
+  main().catch((err) => {
     console.error(`\n${colors.red}Health check failed:${colors.reset}`, err.message);
     process.exit(1);
   });

@@ -55,7 +55,7 @@ export class PricingEngine {
     }
 
     const CalculatorClass = this.calculators[input.process as string];
-    
+
     if (!CalculatorClass) {
       throw new Error(`No calculator found for process: ${input.process}`);
     }
@@ -63,12 +63,12 @@ export class PricingEngine {
     try {
       const calculator = new CalculatorClass(input);
       const result = calculator.calculate();
-      
+
       // Check for invalid geometry
       if (input.geometry && input.geometry.volumeCm3 < 0) {
         result.warnings.push('Invalid geometry values');
       }
-      
+
       return result;
     } catch (error) {
       // Return error result instead of throwing
@@ -104,7 +104,7 @@ export class PricingEngine {
   }
 
   calculateBatch(inputs: PricingInput[]): PricingResult[] {
-    return inputs.map(input => {
+    return inputs.map((input) => {
       try {
         return this.calculate(input);
       } catch (error) {
@@ -146,11 +146,17 @@ export class PricingEngine {
       try {
         // For invalid input, throw error to maintain async error handling
         const errors = this.validateInput(input);
-        if (errors.length > 0 && !input.process && !input.geometry && !input.material && !input.machine) {
+        if (
+          errors.length > 0 &&
+          !input.process &&
+          !input.geometry &&
+          !input.material &&
+          !input.machine
+        ) {
           reject(new Error('Invalid input'));
           return;
         }
-        
+
         const result = this.calculate(input);
         resolve(result);
       } catch (error) {
@@ -161,18 +167,16 @@ export class PricingEngine {
 
   async calculateBatchAsync(
     inputs: PricingInput[],
-    options: { concurrency: number } = { concurrency: 5 }
+    options: { concurrency: number } = { concurrency: 5 },
   ): Promise<PricingResult[]> {
     const results: PricingResult[] = [];
-    
+
     for (let i = 0; i < inputs.length; i += options.concurrency) {
       const batch = inputs.slice(i, i + options.concurrency);
-      const batchResults = await Promise.all(
-        batch.map(input => this.calculateAsync(input))
-      );
+      const batchResults = await Promise.all(batch.map((input) => this.calculateAsync(input)));
       results.push(...batchResults);
     }
-    
+
     return results;
   }
 

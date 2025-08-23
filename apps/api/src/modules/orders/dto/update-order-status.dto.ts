@@ -3,7 +3,7 @@ import { IsEnum } from 'class-validator';
 import { OrderStatus } from '@madfam/shared';
 
 export class UpdateOrderStatusDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'New order status',
     enum: OrderStatus,
   })

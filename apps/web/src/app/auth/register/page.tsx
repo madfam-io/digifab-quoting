@@ -74,10 +74,7 @@ export default function RegisterPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link
-              href="/auth/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
+            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
               sign in to an existing account
             </Link>
           </p>
@@ -122,9 +119,7 @@ export default function RegisterPage() {
                 autoComplete="email"
                 className="mt-1"
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -150,9 +145,7 @@ export default function RegisterPage() {
                 autoComplete="tel"
                 className="mt-1"
               />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>
-              )}
+              {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>}
             </div>
 
             <div>
@@ -177,14 +170,8 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Create account
             </Button>
           </div>

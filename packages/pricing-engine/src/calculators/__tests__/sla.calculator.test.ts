@@ -104,7 +104,7 @@ describe('SLAPricingCalculator', () => {
 
       expect(fineLayers.unitPrice.toNumber()).toBeGreaterThan(standardLayers.unitPrice.toNumber());
       expect(fineLayers.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        standardLayers.costBreakdown.machine.toNumber()
+        standardLayers.costBreakdown.machine.toNumber(),
       );
     });
 
@@ -119,9 +119,11 @@ describe('SLAPricingCalculator', () => {
         selections: { ...basePricingInput.selections, supportsRequired: false },
       });
 
-      expect(withSupports.unitPrice.toNumber()).toBeGreaterThan(withoutSupports.unitPrice.toNumber());
+      expect(withSupports.unitPrice.toNumber()).toBeGreaterThan(
+        withoutSupports.unitPrice.toNumber(),
+      );
       expect(withSupports.costBreakdown.material.toNumber()).toBeGreaterThan(
-        withoutSupports.costBreakdown.material.toNumber()
+        withoutSupports.costBreakdown.material.toNumber(),
       );
     });
 
@@ -131,7 +133,7 @@ describe('SLAPricingCalculator', () => {
       // SLA requires washing and curing
       expect(result.costBreakdown.labor.toNumber()).toBeGreaterThan(5); // Minimum labor cost
       expect(result.costBreakdown.labor.toNumber()).toBeGreaterThan(
-        basePricingInput.tenantConfig.laborRatePerHour.mul(0.5).toNumber() // At least 30 min post-processing
+        basePricingInput.tenantConfig.laborRatePerHour.mul(0.5).toNumber(), // At least 30 min post-processing
       );
     });
 
@@ -151,7 +153,7 @@ describe('SLAPricingCalculator', () => {
 
       expect(toughResin.unitPrice.toNumber()).toBeGreaterThan(standardResin.unitPrice.toNumber());
       expect(toughResin.costBreakdown.material.toNumber()).toBeGreaterThan(
-        standardResin.costBreakdown.material.toNumber()
+        standardResin.costBreakdown.material.toNumber(),
       );
     });
 
@@ -334,15 +336,15 @@ describe('SLAPricingCalculator', () => {
           code: 'RESIN-BIO',
           pricePerUom: 300,
         },
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           material: 'BioMed Clear',
           biocompatible: true,
         },
       });
 
       expect(bioResin.unitPrice.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).unitPrice.toNumber() * 2
+        calculator.calculate(basePricingInput).unitPrice.toNumber() * 2,
       );
       expect(bioResin.warnings).toContain('Biocompatible material requires special handling');
     });
@@ -375,7 +377,7 @@ describe('SLAPricingCalculator', () => {
 
       // Clear resin needs more post-processing
       expect(clearResin.costBreakdown.labor.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).costBreakdown.labor.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.labor.toNumber(),
       );
     });
   });

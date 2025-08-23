@@ -30,16 +30,16 @@ export class HealthController {
     return this.health.check([
       // Database health
       () => this.prisma.isHealthy('database'),
-      
+
       // Redis health
       () => this.redis.isHealthy('redis'),
-      
+
       // S3 health
       () => this.s3.isHealthy('s3'),
-      
+
       // Memory health - max 300MB heap
       () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
-      
+
       // Disk health - min 10% free
       () => this.disk.checkStorage('storage', { path: '/', thresholdPercent: 0.9 }),
     ]);
@@ -59,8 +59,6 @@ export class HealthController {
   @Public()
   @HealthCheck()
   liveness() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024)]);
   }
 }

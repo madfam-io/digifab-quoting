@@ -6,9 +6,7 @@ import { Decimal } from 'decimal.js';
 
 @Injectable()
 export class PricingService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async calculateQuoteItem(
     tenantId: string,
@@ -35,10 +33,12 @@ export class PricingService {
 
     // Basic calculation
     const volumeCm3 = geometryMetrics.volumeCm3 || 1;
-    const materialCost = new Decimal(volumeCm3).mul(material.costPerUnit?.toString() || '1').div(1000); // Convert to cost per cm³
+    const materialCost = new Decimal(volumeCm3)
+      .mul(material.costPerUnit?.toString() || '1')
+      .div(1000); // Convert to cost per cm³
     const machineHours = volumeCm3 / 60; // Simplified: 60 cm³/hour
     const machineCost = new Decimal(machineHours).mul(machine.hourlyRate?.toString() || '500');
-    
+
     const unitPrice = materialCost.plus(machineCost).mul(1.5); // 50% markup
     const totalPrice = unitPrice.mul(quantity);
 
@@ -127,7 +127,7 @@ export class PricingService {
       },
     });
 
-    const defaultMargin = margins.find(m => m.type === 'default');
+    const defaultMargin = margins.find((m) => m.type === 'default');
 
     return {
       defaultMargin: defaultMargin?.marginPercent?.toNumber() || 0.3,

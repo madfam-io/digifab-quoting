@@ -107,23 +107,29 @@ describe('CNCPricingCalculator', () => {
         selections: { ...basePricingInput.selections, tolerance: 'loose' }, // ±0.2mm
       });
 
-      expect(tightTolerance.unitPrice.toNumber()).toBeGreaterThan(looseTolerance.unitPrice.toNumber());
+      expect(tightTolerance.unitPrice.toNumber()).toBeGreaterThan(
+        looseTolerance.unitPrice.toNumber(),
+      );
       expect(tightTolerance.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        looseTolerance.costBreakdown.machine.toNumber()
+        looseTolerance.costBreakdown.machine.toNumber(),
       );
     });
 
     it('should calculate material waste for CNC', () => {
       const result = calculator.calculate(basePricingInput);
-      
+
       // CNC removes material, so stock volume > part volume
-      const stockVolume = basePricingInput.geometry.bboxMm.x * 
-                         basePricingInput.geometry.bboxMm.y * 
-                         basePricingInput.geometry.bboxMm.z / 1000; // cm³
-      
+      const stockVolume =
+        (basePricingInput.geometry.bboxMm.x *
+          basePricingInput.geometry.bboxMm.y *
+          basePricingInput.geometry.bboxMm.z) /
+        1000; // cm³
+
       expect(result.costBreakdown.material.toNumber()).toBeGreaterThan(
-        basePricingInput.geometry.volumeCm3 * basePricingInput.material.density * 
-        basePricingInput.material.pricePerUom / 1000
+        (basePricingInput.geometry.volumeCm3 *
+          basePricingInput.material.density *
+          basePricingInput.material.pricePerUom) /
+          1000,
       );
     });
 
@@ -140,7 +146,7 @@ describe('CNCPricingCalculator', () => {
 
       expect(polished.unitPrice.toNumber()).toBeGreaterThan(asMachined.unitPrice.toNumber());
       expect(polished.costBreakdown.labor.toNumber()).toBeGreaterThan(
-        asMachined.costBreakdown.labor.toNumber()
+        asMachined.costBreakdown.labor.toNumber(),
       );
     });
 
@@ -161,7 +167,7 @@ describe('CNCPricingCalculator', () => {
 
       // Steel is harder to machine, should take longer
       expect(steelPart.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        aluminumPart.costBreakdown.machine.toNumber()
+        aluminumPart.costBreakdown.machine.toNumber(),
       );
     });
 
@@ -170,10 +176,10 @@ describe('CNCPricingCalculator', () => {
 
       expect(result.costBreakdown.tooling).toBeDefined();
       expect(result.costBreakdown.tooling!.toNumber()).toBeGreaterThan(0);
-      
+
       // Tooling cost should be reasonable relative to total
       expect(result.costBreakdown.tooling!.toNumber()).toBeLessThan(
-        result.unitPrice.toNumber() * 0.2
+        result.unitPrice.toNumber() * 0.2,
       );
     });
 
@@ -203,9 +209,11 @@ describe('CNCPricingCalculator', () => {
         },
       });
 
-      expect(complexPart.unitPrice.toNumber()).toBeGreaterThan(simplePart.unitPrice.toNumber() * 1.5);
+      expect(complexPart.unitPrice.toNumber()).toBeGreaterThan(
+        simplePart.unitPrice.toNumber() * 1.5,
+      );
       expect(complexPart.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        simplePart.costBreakdown.machine.toNumber() * 2
+        simplePart.costBreakdown.machine.toNumber() * 2,
       );
     });
 
@@ -284,9 +292,11 @@ describe('CNCPricingCalculator', () => {
       const usage = calculator.calculateMaterialUsage(basePricingInput);
 
       // Stock volume should be larger than part volume
-      const minStockVolume = basePricingInput.geometry.bboxMm.x *
-                            basePricingInput.geometry.bboxMm.y *
-                            basePricingInput.geometry.bboxMm.z / 1000;
+      const minStockVolume =
+        (basePricingInput.geometry.bboxMm.x *
+          basePricingInput.geometry.bboxMm.y *
+          basePricingInput.geometry.bboxMm.z) /
+        1000;
 
       expect(usage.toNumber()).toBeGreaterThan(basePricingInput.geometry.volumeCm3);
       expect(usage.toNumber()).toBeGreaterThanOrEqual(minStockVolume);
@@ -296,7 +306,7 @@ describe('CNCPricingCalculator', () => {
       const usage = calculator.calculateMaterialUsage(basePricingInput);
 
       const bbox = basePricingInput.geometry.bboxMm;
-      const stockVolume = (bbox.x + 10) * (bbox.y + 10) * (bbox.z + 5) / 1000;
+      const stockVolume = ((bbox.x + 10) * (bbox.y + 10) * (bbox.z + 5)) / 1000;
 
       expect(usage.toNumber()).toBeCloseTo(stockVolume, 1);
     });
@@ -311,7 +321,7 @@ describe('CNCPricingCalculator', () => {
       });
 
       // Should enforce minimum stock thickness
-      const minStockVolume = 100 * 100 * 3 / 1000; // 3mm minimum
+      const minStockVolume = (100 * 100 * 3) / 1000; // 3mm minimum
       expect(thinPart.toNumber()).toBeGreaterThanOrEqual(minStockVolume);
     });
   });
@@ -319,7 +329,7 @@ describe('CNCPricingCalculator', () => {
   describe('cost breakdown accuracy', () => {
     it('should include setup costs in labor', () => {
       const result = calculator.calculate(basePricingInput);
-      
+
       // CNC requires significant setup time
       const minSetupCost = defaultConfig.laborRatePerHour.mul(0.75); // 45 min setup
       expect(result.costBreakdown.labor.toNumber()).toBeGreaterThan(minSetupCost.toNumber());
@@ -374,7 +384,7 @@ describe('CNCPricingCalculator', () => {
       });
 
       expect(recycledAluminum.sustainability.score).toBeGreaterThan(
-        virginAluminum.sustainability.score
+        virginAluminum.sustainability.score,
       );
     });
 
@@ -383,7 +393,7 @@ describe('CNCPricingCalculator', () => {
 
       // CNC uses lots of energy
       expect(result.sustainability.co2e.energy).toBeGreaterThan(
-        result.sustainability.co2e.material
+        result.sustainability.co2e.material,
       );
     });
   });
@@ -418,22 +428,22 @@ describe('CNCPricingCalculator', () => {
       expect(plasticPart.unitPrice.toNumber()).toBeGreaterThan(0);
       // Plastics machine faster than metals
       expect(plasticPart.costBreakdown.machine.toNumber()).toBeLessThan(
-        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber(),
       );
     });
 
     it('should handle very tight tolerances with warnings', () => {
       const precisionPart = calculator.calculate({
         ...basePricingInput,
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           tolerance: 'precision', // ±0.01mm
         },
       });
 
       expect(precisionPart.warnings).toContain('Precision tolerance may require special tooling');
       expect(precisionPart.unitPrice.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).unitPrice.toNumber() * 1.5
+        calculator.calculate(basePricingInput).unitPrice.toNumber() * 1.5,
       );
     });
 
@@ -452,7 +462,7 @@ describe('CNCPricingCalculator', () => {
 
       expect(thinWalls.warnings).toContain('Thin walls require careful machining');
       expect(thinWalls.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber(),
       );
     });
   });

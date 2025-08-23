@@ -88,9 +88,13 @@ describe('CsvReportGeneratorService', () => {
       expect(result).toHaveProperty('filePath');
       expect(result).toHaveProperty('fileName');
       expect(result.fileName).toMatch(/^quote-quote-123-\d+\.csv$/);
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('Generating CSV report'));
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('CSV report generated successfully'));
-      
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('Generating CSV report'),
+      );
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('CSV report generated successfully'),
+      );
+
       // Verify CSV content was written
       expect(mockStream.write).toHaveBeenCalled();
       const csvContent = mockStream.write.mock.calls[0][0];
@@ -154,9 +158,7 @@ describe('CsvReportGeneratorService', () => {
         },
         order: {
           quote: {
-            items: [
-              { name: 'Item 1', quantity: 1, unitPrice: 1000 },
-            ],
+            items: [{ name: 'Item 1', quantity: 1, unitPrice: 1000 }],
           },
         },
       };
@@ -181,9 +183,7 @@ describe('CsvReportGeneratorService', () => {
           { status: 'accepted', _count: 10, _sum: { total: 10000 } },
           { status: 'pending', _count: 5, _sum: { total: 5000 } },
         ],
-        orders: [
-          { status: 'completed', _count: 8, _sum: { totalPaid: 8000 } },
-        ],
+        orders: [{ status: 'completed', _count: 8, _sum: { totalPaid: 8000 } }],
         revenue: [
           { period: '2024-01-01', order_count: 3, revenue: 3000 },
           { period: '2024-01-02', order_count: 5, revenue: 5000 },
@@ -202,8 +202,9 @@ describe('CsvReportGeneratorService', () => {
     });
 
     it('should throw error for unsupported report types', async () => {
-      await expect(service.generateReport('unsupported' as any, {}, {}))
-        .rejects.toThrow('CSV generation not supported for report type: unsupported');
+      await expect(service.generateReport('unsupported' as any, {}, {})).rejects.toThrow(
+        'CSV generation not supported for report type: unsupported',
+      );
     });
 
     it('should handle missing customer data', async () => {
@@ -275,8 +276,9 @@ describe('CsvReportGeneratorService', () => {
       };
       (createWriteStream as jest.Mock).mockReturnValue(errorStream);
 
-      await expect(service.generateReport('quote', mockQuoteData, {}))
-        .rejects.toThrow('Write failed');
+      await expect(service.generateReport('quote', mockQuoteData, {})).rejects.toThrow(
+        'Write failed',
+      );
     });
 
     it('should handle missing invoice customer billing address', async () => {
@@ -306,12 +308,8 @@ describe('CsvReportGeneratorService', () => {
           startDate: '2024-01-01',
           endDate: '2024-01-31',
         },
-        quotes: [
-          { status: 'accepted', _count: 10, _sum: { total: 10000 } },
-        ],
-        orders: [
-          { status: 'completed', _count: 5, _sum: { totalPaid: 5000 } },
-        ],
+        quotes: [{ status: 'accepted', _count: 10, _sum: { total: 10000 } }],
+        orders: [{ status: 'completed', _count: 5, _sum: { totalPaid: 5000 } }],
       };
 
       await service.generateReport('analytics', analyticsData, {});
@@ -343,13 +341,15 @@ describe('CsvReportGeneratorService', () => {
     it('should handle special characters in CSV values', async () => {
       const quoteWithSpecialChars = {
         ...mockQuoteData,
-        items: [{
-          files: [{ originalName: 'part="test",file.stl' }],
-          material: { name: 'PLA\nFilament' },
-          manufacturingProcess: { name: '3D,Printing' },
-          quantity: 10,
-          unitPrice: 100,
-        }],
+        items: [
+          {
+            files: [{ originalName: 'part="test",file.stl' }],
+            material: { name: 'PLA\nFilament' },
+            manufacturingProcess: { name: '3D,Printing' },
+            quantity: 10,
+            unitPrice: 100,
+          },
+        ],
       };
 
       await service.generateReport('quote', quoteWithSpecialChars, {});

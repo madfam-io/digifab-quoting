@@ -3,7 +3,7 @@ import { TenantContext } from '../tenant-context.service';
 
 /**
  * Decorator to get the current tenant context in controllers
- * 
+ *
  * @example
  * ```typescript
  * @Get()
@@ -23,7 +23,7 @@ export const Tenant = createParamDecorator(
 
 /**
  * Decorator to get just the tenant ID
- * 
+ *
  * @example
  * ```typescript
  * @Get()
@@ -32,9 +32,7 @@ export const Tenant = createParamDecorator(
  * }
  * ```
  */
-export const TenantId = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.tenantContext?.tenantId;
-  },
-);
+export const TenantId = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest();
+  return request.tenantContext?.tenantId;
+});

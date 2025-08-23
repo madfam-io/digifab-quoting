@@ -83,9 +83,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     });
   }
 
-  async create(
-    data: Prisma.QuoteCreateInput & { tenantId: string },
-  ): Promise<QuoteWithRelations> {
+  async create(data: Prisma.QuoteCreateInput & { tenantId: string }): Promise<QuoteWithRelations> {
     return this.prisma.quote.create({ data });
   }
 
@@ -106,10 +104,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     });
   }
 
-  async findDraftQuote(
-    customerId: string,
-    tenantId: string,
-  ): Promise<QuoteWithRelations | null> {
+  async findDraftQuote(customerId: string, tenantId: string): Promise<QuoteWithRelations | null> {
     return this.prisma.quote.findFirst({
       where: {
         tenantId,
@@ -210,10 +205,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     });
   }
 
-  protected buildWhereClause(
-    tenantId: string,
-    filters?: Record<string, any>,
-  ): any {
+  protected buildWhereClause(tenantId: string, filters?: Record<string, any>): any {
     const where = super.buildWhereClause(tenantId, filters);
 
     // Handle special filters

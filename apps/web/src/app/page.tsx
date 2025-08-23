@@ -15,8 +15,8 @@ export default function HomePage() {
               Cotización Instantánea para Fabricación Digital
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Obtén precios al instante para impresión 3D, mecanizado CNC y corte láser. 
-              Sube tus archivos y recibe tu cotización en menos de 5 minutos.
+              Obtén precios al instante para impresión 3D, mecanizado CNC y corte láser. Sube tus
+              archivos y recibe tu cotización en menos de 5 minutos.
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/quote/new">
@@ -39,35 +39,30 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            ¿Por qué elegirnos?
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-12">¿Por qué elegirnos?</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 text-center">
               <Clock className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h3 className="text-xl font-semibold mb-2">
-                Cotización en 5 minutos
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">Cotización en 5 minutos</h3>
               <p className="text-muted-foreground">
-                Sistema automatizado que analiza tus archivos y genera cotizaciones precisas al instante.
+                Sistema automatizado que analiza tus archivos y genera cotizaciones precisas al
+                instante.
               </p>
             </Card>
             <Card className="p-6 text-center">
               <Calculator className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h3 className="text-xl font-semibold mb-2">
-                Precios Transparentes
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">Precios Transparentes</h3>
               <p className="text-muted-foreground">
-                Desglose detallado de costos sin sorpresas. Siempre sabrás exactamente qué estás pagando.
+                Desglose detallado de costos sin sorpresas. Siempre sabrás exactamente qué estás
+                pagando.
               </p>
             </Card>
             <Card className="p-6 text-center">
               <Leaf className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h3 className="text-xl font-semibold mb-2">
-                Sostenibilidad
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">Sostenibilidad</h3>
               <p className="text-muted-foreground">
-                Cada cotización incluye métricas de sostenibilidad y opciones ecológicas cuando están disponibles.
+                Cada cotización incluye métricas de sostenibilidad y opciones ecológicas cuando
+                están disponibles.
               </p>
             </Card>
           </div>
@@ -77,9 +72,7 @@ export default function HomePage() {
       {/* Processes Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Nuestros Procesos
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Nuestros Procesos</h2>
           <div className="grid md:grid-cols-4 gap-6">
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-2">Impresión 3D FFF</h3>
@@ -132,9 +125,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            ¿Listo para empezar?
-          </h2>
+          <h2 className="text-3xl font-bold mb-4">¿Listo para empezar?</h2>
           <p className="text-xl mb-8 opacity-90">
             Únete a cientos de empresas que confían en nosotros para sus proyectos de fabricación.
           </p>

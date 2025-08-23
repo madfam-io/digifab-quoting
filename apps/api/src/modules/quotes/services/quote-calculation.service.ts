@@ -50,17 +50,10 @@ export class QuoteCalculationService {
       }
 
       // 2. Prepare items for calculation
-      const itemsToCalculate = this.prepareItemsForCalculation(
-        quote.items,
-        itemsData,
-      );
+      const itemsToCalculate = this.prepareItemsForCalculation(quote.items, itemsData);
 
       // 3. Batch load materials and machines
-      const { materials, machines } = await this.batchLoadResources(
-        tx,
-        itemsToCalculate,
-        tenantId,
-      );
+      const { materials, machines } = await this.batchLoadResources(tx, itemsToCalculate, tenantId);
 
       // 4. Calculate pricing for all items
       const calculationResults = await this.calculateItemPricing(
@@ -71,10 +64,7 @@ export class QuoteCalculationService {
       );
 
       // 5. Prepare updates and calculate totals
-      const result = this.prepareCalculationResult(
-        calculationResults,
-        quote.currency,
-      );
+      const result = this.prepareCalculationResult(calculationResults, quote.currency);
 
       return result;
     });
@@ -105,9 +95,7 @@ export class QuoteCalculationService {
     updates?: UpdateQuoteItemDto[],
   ): ItemWithRelations[] {
     if (!updates || updates.length === 0) {
-      return existingItems.filter(
-        (item) => item.status === 'pending' && item.files.length > 0,
-      );
+      return existingItems.filter((item) => item.status === 'pending' && item.files.length > 0);
     }
 
     // Create a map for quick lookup
@@ -255,10 +243,7 @@ export class QuoteCalculationService {
     };
   }
 
-  private prepareCalculationResult(
-    calculations: any[],
-    currency: string,
-  ): CalculationResult {
+  private prepareCalculationResult(calculations: any[], currency: string): CalculationResult {
     const itemsToUpdate: Array<{ id: string; data: Prisma.QuoteItemUpdateInput }> = [];
     const warnings: string[] = [];
     let subtotal = new Decimal(0);
@@ -270,7 +255,7 @@ export class QuoteCalculationService {
       }
 
       const { item, pricing } = calc;
-      
+
       itemsToUpdate.push({
         id: item.id,
         data: {
@@ -328,7 +313,7 @@ export class QuoteCalculationService {
 
   private async getCachedTenantConfig(tenantId: string) {
     const cacheKey = `tenant-config:${tenantId}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
@@ -342,10 +327,10 @@ export class QuoteCalculationService {
     });
 
     const config = this.parseTenantConfig(tenant?.settings || {});
-    
+
     // Cache for 1 hour
     await this.cacheService.set(cacheKey, config, 3600);
-    
+
     return config;
   }
 

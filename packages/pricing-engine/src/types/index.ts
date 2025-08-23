@@ -1,4 +1,10 @@
-import { ProcessType, GeometryMetrics as BaseGeometryMetrics, Material as BaseMaterial, Machine, QuoteItemSelections } from '@madfam/shared';
+import {
+  ProcessType,
+  GeometryMetrics as BaseGeometryMetrics,
+  Material as BaseMaterial,
+  Machine,
+  QuoteItemSelections,
+} from '@madfam/shared';
 import { Decimal } from 'decimal.js';
 
 // Extended geometry metrics for pricing calculations

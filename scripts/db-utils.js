@@ -14,7 +14,7 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  cyan: '\x1b[36m'
+  cyan: '\x1b[36m',
 };
 
 // Utility functions
@@ -22,21 +22,21 @@ const log = {
   info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
   success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
   warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
-  error: (msg) => console.error(`${colors.red}[ERROR]${colors.reset} ${msg}`)
+  error: (msg) => console.error(`${colors.red}[ERROR]${colors.reset} ${msg}`),
 };
 
 // Ask user confirmation
 async function confirm(question) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
-  
+
   const answer = await new Promise((resolve) => {
     rl.question(`${colors.yellow}${question} (y/n): ${colors.reset}`, resolve);
   });
   rl.close();
-  
+
   return answer.toLowerCase() === 'y';
 }
 
@@ -44,20 +44,20 @@ async function confirm(question) {
 const commands = {
   reset: async () => {
     log.warning('This will drop and recreate the database, losing all data!');
-    
-    if (!await confirm('Are you sure you want to reset the database?')) {
+
+    if (!(await confirm('Are you sure you want to reset the database?'))) {
       log.info('Database reset cancelled');
       return;
     }
-    
+
     try {
       log.info('Dropping database...');
       await execAsync('cd apps/api && npx prisma migrate reset --force', {
-        env: { ...process.env, NODE_ENV: 'development' }
+        env: { ...process.env, NODE_ENV: 'development' },
       });
-      
+
       log.success('Database reset successfully');
-      
+
       if (await confirm('Would you like to seed the database?')) {
         await commands.seed();
       }
@@ -66,15 +66,15 @@ const commands = {
       process.exit(1);
     }
   },
-  
+
   migrate: async () => {
     try {
       log.info('Running database migrations...');
-      
+
       const { stdout } = await execAsync('cd apps/api && npx prisma migrate dev', {
-        env: { ...process.env, NODE_ENV: 'development' }
+        env: { ...process.env, NODE_ENV: 'development' },
       });
-      
+
       console.log(stdout);
       log.success('Migrations completed successfully');
     } catch (err) {
@@ -82,15 +82,15 @@ const commands = {
       process.exit(1);
     }
   },
-  
+
   seed: async () => {
     try {
       log.info('Seeding database...');
-      
+
       await execAsync('cd apps/api && npm run db:seed', {
-        env: { ...process.env, NODE_ENV: 'development' }
+        env: { ...process.env, NODE_ENV: 'development' },
       });
-      
+
       log.success('Database seeded successfully');
       log.info('Test users created:');
       log.info('  - admin@madfam.io (password: Admin123!)');
@@ -100,28 +100,28 @@ const commands = {
       process.exit(1);
     }
   },
-  
+
   status: async () => {
     try {
       log.info('Checking database status...');
-      
+
       // Check connection
       try {
         await execAsync('cd apps/api && npx prisma db execute --stdin <<< "SELECT 1"', {
-          env: { ...process.env, NODE_ENV: 'development' }
+          env: { ...process.env, NODE_ENV: 'development' },
         });
         log.success('Database connection: OK');
       } catch (err) {
         log.error('Database connection: FAILED');
         throw err;
       }
-      
+
       // Check migrations
       try {
         const { stdout } = await execAsync('cd apps/api && npx prisma migrate status', {
-          env: { ...process.env, NODE_ENV: 'development' }
+          env: { ...process.env, NODE_ENV: 'development' },
         });
-        
+
         if (stdout.includes('up to date')) {
           log.success('Migrations: Up to date');
         } else {
@@ -135,13 +135,16 @@ const commands = {
           throw err;
         }
       }
-      
+
       // Check table count
       try {
-        const { stdout } = await execAsync(`cd apps/api && npx prisma db execute --stdin <<< "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"`, {
-          env: { ...process.env, NODE_ENV: 'development' }
-        });
-        
+        const { stdout } = await execAsync(
+          `cd apps/api && npx prisma db execute --stdin <<< "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"`,
+          {
+            env: { ...process.env, NODE_ENV: 'development' },
+          },
+        );
+
         const match = stdout.match(/(\d+)/);
         if (match) {
           log.info(`Tables in database: ${match[1]}`);
@@ -149,96 +152,95 @@ const commands = {
       } catch (err) {
         // Ignore
       }
-      
     } catch (err) {
       log.error(`Status check failed: ${err.message}`);
       process.exit(1);
     }
   },
-  
+
   studio: async () => {
     try {
       log.info('Starting Prisma Studio...');
       log.info('Opening in browser at http://localhost:5555');
-      
+
       const studio = exec('cd apps/api && npx prisma studio', {
-        env: { ...process.env, NODE_ENV: 'development' }
+        env: { ...process.env, NODE_ENV: 'development' },
       });
-      
+
       studio.stdout.on('data', (data) => {
         console.log(data.toString());
       });
-      
+
       studio.stderr.on('data', (data) => {
         console.error(data.toString());
       });
-      
+
       process.on('SIGINT', () => {
         studio.kill();
         process.exit(0);
       });
-      
     } catch (err) {
       log.error(`Failed to start Prisma Studio: ${err.message}`);
       process.exit(1);
     }
   },
-  
+
   backup: async () => {
     try {
       const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
       const filename = `backup-${timestamp}.sql`;
-      
+
       log.info(`Creating database backup: ${filename}`);
-      
+
       // Get database name from DATABASE_URL
       const dbUrl = process.env.DATABASE_URL || '';
       const dbName = dbUrl.split('/').pop()?.split('?')[0] || 'madfam_dev';
-      
+
       await execAsync(`pg_dump ${dbName} > ${filename}`);
-      
+
       log.success(`Database backed up to: ${filename}`);
-      log.info(`File size: ${(await execAsync(`ls -lh ${filename} | awk '{print $5}'`)).stdout.trim()}`);
+      log.info(
+        `File size: ${(await execAsync(`ls -lh ${filename} | awk '{print $5}'`)).stdout.trim()}`,
+      );
     } catch (err) {
       log.error(`Backup failed: ${err.message}`);
       log.info('Make sure pg_dump is installed and DATABASE_URL is set');
       process.exit(1);
     }
   },
-  
+
   restore: async (filename) => {
     if (!filename) {
       log.error('Please provide a backup filename');
       log.info('Usage: npm run db:utils restore <filename>');
       process.exit(1);
     }
-    
+
     log.warning(`This will restore the database from ${filename}, replacing all current data!`);
-    
-    if (!await confirm('Are you sure you want to restore from backup?')) {
+
+    if (!(await confirm('Are you sure you want to restore from backup?'))) {
       log.info('Restore cancelled');
       return;
     }
-    
+
     try {
       // Get database name from DATABASE_URL
       const dbUrl = process.env.DATABASE_URL || '';
       const dbName = dbUrl.split('/').pop()?.split('?')[0] || 'madfam_dev';
-      
+
       log.info('Restoring database...');
       await execAsync(`psql ${dbName} < ${filename}`);
-      
+
       log.success('Database restored successfully');
-      
+
       // Update Prisma client
       await execAsync('cd apps/api && npx prisma generate');
       log.success('Prisma client regenerated');
-      
     } catch (err) {
       log.error(`Restore failed: ${err.message}`);
       process.exit(1);
     }
-  }
+  },
 };
 
 // Help text
@@ -273,21 +275,21 @@ async function main() {
   } catch (err) {
     // Ignore
   }
-  
+
   const command = process.argv[2];
   const args = process.argv.slice(3);
-  
+
   if (!command || command === 'help') {
     showHelp();
     return;
   }
-  
+
   if (!commands[command]) {
     log.error(`Unknown command: ${command}`);
     showHelp();
     process.exit(1);
   }
-  
+
   try {
     await commands[command](...args);
   } catch (err) {

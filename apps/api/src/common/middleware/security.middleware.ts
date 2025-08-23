@@ -20,7 +20,7 @@ export class SecurityMiddleware implements NestMiddleware {
     },
     crossOriginEmbedderPolicy: true,
     crossOriginOpenerPolicy: true,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     dnsPrefetchControl: true,
     frameguard: { action: 'deny' },
     hidePoweredBy: true,
@@ -33,7 +33,7 @@ export class SecurityMiddleware implements NestMiddleware {
     noSniff: true,
     originAgentCluster: true,
     permittedCrossDomainPolicies: false,
-    referrerPolicy: { policy: "no-referrer" },
+    referrerPolicy: { policy: 'no-referrer' },
     xssFilter: true,
   });
 
@@ -46,11 +46,11 @@ export class SecurityMiddleware implements NestMiddleware {
       res.setHeader('X-XSS-Protection', '1; mode=block');
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
       res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-      
+
       // Remove sensitive headers
       res.removeHeader('X-Powered-By');
       res.removeHeader('Server');
-      
+
       next();
     });
   }

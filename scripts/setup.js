@@ -15,7 +15,7 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  cyan: '\x1b[36m'
+  cyan: '\x1b[36m',
 };
 
 // Utility functions
@@ -24,7 +24,7 @@ const log = {
   success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
   warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
   error: (msg) => console.error(`${colors.red}[ERROR]${colors.reset} ${msg}`),
-  step: (msg) => console.log(`\n${colors.bright}${colors.cyan}${msg}${colors.reset}`)
+  step: (msg) => console.log(`\n${colors.bright}${colors.cyan}${msg}${colors.reset}`),
 };
 
 // Check if command exists
@@ -41,32 +41,32 @@ async function commandExists(cmd) {
 async function askInput(question, defaultValue = '') {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
-  
+
   const answer = await new Promise((resolve) => {
     const prompt = defaultValue ? `${question} [${defaultValue}]: ` : `${question}: `;
     rl.question(prompt, resolve);
   });
   rl.close();
-  
+
   return answer || defaultValue;
 }
 
 // Setup steps
 async function setupPostgreSQL() {
   log.step('Setting up PostgreSQL');
-  
+
   if (await commandExists('psql')) {
     log.success('PostgreSQL is installed');
-    
+
     // Check if it's running
     try {
       await execAsync('pg_isready');
       log.success('PostgreSQL is running');
     } catch (err) {
       log.warning('PostgreSQL is not running');
-      
+
       if (await commandExists('brew')) {
         log.info('Starting PostgreSQL...');
         await execAsync('brew services start postgresql@15 || brew services start postgresql');
@@ -75,7 +75,7 @@ async function setupPostgreSQL() {
         log.warning('Please start PostgreSQL manually');
       }
     }
-    
+
     // Create database
     const dbName = await askInput('Database name', 'madfam_dev');
     try {
@@ -88,11 +88,11 @@ async function setupPostgreSQL() {
         log.error(`Failed to create database: ${err.message}`);
       }
     }
-    
+
     return dbName;
   } else {
     log.error('PostgreSQL is not installed');
-    
+
     if (await commandExists('brew')) {
       log.info('To install PostgreSQL:');
       log.info('  brew install postgresql@15');
@@ -100,24 +100,24 @@ async function setupPostgreSQL() {
     } else {
       log.info('Please install PostgreSQL from: https://www.postgresql.org/download/');
     }
-    
+
     throw new Error('PostgreSQL is required');
   }
 }
 
 async function setupRedis() {
   log.step('Setting up Redis');
-  
+
   if (await commandExists('redis-cli')) {
     log.success('Redis is installed');
-    
+
     // Check if it's running
     try {
       await execAsync('redis-cli ping');
       log.success('Redis is running');
     } catch (err) {
       log.warning('Redis is not running');
-      
+
       if (await commandExists('brew')) {
         log.info('Starting Redis...');
         await execAsync('brew services start redis');
@@ -128,7 +128,7 @@ async function setupRedis() {
     }
   } else {
     log.error('Redis is not installed');
-    
+
     if (await commandExists('brew')) {
       log.info('To install Redis:');
       log.info('  brew install redis');
@@ -136,20 +136,20 @@ async function setupRedis() {
     } else {
       log.info('Please install Redis from: https://redis.io/download');
     }
-    
+
     throw new Error('Redis is required');
   }
 }
 
 async function setupEnvironment(dbName) {
   log.step('Setting up environment variables');
-  
+
   const envPath = path.join(process.cwd(), '.env.local');
-  
+
   try {
     await fs.access(envPath);
     log.info('.env.local already exists');
-    
+
     const overwrite = await askInput('Overwrite existing .env.local? (y/n)', 'n');
     if (overwrite.toLowerCase() !== 'y') {
       log.info('Keeping existing .env.local');
@@ -158,26 +158,26 @@ async function setupEnvironment(dbName) {
   } catch (err) {
     // File doesn't exist, which is fine
   }
-  
+
   // Collect configuration
   log.info('Please provide the following configuration:');
-  
+
   const dbUser = await askInput('PostgreSQL username', 'postgres');
   const dbPassword = await askInput('PostgreSQL password', '');
   const dbHost = await askInput('PostgreSQL host', 'localhost');
   const dbPort = await askInput('PostgreSQL port', '5432');
-  
+
   const jwtSecret = await askInput('JWT secret (leave empty to generate)', '');
   const nextAuthSecret = await askInput('NextAuth secret (leave empty to generate)', '');
-  
+
   // Generate secrets if not provided
   const generateSecret = () => {
     return require('crypto').randomBytes(32).toString('hex');
   };
-  
+
   const finalJwtSecret = jwtSecret || generateSecret();
   const finalNextAuthSecret = nextAuthSecret || generateSecret();
-  
+
   // Create .env.local content
   const envContent = `# Database
 DATABASE_URL="postgresql://${dbUser}${dbPassword ? ':' + dbPassword : ''}@${dbHost}:${dbPort}/${dbName}?schema=public"
@@ -222,10 +222,10 @@ FEATURE_STRIPE_PAYMENTS="false"
 FEATURE_EMAIL_NOTIFICATIONS="false"
 FEATURE_FILE_UPLOAD="false"
 `;
-  
+
   await fs.writeFile(envPath, envContent);
   log.success('Created .env.local with configuration');
-  
+
   if (!jwtSecret) {
     log.warning('Generated random JWT secret - save this for production use');
   }
@@ -236,12 +236,12 @@ FEATURE_FILE_UPLOAD="false"
 
 async function installDependencies() {
   log.step('Installing dependencies');
-  
+
   log.info('Running npm install...');
-  
+
   try {
     await execAsync('npm install', {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
     log.success('Dependencies installed');
   } catch (err) {
@@ -252,27 +252,27 @@ async function installDependencies() {
 
 async function setupDatabase() {
   log.step('Setting up database schema');
-  
+
   try {
     // Generate Prisma client
     log.info('Generating Prisma client...');
     await execAsync('npm run db:generate');
     log.success('Prisma client generated');
-    
+
     // Run migrations
     log.info('Running database migrations...');
     await execAsync('cd apps/api && npx prisma migrate dev --name init', {
-      env: { ...process.env, NODE_ENV: 'development' }
+      env: { ...process.env, NODE_ENV: 'development' },
     });
     log.success('Database migrations completed');
-    
+
     // Seed database
     const seed = await askInput('Seed database with test data? (y/n)', 'y');
     if (seed.toLowerCase() === 'y') {
       log.info('Seeding database...');
       await execAsync('npm run db:seed');
       log.success('Database seeded');
-      
+
       log.info('\nTest users created:');
       log.info('  Admin: admin@madfam.io (password: Admin123!)');
       log.info('  User: user@example.com (password: User123!)');
@@ -291,30 +291,30 @@ ${'='.repeat(50)}
 
 This script will help you set up your development environment.
 `);
-  
+
   try {
     // Check Node.js version
     const nodeVersion = process.version;
     const majorVersion = parseInt(nodeVersion.split('.')[0].substring(1));
-    
+
     if (majorVersion < 18) {
       throw new Error(`Node.js 18+ required. Current: ${nodeVersion}`);
     }
     log.success(`Node.js ${nodeVersion} meets requirements`);
-    
+
     // Setup services
     const dbName = await setupPostgreSQL();
     await setupRedis();
-    
+
     // Setup environment
     await setupEnvironment(dbName);
-    
+
     // Install dependencies
     await installDependencies();
-    
+
     // Setup database
     await setupDatabase();
-    
+
     // Success!
     console.log(`
 ${colors.bright}${colors.green}✨ Setup completed successfully! ✨${colors.reset}
@@ -330,7 +330,6 @@ To manage the database:
 
 Happy coding! 🚀
 `);
-    
   } catch (err) {
     console.error(`\n${colors.red}Setup failed:${colors.reset} ${err.message}\n`);
     process.exit(1);

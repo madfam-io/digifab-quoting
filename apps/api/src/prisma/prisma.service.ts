@@ -37,7 +37,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit() {
     await this.$connect();
-    
+
     // Add middleware for multi-tenancy
     this.$use(async (params, next) => {
       // Skip for global models or transactions
@@ -46,7 +46,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       }
 
       const context = this.tenantContext?.getContext();
-      
+
       // For tenant-scoped models, enforce tenant isolation
       if (TENANT_MODELS.includes(params.model!) && context?.tenantId) {
         // For create operations, add tenantId
@@ -56,7 +56,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             tenantId: context.tenantId,
           };
         }
-        
+
         // For createMany operations, add tenantId to each record
         if (params.action === 'createMany') {
           if (Array.isArray(params.args.data)) {
@@ -73,14 +73,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         }
 
         // For all query operations, add tenant filter
-        if (['findUnique', 'findFirst', 'findMany', 'count', 'aggregate', 'groupBy'].includes(params.action)) {
+        if (
+          ['findUnique', 'findFirst', 'findMany', 'count', 'aggregate', 'groupBy'].includes(
+            params.action,
+          )
+        ) {
           if (!params.args) {
             params.args = {};
           }
           if (!params.args.where) {
             params.args.where = {};
           }
-          
+
           // Add tenant filter
           params.args.where = {
             ...params.args.where,
@@ -93,7 +97,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           if (!params.args.where) {
             params.args.where = {};
           }
-          
+
           params.args.where = {
             ...params.args.where,
             tenantId: context.tenantId,
@@ -106,7 +110,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             ...params.args.create,
             tenantId: context.tenantId,
           };
-          
+
           params.args.where = {
             ...params.args.where,
             tenantId: context.tenantId,
@@ -131,12 +135,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       throw new Error('cleanDatabase is not allowed in production');
     }
 
-    const models = Reflect.ownKeys(this).filter(
-      (key) => {
-        const keyStr = String(key);
-        return keyStr[0] !== '_' && keyStr[0] !== '$' && keyStr !== 'constructor';
-      }
-    );
+    const models = Reflect.ownKeys(this).filter((key) => {
+      const keyStr = String(key);
+      return keyStr[0] !== '_' && keyStr[0] !== '$' && keyStr !== 'constructor';
+    });
 
     return Promise.all(
       models.map((modelKey) => {

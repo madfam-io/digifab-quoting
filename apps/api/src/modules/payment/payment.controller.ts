@@ -1,22 +1,16 @@
-import { 
-  Controller, 
-  Post, 
+import {
+  Controller,
+  Post,
   Get,
-  Param, 
-  Body, 
+  Param,
+  Body,
   Headers,
   UseGuards,
   Request,
   BadRequestException,
   RawBodyRequest,
 } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse,
-  ApiBearerAuth,
-  ApiHeader,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import { StripeService } from './stripe.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -37,8 +31,8 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create Stripe checkout session for quote payment' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Checkout session created successfully',
     type: PaymentSessionResponseDto,
   })
@@ -55,14 +49,11 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get payment status for a quote' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Payment status retrieved successfully',
   })
-  async getPaymentStatus(
-    @Param('quoteId') quoteId: string,
-    @TenantContext() tenantId: string,
-  ) {
+  async getPaymentStatus(@Param('quoteId') quoteId: string, @TenantContext() tenantId: string) {
     return this.paymentService.getPaymentStatus(quoteId, tenantId);
   }
 
@@ -86,10 +77,7 @@ export class PaymentController {
 
     try {
       // Construct and verify the webhook event
-      const event = this.stripeService.constructWebhookEvent(
-        req.rawBody || rawBody,
-        signature
-      );
+      const event = this.stripeService.constructWebhookEvent(req.rawBody || rawBody, signature);
 
       // Extract tenant ID from metadata
       const metadata = (event.data.object as any).metadata;

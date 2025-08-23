@@ -4,9 +4,7 @@ import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class RateLimitGuard extends ThrottlerGuard {
-  constructor(
-    private reflector: Reflector,
-  ) {
+  constructor(private reflector: Reflector) {
     super(
       {
         ttl: 60,
@@ -24,21 +22,24 @@ export class RateLimitGuard extends ThrottlerGuard {
     const ip = req.ip || req.connection.remoteAddress;
     const tenantId = req.headers['x-tenant-id'] || 'default';
     const userId = req.user?.id || 'anonymous';
-    
+
     // Different rate limit buckets for authenticated vs anonymous users
     if (req.user) {
       return `${tenantId}:${userId}`;
     }
-    
+
     return `${tenantId}:${ip}`;
   }
 
   protected throwThrottlingException(context: ExecutionContext): void {
-    throw new HttpException({
-      statusCode: HttpStatus.TOO_MANY_REQUESTS,
-      message: 'Too many requests. Please try again later.',
-      error: 'Too Many Requests',
-      retryAfter: 60,
-    }, HttpStatus.TOO_MANY_REQUESTS);
+    throw new HttpException(
+      {
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message: 'Too many requests. Please try again later.',
+        error: 'Too Many Requests',
+        retryAfter: 60,
+      },
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
   }
 }

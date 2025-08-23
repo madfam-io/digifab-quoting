@@ -1,9 +1,9 @@
 import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
-import { 
-  JobType, 
-  ReportGenerationJobData, 
+import {
+  JobType,
+  ReportGenerationJobData,
   JobResult,
   JobProgress,
 } from '../interfaces/job.interface';
@@ -43,7 +43,9 @@ export class ReportGenerationProcessor {
   ) {}
 
   @Process()
-  async handleReportGeneration(job: Job<ReportGenerationJobData>): Promise<JobResult<ReportResult>> {
+  async handleReportGeneration(
+    job: Job<ReportGenerationJobData>,
+  ): Promise<JobResult<ReportResult>> {
     const startTime = Date.now();
     const { reportType, entityId, format, options, tenantId } = job.data;
 
@@ -235,8 +237,8 @@ export class ReportGenerationProcessor {
       'Generating report': 'Creating report document...',
       'Uploading report': 'Uploading report to secure storage...',
       'Saving metadata': 'Saving report information...',
-      'Finalizing': 'Finalizing report generation...',
-      'Completed': 'Report generation completed successfully',
+      Finalizing: 'Finalizing report generation...',
+      Completed: 'Report generation completed successfully',
     };
     return messages[step] || step;
   }

@@ -14,8 +14,8 @@ export class TenantContextMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       // Generate request ID
-      const requestId = req.headers['x-request-id'] as string || randomUUID();
-      
+      const requestId = (req.headers['x-request-id'] as string) || randomUUID();
+
       // Extract tenant information from various sources
       let tenantId: string | undefined;
       let tenantCode: string | undefined;
@@ -25,7 +25,7 @@ export class TenantContextMiddleware implements NestMiddleware {
       if (req.headers['x-tenant-id']) {
         tenantId = req.headers['x-tenant-id'] as string;
       }
-      
+
       // 2. Check for tenant code in header
       if (req.headers['x-tenant-code']) {
         tenantCode = req.headers['x-tenant-code'] as string;
@@ -65,14 +65,13 @@ export class TenantContextMiddleware implements NestMiddleware {
 
       // For public endpoints (health, login), we don't require tenant
       const isPublicEndpoint = this.isPublicEndpoint(req.path);
-      
-      
+
       if (!tenantId && !isPublicEndpoint) {
         // For MVP, use default tenant if none specified
         const defaultTenant = await this.prisma.tenant.findFirst({
           where: { code: 'default' },
         });
-        
+
         if (defaultTenant) {
           tenantId = defaultTenant.id;
           tenantCode = defaultTenant.code;
@@ -96,7 +95,7 @@ export class TenantContextMiddleware implements NestMiddleware {
 
       // Add request ID to response headers
       res.setHeader('X-Request-Id', requestId);
-      
+
       // Run the request in tenant context
       this.tenantContext.run(context, () => {
         next();
@@ -107,14 +106,9 @@ export class TenantContextMiddleware implements NestMiddleware {
   }
 
   private isPublicEndpoint(path: string): boolean {
-    const publicPaths = [
-      '/health',
-      '/auth/login',
-      '/auth/register', 
-      '/auth/refresh',
-    ];
-    
+    const publicPaths = ['/health', '/auth/login', '/auth/register', '/auth/refresh'];
+
     // Check if the path contains any of the public paths
-    return publicPaths.some(p => path.includes(p));
+    return publicPaths.some((p) => path.includes(p));
   }
 }

@@ -16,7 +16,7 @@ export function createPaginatedResponse<T>(
 ): PaginatedDto<T> {
   const { data, total } = result;
   const { page, limit } = options;
-  
+
   const totalPages = Math.ceil(total / limit);
   const hasPrevious = page > 1;
   const hasNext = page < totalPages;

@@ -119,7 +119,7 @@ describe('LaserPricingCalculator', () => {
 
       // Thicker material takes longer to cut
       expect(thickMaterial.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        thinMaterial.costBreakdown.machine.toNumber() * 3
+        thinMaterial.costBreakdown.machine.toNumber() * 3,
       );
     });
 
@@ -144,7 +144,7 @@ describe('LaserPricingCalculator', () => {
 
       expect(complexCut.unitPrice.toNumber()).toBeGreaterThan(simpleCut.unitPrice.toNumber() * 2);
       expect(complexCut.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        simpleCut.costBreakdown.machine.toNumber() * 3
+        simpleCut.costBreakdown.machine.toNumber() * 3,
       );
     });
 
@@ -159,8 +159,8 @@ describe('LaserPricingCalculator', () => {
           thickness: 1.5,
           pricePerUom: 4,
         },
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           material: 'Stainless Steel 304',
           thickness: 1.5,
         },
@@ -170,7 +170,7 @@ describe('LaserPricingCalculator', () => {
 
       // Stainless steel cuts slower than mild steel
       expect(stainlessSteel.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        mildSteel.costBreakdown.machine.toNumber()
+        mildSteel.costBreakdown.machine.toNumber(),
       );
     });
 
@@ -191,8 +191,8 @@ describe('LaserPricingCalculator', () => {
           volumeCm3: 30,
           bboxMm: { ...basePricingInput.geometry.bboxMm, z: 3 },
         },
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           material: 'Acrylic Clear',
           thickness: 3,
         },
@@ -201,7 +201,7 @@ describe('LaserPricingCalculator', () => {
       expect(acrylic.unitPrice.toNumber()).toBeGreaterThan(0);
       // Acrylic cuts faster than steel
       expect(acrylic.costBreakdown.machine.toNumber()).toBeLessThan(
-        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber(),
       );
     });
 
@@ -236,7 +236,7 @@ describe('LaserPricingCalculator', () => {
 
       // Better material utilization should reduce cost per part
       expect(multiplePartsOnSheet.unitPrice.toNumber()).toBeLessThan(
-        singlePart.unitPrice.toNumber()
+        singlePart.unitPrice.toNumber(),
       );
     });
   });
@@ -330,7 +330,7 @@ describe('LaserPricingCalculator', () => {
       // Relative difference accounting for volume
       const thickKerfPerVolume = thickKerf.div(10);
       const thinKerfPerVolume = thinKerf.div(0.5);
-      
+
       expect(thickKerfPerVolume.toNumber()).toBeGreaterThan(thinKerfPerVolume.toNumber());
     });
   });
@@ -341,7 +341,7 @@ describe('LaserPricingCalculator', () => {
 
       // Energy cost should include laser power + assist gas
       expect(result.costBreakdown.energy.toNumber()).toBeGreaterThan(0);
-      
+
       // For steel cutting, assist gas is significant
       const minGasCost = result.costBreakdown.machine.mul(0.1); // ~10% of machine cost
       expect(result.costBreakdown.energy.toNumber()).toBeGreaterThan(minGasCost.toNumber());
@@ -353,7 +353,7 @@ describe('LaserPricingCalculator', () => {
       // Laser cutting needs minimal labor
       expect(result.costBreakdown.labor.toNumber()).toBeGreaterThan(0);
       expect(result.costBreakdown.labor.toNumber()).toBeLessThan(
-        defaultConfig.laborRatePerHour.mul(0.5).toNumber() // Less than 30 min
+        defaultConfig.laborRatePerHour.mul(0.5).toNumber(), // Less than 30 min
       );
     });
   });
@@ -373,7 +373,7 @@ describe('LaserPricingCalculator', () => {
       expect(result.sustainability.co2e.energy).toBeGreaterThan(0);
       // Laser uses significant power
       expect(result.sustainability.co2e.energy).toBeGreaterThan(
-        result.sustainability.co2e.material * 0.2
+        result.sustainability.co2e.material * 0.2,
       );
     });
 
@@ -430,8 +430,8 @@ describe('LaserPricingCalculator', () => {
           thickness: 2,
           reflectivity: 'high',
         },
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           material: 'Aluminum 5052',
           thickness: 2,
         },
@@ -439,7 +439,7 @@ describe('LaserPricingCalculator', () => {
 
       // Reflective materials need more power/time
       expect(aluminum.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.machine.toNumber(),
       );
     });
 
@@ -466,7 +466,7 @@ describe('LaserPricingCalculator', () => {
 
       // Complex paths require slower cutting
       expect(intricateCut.costBreakdown.machine.toNumber()).toBeGreaterThan(
-        simpleCut.costBreakdown.machine.toNumber()
+        simpleCut.costBreakdown.machine.toNumber(),
       );
     });
 
@@ -483,8 +483,8 @@ describe('LaserPricingCalculator', () => {
           co2eFactor: 0.8,
           organicMaterial: true,
         },
-        selections: { 
-          ...basePricingInput.selections, 
+        selections: {
+          ...basePricingInput.selections,
           material: 'Plywood',
           thickness: 6,
         },
@@ -506,7 +506,7 @@ describe('LaserPricingCalculator', () => {
 
       expect(largeSheet.warnings).toContain('Large part may require sheet repositioning');
       expect(largeSheet.costBreakdown.labor.toNumber()).toBeGreaterThan(
-        calculator.calculate(basePricingInput).costBreakdown.labor.toNumber()
+        calculator.calculate(basePricingInput).costBreakdown.labor.toNumber(),
       );
     });
   });

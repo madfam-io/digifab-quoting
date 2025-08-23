@@ -40,15 +40,15 @@ export function getErrorMessage(error: unknown): string {
   if (isError(error)) {
     return error.message;
   }
-  
+
   if (hasMessage(error)) {
     return error.message;
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   return 'An unknown error occurred';
 }
 
@@ -59,11 +59,11 @@ export function getErrorStack(error: unknown): string | undefined {
   if (isError(error)) {
     return error.stack;
   }
-  
+
   if (hasStack(error)) {
     return error.stack;
   }
-  
+
   return undefined;
 }
 
@@ -74,16 +74,16 @@ export function toError(error: unknown): Error {
   if (isError(error)) {
     return error;
   }
-  
+
   const message = getErrorMessage(error);
   const err = new Error(message);
-  
+
   // Preserve original stack if available
   const stack = getErrorStack(error);
   if (stack) {
     err.stack = stack;
   }
-  
+
   return err;
 }
 
@@ -105,17 +105,17 @@ export function enhanceError(
     code?: string;
     statusCode?: number;
     [key: string]: any;
-  }
+  },
 ): ErrorWithMetadata {
   const err = toError(error) as ErrorWithMetadata;
-  
+
   if (metadata) {
     const { code, statusCode, ...rest } = metadata;
     err.code = code;
     err.statusCode = statusCode;
     err.metadata = rest;
   }
-  
+
   return err;
 }
 
@@ -132,7 +132,7 @@ export interface FormattedError {
 
 export function formatErrorForLogging(error: unknown): FormattedError {
   const err = toError(error) as ErrorWithMetadata;
-  
+
   return {
     message: err.message,
     stack: err.stack,

@@ -1,6 +1,6 @@
 /**
  * Example usage of Redis caching in MADFAM Quoting MVP
- * 
+ *
  * This file demonstrates various caching patterns and best practices
  */
 
@@ -66,10 +66,18 @@ export class ExampleService {
   }
 
   // Placeholder methods
-  private async performExpensiveCalculation(id: string) { return { id, data: 'expensive' }; }
-  private async saveData(id: string, data: any) { return { id, data }; }
-  private async complexPriceCalculation(quantity: number) { return { price: quantity * 10 }; }
-  private async calculateCustomQuote(options: any) { return { quote: options }; }
+  private async performExpensiveCalculation(id: string) {
+    return { id, data: 'expensive' };
+  }
+  private async saveData(id: string, data: any) {
+    return { id, data };
+  }
+  private async complexPriceCalculation(quantity: number) {
+    return { price: quantity * 10 };
+  }
+  private async calculateCustomQuote(options: any) {
+    return { quote: options };
+  }
 }
 
 /**
@@ -95,16 +103,20 @@ export class TenantConfigService {
   async updateTenantConfig(tenantId: string, config: any) {
     // Update database
     const updated = await this.saveTenantConfigToDb(tenantId, config);
-    
+
     // Invalidate cache
     await this.cacheService.invalidate(`tenant:config:${tenantId}`);
-    
+
     return updated;
   }
 
   // Placeholder methods
-  private async fetchTenantConfigFromDb(tenantId: string) { return { tenantId, config: {} }; }
-  private async saveTenantConfigToDb(tenantId: string, config: any) { return { tenantId, config }; }
+  private async fetchTenantConfigFromDb(tenantId: string) {
+    return { tenantId, config: {} };
+  }
+  private async saveTenantConfigToDb(tenantId: string, config: any) {
+    return { tenantId, config };
+  }
 }
 
 /**
@@ -124,29 +136,26 @@ export class QuoteCalculationService {
     };
 
     // Use specialized quote cache service
-    return await this.quoteCacheService.getOrCalculateQuote(
-      cacheKey,
-      async () => {
-        // Perform actual calculation if not cached
-        const result = await this.performQuoteCalculation(fileHash, options);
-        
-        return {
-          pricing: {
-            unitCost: result.unitCost,
-            totalCost: result.totalCost,
-            margin: result.margin,
-            finalPrice: result.finalPrice,
-          },
-          manufacturing: {
-            estimatedTime: result.leadTime,
-            machineCost: result.machineCost,
-            materialCost: result.materialCost,
-          },
-          geometry: result.geometry,
-          timestamp: Date.now(),
-        };
-      },
-    );
+    return await this.quoteCacheService.getOrCalculateQuote(cacheKey, async () => {
+      // Perform actual calculation if not cached
+      const result = await this.performQuoteCalculation(fileHash, options);
+
+      return {
+        pricing: {
+          unitCost: result.unitCost,
+          totalCost: result.totalCost,
+          margin: result.margin,
+          finalPrice: result.finalPrice,
+        },
+        manufacturing: {
+          estimatedTime: result.leadTime,
+          machineCost: result.machineCost,
+          materialCost: result.materialCost,
+        },
+        geometry: result.geometry,
+        timestamp: Date.now(),
+      };
+    });
   }
 
   async invalidateQuotesForMaterial(service: string, material: string) {
@@ -202,10 +211,10 @@ export class SessionService {
 
     // Fetch from database
     const session = await this.fetchSessionFromDb(userId);
-    
+
     // Cache for future requests
     await this.cacheService.cacheUserSession(userId, session);
-    
+
     return session;
   }
 
@@ -229,7 +238,7 @@ export class BatchQuoteService {
 
   async getMultipleQuotes(quoteRequests: any[]) {
     // Prepare cache keys
-    const cacheKeys = quoteRequests.map(req => ({
+    const cacheKeys = quoteRequests.map((req) => ({
       fileHash: req.fileHash,
       service: req.service,
       material: req.material,
@@ -244,14 +253,14 @@ export class BatchQuoteService {
     for (let i = 0; i < quoteRequests.length; i++) {
       const cacheKey = this.generateCacheKey(cacheKeys[i]);
       const cached = cachedResults.get(cacheKey);
-      
+
       if (cached) {
         results.push(cached);
       } else {
         // Calculate missing quotes
         const calculated = await this.calculateSingleQuote(quoteRequests[i]);
         results.push(calculated);
-        
+
         // Cache for future use
         await this.quoteCacheService.cacheQuote(cacheKeys[i], calculated);
       }

@@ -28,7 +28,7 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     // If no roles are required, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -36,7 +36,7 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    
+
     // Check if user is authenticated
     if (!user) {
       throw new ForbiddenException('User not authenticated');
@@ -45,20 +45,18 @@ export class RolesGuard implements CanActivate {
     // Get user roles from JWT and tenant context
     const userRoles = user.roles || [];
     const contextRoles = this.tenantContext.getCurrentUserRoles();
-    
+
     // Combine roles from both sources
     const allUserRoles = [...new Set([...userRoles, ...contextRoles])];
-    
+
     // Check if user has any of the required roles (considering hierarchy)
-    const hasRequiredRole = requiredRoles.some(requiredRole => 
-      allUserRoles.some(userRole => 
-        ROLE_HIERARCHY[userRole as UserRole]?.includes(requiredRole)
-      )
+    const hasRequiredRole = requiredRoles.some((requiredRole) =>
+      allUserRoles.some((userRole) => ROLE_HIERARCHY[userRole as UserRole]?.includes(requiredRole)),
     );
 
     if (!hasRequiredRole) {
       throw new ForbiddenException(
-        `Access denied. Required roles: ${requiredRoles.join(', ')}. User roles: ${allUserRoles.join(', ')}`
+        `Access denied. Required roles: ${requiredRoles.join(', ')}. User roles: ${allUserRoles.join(', ')}`,
       );
     }
 

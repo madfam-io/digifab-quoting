@@ -29,6 +29,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -69,14 +70,15 @@ Content-Type: application/json
 
 ## Rate Limiting
 
-| Endpoint Type | Anonymous | Authenticated | Notes |
-|--------------|-----------|---------------|--------|
-| General | 10/min | 100/min | Per IP/user |
-| Quote Creation | - | 20/min | Per user |
-| File Upload | - | 50/day | Per user |
-| Reports | - | 10/hour | Per tenant |
+| Endpoint Type  | Anonymous | Authenticated | Notes       |
+| -------------- | --------- | ------------- | ----------- |
+| General        | 10/min    | 100/min       | Per IP/user |
+| Quote Creation | -         | 20/min        | Per user    |
+| File Upload    | -         | 50/day        | Per user    |
+| Reports        | -         | 10/hour       | Per tenant  |
 
 Rate limit headers:
+
 - `X-RateLimit-Limit`: Request limit
 - `X-RateLimit-Remaining`: Remaining requests
 - `X-RateLimit-Reset`: Reset timestamp
@@ -105,14 +107,14 @@ All errors follow a consistent format:
 
 ### Common Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `UNAUTHORIZED` | 401 | Missing or invalid authentication |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request data |
-| `RATE_LIMITED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code               | HTTP Status | Description                       |
+| ------------------ | ----------- | --------------------------------- |
+| `UNAUTHORIZED`     | 401         | Missing or invalid authentication |
+| `FORBIDDEN`        | 403         | Insufficient permissions          |
+| `NOT_FOUND`        | 404         | Resource not found                |
+| `VALIDATION_ERROR` | 400         | Invalid request data              |
+| `RATE_LIMITED`     | 429         | Too many requests                 |
+| `INTERNAL_ERROR`   | 500         | Server error                      |
 
 ## Endpoints
 
@@ -135,6 +137,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -147,6 +150,7 @@ Authorization: Bearer <token>
 ```
 
 **Supported File Types:**
+
 - STL (`model/stl`, `.stl`)
 - STEP (`model/step`, `.step`, `.stp`)
 - IGES (`model/iges`, `.iges`, `.igs`)
@@ -155,6 +159,7 @@ Authorization: Bearer <token>
 - PDF (`application/pdf`, `.pdf`)
 
 **File Size Limits:**
+
 - Maximum file size: 100MB
 - Maximum files per quote: 20
 
@@ -195,6 +200,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -216,6 +222,7 @@ Authorization: Bearer <token>
 ```
 
 **Process Types:**
+
 - `FFF` - Fused Filament Fabrication (3D printing)
 - `SLA` - Stereolithography (resin 3D printing)
 - `CNC_3AXIS` - 3-axis CNC machining
@@ -231,6 +238,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -240,10 +248,10 @@ Authorization: Bearer <token>
     "currency": "MXN",
     "validUntil": "2024-02-03T23:59:59Z",
     "totals": {
-      "subtotal": 1500.00,
-      "tax": 240.00,
-      "shipping": 150.00,
-      "grandTotal": 1890.00
+      "subtotal": 1500.0,
+      "tax": 240.0,
+      "shipping": 150.0,
+      "grandTotal": 1890.0
     },
     "items": [
       {
@@ -252,13 +260,13 @@ Authorization: Bearer <token>
         "process": "FFF",
         "material": "PLA",
         "quantity": 10,
-        "unitPrice": 150.00,
-        "totalPrice": 1500.00,
+        "unitPrice": 150.0,
+        "totalPrice": 1500.0,
         "leadDays": 3,
         "costBreakdown": {
-          "material": 45.00,
-          "machine": 35.00,
-          "labor": 15.00,
+          "material": 45.0,
+          "machine": 35.0,
+          "labor": 15.0,
           "overhead": 14.25,
           "margin": 40.75
         },
@@ -287,6 +295,7 @@ Authorization: Bearer <token>
 ```
 
 **Quote Statuses:**
+
 - `draft` - Initial creation
 - `processing` - Analyzing files
 - `needs_review` - Manual review required
@@ -304,6 +313,7 @@ Authorization: Bearer <token>
 ```
 
 **Query Parameters:**
+
 - `page` (integer): Page number (default: 1)
 - `limit` (integer): Items per page (default: 20, max: 100)
 - `status` (string): Filter by status
@@ -313,6 +323,7 @@ Authorization: Bearer <token>
 - `dateTo` (ISO 8601): Filter by creation date
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -391,6 +402,7 @@ Authorization: Bearer <token>
 ```
 
 **Order Statuses:**
+
 - `PENDING` - Awaiting payment confirmation
 - `CONFIRMED` - Payment received
 - `IN_PRODUCTION` - Manufacturing in progress
@@ -407,6 +419,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -456,6 +469,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -482,12 +496,14 @@ Admin endpoints require `admin` or `manager` role.
 #### Materials Management
 
 **List Materials:**
+
 ```http
 GET /admin/materials?process=FFF&active=true
 Authorization: Bearer <token>
 ```
 
 **Create Material:**
+
 ```http
 POST /admin/materials
 Content-Type: application/json
@@ -510,6 +526,7 @@ Authorization: Bearer <token>
 ```
 
 **Update Material:**
+
 ```http
 PUT /admin/materials/{id}
 Content-Type: application/json
@@ -524,12 +541,14 @@ Authorization: Bearer <token>
 #### Machine Management
 
 **List Machines:**
+
 ```http
 GET /admin/machines?process=CNC_3AXIS&active=true
 Authorization: Bearer <token>
 ```
 
 **Update Machine:**
+
 ```http
 PUT /admin/machines/{id}
 Content-Type: application/json
@@ -564,6 +583,7 @@ Authorization: Bearer <token>
 ```
 
 **Report Types:**
+
 - `quotes` - Quote summary report
 - `orders` - Order fulfillment report
 - `revenue` - Revenue analysis
@@ -603,6 +623,7 @@ GET /health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -617,6 +638,7 @@ GET /health/ready
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -661,7 +683,7 @@ let accessToken: string;
 async function login(email: string, password: string) {
   const response = await axios.post(`${API_BASE}/auth/login`, {
     email,
-    password
+    password,
   });
   accessToken = response.data.data.accessToken;
   return response.data;
@@ -674,10 +696,10 @@ async function createQuote(items: QuoteItem[]) {
     { items },
     {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    }
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
   );
   return response.data;
 }
@@ -690,20 +712,20 @@ async function uploadFile(file: File) {
     {
       filename: file.name,
       contentType: file.type,
-      size: file.size
+      size: file.size,
     },
     {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    }
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
   );
 
   // Upload to S3
   await axios.put(urlResponse.data.data.uploadUrl, file, {
     headers: {
-      'Content-Type': file.type
-    }
+      'Content-Type': file.type,
+    },
   });
 
   return urlResponse.data.data.fileId;
@@ -720,7 +742,7 @@ class MADFAMClient:
     def __init__(self, base_url: str = "https://api.madfam.io/v1"):
         self.base_url = base_url
         self.access_token = None
-    
+
     def login(self, email: str, password: str) -> Dict:
         response = requests.post(
             f"{self.base_url}/auth/login",
@@ -730,7 +752,7 @@ class MADFAMClient:
         data = response.json()
         self.access_token = data["data"]["accessToken"]
         return data
-    
+
     def create_quote(self, items: List[Dict]) -> Dict:
         response = requests.post(
             f"{self.base_url}/quotes",
@@ -739,7 +761,7 @@ class MADFAMClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def get_quote(self, quote_id: str) -> Dict:
         response = requests.get(
             f"{self.base_url}/quotes/{quote_id}",
@@ -832,6 +854,7 @@ curl -X GET https://api.madfam.io/v1/quotes/quote_789012 \
 ## Support
 
 For API support:
+
 - Email: api-support@madfam.io
 - Documentation: https://docs.madfam.io/api
 - Status Page: https://status.madfam.io

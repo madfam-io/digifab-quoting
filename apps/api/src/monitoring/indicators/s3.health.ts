@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  HealthIndicator,
-  HealthIndicatorResult,
-  HealthCheckError,
-} from '@nestjs/terminus';
+import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 
@@ -22,9 +18,7 @@ export class S3HealthIndicator extends HealthIndicator {
 
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
     try {
-      await this.s3Client.send(
-        new HeadBucketCommand({ Bucket: this.bucketName }),
-      );
+      await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucketName }));
       return this.getStatus(key, true, { bucket: this.bucketName });
     } catch (error) {
       throw new HealthCheckError(

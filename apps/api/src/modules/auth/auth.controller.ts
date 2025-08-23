@@ -1,12 +1,35 @@
-import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiConflictResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+  Get,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, RefreshTokenResponseDto } from './dto/refresh-token.dto';
-import { UnauthorizedResponseDto, ValidationErrorResponseDto, ConflictResponseDto } from '../../common/dto/api-response.dto';
+import {
+  UnauthorizedResponseDto,
+  ValidationErrorResponseDto,
+  ConflictResponseDto,
+} from '../../common/dto/api-response.dto';
 import { User } from '@madfam/shared';
 import { Public } from './decorators/public.decorator';
 
@@ -17,28 +40,29 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register a new user',
-    description: 'Creates a new user account with the provided information. Email must be unique within the tenant.' 
+    description:
+      'Creates a new user account with the provided information. Email must be unique within the tenant.',
   })
   @ApiBody({ type: RegisterDto })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'User successfully registered',
-    type: RegisterResponseDto 
+    type: RegisterResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Invalid input data',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
-  @ApiConflictResponse({ 
+  @ApiConflictResponse({
     description: 'Email already exists',
-    type: ConflictResponseDto 
+    type: ConflictResponseDto,
   })
   @ApiHeader({
     name: 'X-Tenant-ID',
     description: 'Optional tenant identifier for multi-tenant registration',
-    required: false
+    required: false,
   })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -47,28 +71,28 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Authenticate user',
-    description: 'Authenticates a user with email and password, returns JWT tokens for API access' 
+    description: 'Authenticates a user with email and password, returns JWT tokens for API access',
   })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login successful, returns access and refresh tokens',
-    type: LoginResponseDto 
+    type: LoginResponseDto,
   })
-  @ApiUnauthorizedResponse({ 
+  @ApiUnauthorizedResponse({
     description: 'Invalid credentials',
-    type: UnauthorizedResponseDto 
+    type: UnauthorizedResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Invalid input data',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   @ApiHeader({
     name: 'X-Tenant-ID',
     description: 'Optional tenant identifier for multi-tenant login',
-    required: false
+    required: false,
   })
   async login(@Request() req: Express.Request, @Body() _loginDto: LoginDto) {
     const user = req.user as User;
@@ -77,23 +101,23 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Refresh access token',
-    description: 'Exchange a valid refresh token for new access and refresh tokens' 
+    description: 'Exchange a valid refresh token for new access and refresh tokens',
   })
   @ApiBody({ type: RefreshTokenDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Tokens refreshed successfully',
-    type: RefreshTokenResponseDto 
+    type: RefreshTokenResponseDto,
   })
-  @ApiUnauthorizedResponse({ 
+  @ApiUnauthorizedResponse({
     description: 'Invalid or expired refresh token',
-    type: UnauthorizedResponseDto 
+    type: UnauthorizedResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Invalid input data',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshTokens(refreshTokenDto.refreshToken);
@@ -103,17 +127,17 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Logout user',
-    description: 'Invalidates the current access token, preventing further API access' 
+    description: 'Invalidates the current access token, preventing further API access',
   })
-  @ApiResponse({ 
-    status: 204, 
-    description: 'Logout successful, token invalidated' 
+  @ApiResponse({
+    status: 204,
+    description: 'Logout successful, token invalidated',
   })
-  @ApiUnauthorizedResponse({ 
+  @ApiUnauthorizedResponse({
     description: 'Invalid or missing authentication token',
-    type: UnauthorizedResponseDto 
+    type: UnauthorizedResponseDto,
   })
   async logout(@Request() req: any) {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -123,17 +147,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('session')
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get current user session',
-    description: 'Returns the current authenticated user information' 
+    description: 'Returns the current authenticated user information',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Current user session data'
+  @ApiResponse({
+    status: 200,
+    description: 'Current user session data',
   })
-  @ApiUnauthorizedResponse({ 
+  @ApiUnauthorizedResponse({
     description: 'Invalid or missing authentication token',
-    type: UnauthorizedResponseDto 
+    type: UnauthorizedResponseDto,
   })
   async getSession(@Request() req: any) {
     const user = req.user as User;
@@ -143,22 +167,22 @@ export class AuthController {
         email: user.email,
         name: user.name,
         roles: user.roles,
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('_log')
   @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Log authentication events',
-    description: 'Used by frontend to log authentication-related events for analytics' 
+    description: 'Used by frontend to log authentication-related events for analytics',
   })
-  @ApiResponse({ 
-    status: 204, 
-    description: 'Event logged successfully' 
+  @ApiResponse({
+    status: 204,
+    description: 'Event logged successfully',
   })
   async logEvent(@Body() _eventData: any) {
     // This is a placeholder for frontend analytics

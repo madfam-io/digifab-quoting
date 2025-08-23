@@ -106,7 +106,9 @@ describe('FFFPricingCalculator', () => {
       const coarseLayers = coarseCalculator.calculate();
 
       expect(fineLayers.unitPrice.toNumber()).toBeGreaterThan(coarseLayers.unitPrice.toNumber());
-      expect(fineLayers.costBreakdown.machine.toNumber()).toBeGreaterThan(coarseLayers.costBreakdown.machine.toNumber());
+      expect(fineLayers.costBreakdown.machine.toNumber()).toBeGreaterThan(
+        coarseLayers.costBreakdown.machine.toNumber(),
+      );
     });
 
     it('should calculate support material cost correctly', () => {
@@ -125,8 +127,12 @@ describe('FFFPricingCalculator', () => {
       const withSupports = withSupportsCalc.calculate();
       const withoutSupports = withoutSupportsCalc.calculate();
 
-      expect(withSupports.unitPrice.toNumber()).toBeGreaterThan(withoutSupports.unitPrice.toNumber());
-      expect(withSupports.costBreakdown.material.toNumber()).toBeGreaterThan(withoutSupports.costBreakdown.material.toNumber());
+      expect(withSupports.unitPrice.toNumber()).toBeGreaterThan(
+        withoutSupports.unitPrice.toNumber(),
+      );
+      expect(withSupports.costBreakdown.material.toNumber()).toBeGreaterThan(
+        withoutSupports.costBreakdown.material.toNumber(),
+      );
     });
 
     it('should handle different infill percentages', () => {
@@ -146,7 +152,9 @@ describe('FFFPricingCalculator', () => {
       const highInfill = highInfillCalc.calculate();
 
       expect(highInfill.unitPrice.toNumber()).toBeGreaterThan(lowInfill.unitPrice.toNumber());
-      expect(highInfill.costBreakdown.material.toNumber()).toBeGreaterThan(lowInfill.costBreakdown.material.toNumber());
+      expect(highInfill.costBreakdown.material.toNumber()).toBeGreaterThan(
+        lowInfill.costBreakdown.material.toNumber(),
+      );
     });
 
     it('should apply minimum charge for very small parts', () => {
@@ -306,9 +314,7 @@ describe('FFFPricingCalculator', () => {
 
       const calculator = new FFFPricingCalculator(lowMarginInput);
       const result = calculator.calculate();
-      const marginPercent = result.costBreakdown.margin
-        .div(result.unitPrice)
-        .mul(100);
+      const marginPercent = result.costBreakdown.margin.div(result.unitPrice).mul(100);
 
       expect(marginPercent.toNumber()).toBeGreaterThanOrEqual(30);
     });
@@ -325,9 +331,8 @@ describe('FFFPricingCalculator', () => {
       expect(sustainability.co2e.logistics).toBeGreaterThan(0);
       expect(sustainability.co2e.total).toBeGreaterThan(0);
 
-      const expectedTotal = sustainability.co2e.material + 
-                           sustainability.co2e.energy + 
-                           sustainability.co2e.logistics;
+      const expectedTotal =
+        sustainability.co2e.material + sustainability.co2e.energy + sustainability.co2e.logistics;
       expect(sustainability.co2e.total).toBeCloseTo(expectedTotal, 2);
     });
 
@@ -358,7 +363,9 @@ describe('FFFPricingCalculator', () => {
       const recycledResult = recycledCalc.calculate();
       const virginResult = virginCalc.calculate();
 
-      expect(recycledResult.sustainability.score).toBeGreaterThan(virginResult.sustainability.score);
+      expect(recycledResult.sustainability.score).toBeGreaterThan(
+        virginResult.sustainability.score,
+      );
     });
   });
 
@@ -414,7 +421,7 @@ describe('FFFPricingCalculator', () => {
 
       expect(absResult.unitPrice.toNumber()).toBeGreaterThan(0);
       expect(absResult.costBreakdown.material.toNumber()).not.toBe(
-        plaResult.costBreakdown.material.toNumber()
+        plaResult.costBreakdown.material.toNumber(),
       );
     });
   });

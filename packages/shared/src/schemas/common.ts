@@ -26,15 +26,19 @@ export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({
     success: z.boolean(),
     data: dataSchema.optional(),
-    error: z.object({
-      code: z.string(),
-      message: z.string(),
-      details: z.record(z.any()).optional(),
-    }).optional(),
-    meta: z.object({
-      timestamp: iso8601Schema,
-      version: z.string(),
-    }).optional(),
+    error: z
+      .object({
+        code: z.string(),
+        message: z.string(),
+        details: z.record(z.any()).optional(),
+      })
+      .optional(),
+    meta: z
+      .object({
+        timestamp: iso8601Schema,
+        version: z.string(),
+      })
+      .optional(),
   });
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

@@ -4,20 +4,20 @@ const { PrismaClient } = require('@prisma/client');
 
 async function createDefaultTenant() {
   const prisma = new PrismaClient();
-  
+
   console.log('Creating default tenant...');
-  
+
   try {
     // Check if default tenant already exists
     const existingTenant = await prisma.tenant.findFirst({
-      where: { code: 'default' }
+      where: { code: 'default' },
     });
-    
+
     if (existingTenant) {
       console.log('✅ Default tenant already exists:', existingTenant.id);
       return;
     }
-    
+
     // Create default tenant
     const defaultTenant = await prisma.tenant.create({
       data: {
@@ -31,12 +31,11 @@ async function createDefaultTenant() {
         features: {},
         settings: {},
         branding: {},
-        active: true
-      }
+        active: true,
+      },
     });
-    
+
     console.log('✅ Default tenant created successfully:', defaultTenant.id);
-    
   } catch (error) {
     console.error('❌ Error creating tenant:', error.message);
     process.exit(1);

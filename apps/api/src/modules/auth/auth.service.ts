@@ -21,7 +21,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
+    if (user && user.passwordHash && (await bcrypt.compare(password, user.passwordHash))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash: _, ...result } = user;
       return {
@@ -39,14 +39,16 @@ export class AuthService {
 
   async login(user: User): Promise<AuthTokens> {
     const tokens = await this.generateTokens(user);
-    
+
     // Store session
     await this.prisma.session.create({
       data: {
         userId: user.id,
         token: tokens.accessToken,
         refreshToken: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000),
+        expiresAt: new Date(
+          Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000,
+        ),
       },
     });
 
@@ -101,7 +103,9 @@ export class AuthService {
         data: {
           token: tokens.accessToken,
           refreshToken: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000),
+          expiresAt: new Date(
+            Date.now() + (this.configService.get<number>('jwt.refreshTokenExpiry') || 86400) * 1000,
+          ),
         },
       });
 
@@ -142,7 +146,7 @@ export class AuthService {
       const defaultTenant = await this.prisma.tenant.findFirst({
         where: { domain: 'default' },
       });
-      
+
       if (!defaultTenant) {
         // Create default tenant for MVP
         const tenant = await this.prisma.tenant.create({
@@ -214,7 +218,7 @@ export class AuthService {
       tenantId: user.tenantId,
       roles: user.roles,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (15 * 60), // 15 minutes
+      exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15 minutes
     };
 
     const accessToken = this.jwtService.sign(payload);

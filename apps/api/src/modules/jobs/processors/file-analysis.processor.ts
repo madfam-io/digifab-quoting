@@ -1,12 +1,7 @@
 import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
-import { 
-  JobType, 
-  FileAnalysisJobData, 
-  JobResult,
-  JobProgress,
-} from '../interfaces/job.interface';
+import { JobType, FileAnalysisJobData, JobResult, JobProgress } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { FilesService } from '@/modules/files/files.service';
@@ -83,7 +78,7 @@ export class FileAnalysisProcessor {
 
       // Download file from S3
       const fileBuffer = await this.filesService.downloadFile(fileUrl);
-      
+
       await this.updateProgress(job, 20, 'File downloaded successfully');
 
       // Validate file format
@@ -185,10 +180,19 @@ export class FileAnalysisProcessor {
 
   private isValidFileFormat(fileType: string): boolean {
     const supportedFormats = [
-      'stl', 'obj', 'step', 'stp', 'iges', 'igs',
-      '3mf', 'dxf', 'dwg', 'svg', 'pdf',
+      'stl',
+      'obj',
+      'step',
+      'stp',
+      'iges',
+      'igs',
+      '3mf',
+      'dxf',
+      'dwg',
+      'svg',
+      'pdf',
     ];
-    
+
     return supportedFormats.includes(fileType.toLowerCase());
   }
 
@@ -209,25 +213,17 @@ export class FileAnalysisProcessor {
       const progressInterval = setInterval(async () => {
         const currentProgress = job.progress() as JobProgress;
         if (currentProgress.percentage < 80) {
-          await this.updateProgress(
-            job,
-            currentProgress.percentage + 5,
-            'Analyzing geometry...',
-          );
+          await this.updateProgress(job, currentProgress.percentage + 5, 'Analyzing geometry...');
         }
       }, 5000);
 
       const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.workerServiceUrl}/api/v1/analyze`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            timeout: 5 * 60 * 1000, // 5 minutes
+        this.httpService.post(`${this.workerServiceUrl}/api/v1/analyze`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
           },
-        ),
+          timeout: 5 * 60 * 1000, // 5 minutes
+        }),
       );
 
       clearInterval(progressInterval);
@@ -245,13 +241,11 @@ export class FileAnalysisProcessor {
       };
     } catch (error) {
       // If worker service is unavailable, provide basic analysis
-      this.logger.warn(`Worker service unavailable, using fallback analysis: ${error instanceof Error ? error.message : String(error)}`);
-      
-      return this.performBasicAnalysis(
-        job.data.fileId,
-        fileBuffer,
-        fileType,
+      this.logger.warn(
+        `Worker service unavailable, using fallback analysis: ${error instanceof Error ? error.message : String(error)}`,
       );
+
+      return this.performBasicAnalysis(job.data.fileId, fileBuffer, fileType);
     }
   }
 
@@ -297,7 +291,7 @@ export class FileAnalysisProcessor {
     await this.prisma.$transaction(async (tx) => {
       // Update file with analysis results
       await tx.file.update({
-        where: { 
+        where: {
           id: fileId,
           tenantId,
         },
@@ -306,10 +300,12 @@ export class FileAnalysisProcessor {
           analysisResult: analysis as any,
           analyzedAt: new Date(),
           metadata: {
-            ...(await tx.file.findUnique({
-              where: { id: fileId },
-              select: { metadata: true },
-            }))?.metadata as any || {},
+            ...(((
+              await tx.file.findUnique({
+                where: { id: fileId },
+                select: { metadata: true },
+              })
+            )?.metadata as any) || {}),
             geometry: analysis.geometry,
             dfmScore: analysis.dfmAnalysis?.score,
             complexity: analysis.features?.complexity,

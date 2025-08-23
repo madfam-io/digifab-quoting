@@ -16,9 +16,7 @@ export interface BaseRepository<T, CreateInput, UpdateInput> {
   create(data: CreateInput & { tenantId: string }): Promise<T>;
   update(id: string, tenantId: string, data: UpdateInput): Promise<T>;
   delete(id: string, tenantId: string): Promise<T>;
-  transaction<R>(
-    fn: (tx: Prisma.TransactionClient) => Promise<R>,
-  ): Promise<R>;
+  transaction<R>(fn: (tx: Prisma.TransactionClient) => Promise<R>): Promise<R>;
 }
 
 export interface PaginatedResult<T> {
@@ -58,16 +56,11 @@ export abstract class BaseRepositoryImpl<T, CreateInput, UpdateInput>
   abstract update(id: string, tenantId: string, data: UpdateInput): Promise<T>;
   abstract delete(id: string, tenantId: string): Promise<T>;
 
-  async transaction<R>(
-    fn: (tx: Prisma.TransactionClient) => Promise<R>,
-  ): Promise<R> {
+  async transaction<R>(fn: (tx: Prisma.TransactionClient) => Promise<R>): Promise<R> {
     return this.prisma.$transaction(fn);
   }
 
-  protected buildWhereClause(
-    tenantId: string,
-    filters?: Record<string, any>,
-  ): any {
+  protected buildWhereClause(tenantId: string, filters?: Record<string, any>): any {
     const where: any = { tenantId };
 
     if (filters) {

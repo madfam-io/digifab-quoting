@@ -20,9 +20,9 @@ const authOptions: NextAuthOptions = {
         try {
           const response = await fetch(`${API_URL}/api/v1/auth/login`, {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
-              'X-Tenant-Code': 'default'
+              'X-Tenant-Code': 'default',
             },
             body: JSON.stringify({
               email: credentials.email,
@@ -34,14 +34,16 @@ const authOptions: NextAuthOptions = {
             return null;
           }
 
-          const data: AuthTokens & { user: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            role: string;
-            tenantId: string;
-          } } = await response.json();
+          const data: AuthTokens & {
+            user: {
+              id: string;
+              email: string;
+              firstName: string;
+              lastName: string;
+              role: string;
+              tenantId: string;
+            };
+          } = await response.json();
 
           return {
             id: data.user.id,
@@ -72,7 +74,7 @@ const authOptions: NextAuthOptions = {
       }
 
       // TODO: Implement token refresh logic here
-      
+
       return token;
     },
     async session({ session, token }) {
@@ -84,7 +86,7 @@ const authOptions: NextAuthOptions = {
         tenantId: token.tenantId as string,
       };
       session.accessToken = token.accessToken as string;
-      
+
       return session;
     },
   },

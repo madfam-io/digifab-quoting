@@ -36,7 +36,7 @@ class ShippingAddressDto {
 }
 
 export class AcceptQuoteDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'IDs of quote items to accept',
     type: [String],
   })

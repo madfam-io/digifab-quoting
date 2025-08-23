@@ -52,7 +52,7 @@ export class QuoteCacheService {
     calculateFn: () => Promise<CachedQuoteResult>,
   ): Promise<CachedQuoteResult> {
     const cacheKey = this.generateQuoteCacheKey(key);
-    
+
     return await this.cacheService.getOrSet({
       key: cacheKey,
       ttl: this.QUOTE_CACHE_TTL,
@@ -64,17 +64,11 @@ export class QuoteCacheService {
   /**
    * Cache quote calculation result
    */
-  async cacheQuote(
-    key: QuoteCacheKey,
-    result: CachedQuoteResult,
-  ): Promise<void> {
+  async cacheQuote(key: QuoteCacheKey, result: CachedQuoteResult): Promise<void> {
     const cacheKey = this.generateQuoteCacheKey(key);
-    await this.redisService.set(
-      cacheKey,
-      result,
-      this.QUOTE_CACHE_TTL,
-      { tenantId: this.cacheService['tenantContext'].getTenantId() }
-    );
+    await this.redisService.set(cacheKey, result, this.QUOTE_CACHE_TTL, {
+      tenantId: this.cacheService['tenantContext'].getTenantId(),
+    });
   }
 
   /**
@@ -96,10 +90,7 @@ export class QuoteCacheService {
   /**
    * Invalidate quotes for a specific service/material combination
    */
-  async invalidateServiceMaterialQuotes(
-    service: string,
-    material: string,
-  ): Promise<number> {
+  async invalidateServiceMaterialQuotes(service: string, material: string): Promise<number> {
     const pattern = `quote:*:${service}:${material}:*`;
     return await this.cacheService.invalidate(pattern);
   }
@@ -107,21 +98,14 @@ export class QuoteCacheService {
   /**
    * Cache pricing configuration
    */
-  async cachePricingConfig(
-    service: string,
-    material: string,
-    config: any,
-  ): Promise<void> {
+  async cachePricingConfig(service: string, material: string, config: any): Promise<void> {
     await this.cacheService.cachePricingRules(service, material, config, this.PRICING_CACHE_TTL);
   }
 
   /**
    * Get cached pricing configuration
    */
-  async getCachedPricingConfig(
-    service: string,
-    material: string,
-  ): Promise<any | null> {
+  async getCachedPricingConfig(service: string, material: string): Promise<any | null> {
     return await this.cacheService.getCachedPricingRules(service, material);
   }
 
@@ -130,22 +114,22 @@ export class QuoteCacheService {
    */
   async batchGetQuotes(keys: QuoteCacheKey[]): Promise<Map<string, CachedQuoteResult | null>> {
     const results = new Map<string, CachedQuoteResult | null>();
-    
+
     // Use pipeline for efficient batch operations
     const client = this.redisService.getClient();
     if (!client) {
       return results;
     }
     const pipeline = client.pipeline();
-    const cacheKeys = keys.map(key => this.generateQuoteCacheKey(key));
-    
-    cacheKeys.forEach(key => {
+    const cacheKeys = keys.map((key) => this.generateQuoteCacheKey(key));
+
+    cacheKeys.forEach((key) => {
       pipeline.get(key);
     });
-    
+
     try {
       const responses = await pipeline.exec();
-      
+
       responses?.forEach(([err, value], index) => {
         if (!err && value) {
           try {
@@ -159,9 +143,12 @@ export class QuoteCacheService {
         }
       });
     } catch (error) {
-      this.logger.error('Error in batch get quotes', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in batch get quotes',
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
-    
+
     return results;
   }
 
@@ -176,7 +163,7 @@ export class QuoteCacheService {
     }>,
   ): Promise<void> {
     this.logger.log('Warming up quote cache');
-    
+
     for (const config of commonConfigs) {
       // Pre-fetch pricing configurations
       await this.getCachedPricingConfig(config.service, config.material);
@@ -201,18 +188,19 @@ export class QuoteCacheService {
     }
     const quoteKeys = await client.keys('*:quote:*');
     const pricingKeys = await client.keys('*:pricing:*');
-    
+
     let totalTTL = 0;
     let validKeys = 0;
-    
-    for (const key of quoteKeys.slice(0, 100)) { // Sample first 100
+
+    for (const key of quoteKeys.slice(0, 100)) {
+      // Sample first 100
       const ttl = await this.redisService.ttl(key);
       if (ttl > 0) {
         totalTTL += ttl;
         validKeys++;
       }
     }
-    
+
     return {
       totalQuotes: quoteKeys.length,
       totalPricingConfigs: pricingKeys.length,
@@ -224,10 +212,8 @@ export class QuoteCacheService {
    * Generate quote cache key
    */
   private generateQuoteCacheKey(key: QuoteCacheKey): string {
-    const optionsHash = key.options 
-      ? this.hashObject(key.options) 
-      : 'default';
-    
+    const optionsHash = key.options ? this.hashObject(key.options) : 'default';
+
     return `quote:file:${key.fileHash}:${key.service}:${key.material}:${key.quantity}:${optionsHash}`;
   }
 

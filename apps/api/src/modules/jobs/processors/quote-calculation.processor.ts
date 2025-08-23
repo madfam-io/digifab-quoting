@@ -1,9 +1,9 @@
 import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
-import { 
-  JobType, 
-  QuoteCalculationJobData, 
+import {
+  JobType,
+  QuoteCalculationJobData,
   JobResult,
   JobProgress,
 } from '../interfaces/job.interface';
@@ -56,7 +56,9 @@ export class QuoteCalculationProcessor {
   ) {}
 
   @Process()
-  async handleQuoteCalculation(job: Job<QuoteCalculationJobData>): Promise<JobResult<QuoteCalculationResult>> {
+  async handleQuoteCalculation(
+    job: Job<QuoteCalculationJobData>,
+  ): Promise<JobResult<QuoteCalculationResult>> {
     const startTime = Date.now();
     const { quoteId, items, rushOrder, currency = 'MXN', tenantId } = job.data;
 
@@ -100,14 +102,10 @@ export class QuoteCalculationProcessor {
           throw new Error('Job was cancelled');
         }
 
-        const calculatedItem = await this.calculateItemPrice(
-          item,
-          pricingConfig,
-          tenantId,
-        );
-        
+        const calculatedItem = await this.calculateItemPrice(item, pricingConfig, tenantId);
+
         calculatedItems.push(calculatedItem);
-        
+
         currentProgress += progressPerItem;
         await this.updateProgress(
           job,
@@ -129,12 +127,7 @@ export class QuoteCalculationProcessor {
       await this.updateProgress(job, 90, 'Saving calculation results');
 
       // Save results to database
-      await this.saveCalculationResults(
-        quoteId,
-        calculatedItems,
-        summary,
-        tenantId,
-      );
+      await this.saveCalculationResults(quoteId, calculatedItems, summary, tenantId);
 
       await this.updateProgress(job, 100, 'Quote calculation completed');
 
@@ -222,7 +215,7 @@ export class QuoteCalculationProcessor {
   private getItemsProcessed(percentage: number, totalItems: number): number {
     if (percentage <= 30) return 0;
     if (percentage >= 80) return totalItems;
-    
+
     const itemProgress = (percentage - 30) / 50;
     return Math.floor(itemProgress * totalItems);
   }
@@ -254,8 +247,8 @@ export class QuoteCalculationProcessor {
     items: QuoteCalculationJobData['items'],
     tenantId: string,
   ): Promise<void> {
-    const fileIds = items.map(item => item.fileId);
-    
+    const fileIds = items.map((item) => item.fileId);
+
     const files = await this.prisma.file.findMany({
       where: {
         id: { in: fileIds },
@@ -266,11 +259,9 @@ export class QuoteCalculationProcessor {
       },
     });
 
-    const unanalyzedFiles = files.filter(f => !f.fileAnalysis);
+    const unanalyzedFiles = files.filter((f) => !f.fileAnalysis);
     if (unanalyzedFiles.length > 0) {
-      throw new Error(
-        `Files not analyzed: ${unanalyzedFiles.map(f => f.filename).join(', ')}`,
-      );
+      throw new Error(`Files not analyzed: ${unanalyzedFiles.map((f) => f.filename).join(', ')}`);
     }
   }
 
@@ -329,32 +320,19 @@ export class QuoteCalculationProcessor {
 
     // Calculate overhead
     const overheadRate = pricingConfig.overheadRate || 0.15;
-    const overheadCost = new Decimal(materialCost + laborCost)
-      .mul(overheadRate)
-      .toNumber();
+    const overheadCost = new Decimal(materialCost + laborCost).mul(overheadRate).toNumber();
 
     // Calculate margin
-    const marginRate = this.getMarginRate(
-      item.quantity,
-      fileAnalysis.complexity,
-      pricingConfig,
-    );
+    const marginRate = this.getMarginRate(item.quantity, fileAnalysis.complexity, pricingConfig);
     const totalCost = materialCost + laborCost + overheadCost + setupCost;
     const margin = new Decimal(totalCost).mul(marginRate).toNumber();
 
     // Calculate unit and total prices
-    const unitPrice = new Decimal(totalCost + margin)
-      .div(item.quantity)
-      .toNumber();
-    const totalPrice = new Decimal(unitPrice)
-      .mul(item.quantity)
-      .toNumber();
+    const unitPrice = new Decimal(totalCost + margin).div(item.quantity).toNumber();
+    const totalPrice = new Decimal(unitPrice).mul(item.quantity).toNumber();
 
     // Estimate lead time
-    const leadTime = this.estimateLeadTime(
-      machineTime * item.quantity,
-      process.code,
-    );
+    const leadTime = this.estimateLeadTime(machineTime * item.quantity, process.code);
 
     return {
       id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -369,23 +347,19 @@ export class QuoteCalculationProcessor {
     };
   }
 
-  private estimateMachineTime(
-    volume: number,
-    processCode: string,
-    complexity: string,
-  ): number {
+  private estimateMachineTime(volume: number, processCode: string, complexity: string): number {
     // Base time estimates (hours per cm³)
     const baseRates = {
-      'FFF': 0.001,
-      'SLA': 0.0008,
-      'CNC_3AXIS': 0.002,
-      'LASER_2D': 0.0005,
+      FFF: 0.001,
+      SLA: 0.0008,
+      CNC_3AXIS: 0.002,
+      LASER_2D: 0.0005,
     };
 
     const complexityMultipliers = {
-      'simple': 1,
-      'moderate': 1.3,
-      'complex': 1.8,
+      simple: 1,
+      moderate: 1.3,
+      complex: 1.8,
     };
 
     const baseRate = baseRates[processCode as keyof typeof baseRates] || 0.001;
@@ -394,11 +368,7 @@ export class QuoteCalculationProcessor {
     return volume * baseRate * multiplier;
   }
 
-  private getMarginRate(
-    quantity: number,
-    complexity: string,
-    pricingConfig: any,
-  ): number {
+  private getMarginRate(quantity: number, complexity: string, pricingConfig: any): number {
     let baseMargin = pricingConfig.defaultMargin || 0.3;
 
     // Volume discount
@@ -418,16 +388,13 @@ export class QuoteCalculationProcessor {
     return Math.max(baseMargin, pricingConfig.minimumMargin || 0.15);
   }
 
-  private estimateLeadTime(
-    totalMachineTime: number,
-    processCode: string,
-  ): number {
+  private estimateLeadTime(totalMachineTime: number, processCode: string): number {
     // Base lead times in days
     const baseLeadTimes = {
-      'FFF': 2,
-      'SLA': 3,
-      'CNC_3AXIS': 5,
-      'LASER_2D': 2,
+      FFF: 2,
+      SLA: 3,
+      CNC_3AXIS: 5,
+      LASER_2D: 2,
     };
 
     const baseDays = baseLeadTimes[processCode as keyof typeof baseLeadTimes] || 3;
@@ -443,7 +410,7 @@ export class QuoteCalculationProcessor {
     pricingConfig: any,
   ): Promise<QuoteCalculationResult['summary']> {
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    
+
     let rushFee = 0;
     if (rushOrder) {
       rushFee = subtotal * (pricingConfig.rushOrderRate || 0.25);

@@ -3,7 +3,9 @@
 ## Local Development Setup
 
 ### Step 1: Prerequisites
+
 Ensure you have:
+
 - Node.js 18+ and npm 9+
 - Docker Desktop installed and running
 - PostgreSQL client tools (optional)
@@ -11,11 +13,13 @@ Ensure you have:
 ### Step 2: Environment Configuration
 
 1. **Root .env file**:
+
 ```bash
 cp .env.example .env
 ```
 
 2. **API .env file** (`apps/api/.env`):
+
 ```env
 NODE_ENV=development
 PORT=4000
@@ -43,6 +47,7 @@ ALLOWED_ORIGINS="http://localhost:3000,http://localhost:4000"
 ```
 
 3. **Web .env file** (`apps/web/.env`):
+
 ```env
 NEXT_PUBLIC_API_URL="http://localhost:4000/api/v1"
 NEXTAUTH_URL="http://localhost:3000"
@@ -88,11 +93,13 @@ npm install
 ### Step 6: Start Development Servers
 
 **Option 1: Run all services (recommended for full stack)**
+
 ```bash
 npm run dev
 ```
 
 **Option 2: Run services individually**
+
 ```bash
 # Terminal 1 - API
 cd apps/api
@@ -115,22 +122,27 @@ python -m uvicorn main:app --reload
 - Worker: http://localhost:8000
 
 ### Default Login Credentials
+
 - **Admin**: admin@madfam.io / admin123
 - **Customer**: test@example.com / test123
 
 ## Common Issues & Solutions
 
 ### Issue 1: API not starting on port 4000
+
 **Symptom**: Connection refused on port 4000
 
 **Solutions**:
+
 1. Check if port is already in use:
+
    ```bash
    lsof -i :4000
    kill -9 <PID>  # Kill process using port
    ```
 
 2. Check API logs:
+
    ```bash
    cd apps/api
    npm run dev
@@ -142,10 +154,13 @@ python -m uvicorn main:app --reload
    ```
 
 ### Issue 2: TypeScript errors preventing build
+
 **Symptom**: Build fails with TS errors
 
 **Solutions**:
+
 1. Clear build cache:
+
    ```bash
    npm run clean
    rm -rf node_modules
@@ -157,9 +172,11 @@ python -m uvicorn main:app --reload
    - Ensure all imports are correct
 
 ### Issue 3: Database connection failed
+
 **Symptom**: Can't connect to PostgreSQL
 
 **Solutions**:
+
 1. Ensure Docker is running
 2. Check database is up:
    ```bash
@@ -191,14 +208,18 @@ python -m uvicorn main:app --reload
 ### Deployment Solution
 
 #### 1. Deploy API Separately
+
 Choose one:
+
 - **Railway**: Easy PostgreSQL + Redis + API hosting
 - **Render**: Good free tier
 - **AWS ECS**: Production-ready but complex
 - **Fly.io**: Good for containers
 
 #### 2. Update Frontend Environment
+
 In Vercel dashboard, set:
+
 ```
 NEXT_PUBLIC_API_URL=https://your-api-domain.com/api/v1
 NEXTAUTH_URL=https://your-app.vercel.app
@@ -206,19 +227,20 @@ NEXTAUTH_SECRET=<generate-secure-secret>
 ```
 
 #### 3. Configure CORS
+
 Update API's `main.ts`:
+
 ```typescript
 app.enableCors({
-  origin: [
-    'https://your-app.vercel.app',
-    'http://localhost:3000'
-  ],
+  origin: ['https://your-app.vercel.app', 'http://localhost:3000'],
   credentials: true,
 });
 ```
 
 #### 4. Create Vercel Configuration
+
 Create `apps/web/vercel.json`:
+
 ```json
 {
   "buildCommand": "cd ../.. && npm run build -- --filter=@madfam/web",
@@ -231,6 +253,7 @@ Create `apps/web/vercel.json`:
 ## Testing the Setup
 
 ### 1. Health Check
+
 ```bash
 # API Health
 curl http://localhost:4000/health
@@ -246,6 +269,7 @@ curl http://localhost:4000/health
 ```
 
 ### 2. Test Authentication
+
 ```bash
 # Login
 curl -X POST http://localhost:4000/api/v1/auth/login \
@@ -254,6 +278,7 @@ curl -X POST http://localhost:4000/api/v1/auth/login \
 ```
 
 ### 3. Test Quote Creation Flow
+
 1. Login to web app
 2. Upload a test STL file
 3. Select material and options
@@ -276,6 +301,7 @@ curl -X POST http://localhost:4000/api/v1/auth/login \
 ## Support
 
 If issues persist:
+
 1. Check logs in `apps/*/logs/`
 2. Review error messages carefully
 3. Ensure all services are running

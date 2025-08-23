@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
@@ -35,10 +30,7 @@ export class AuditInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const auditMetadata = this.reflector.get<AuditMetadata>(
-      AUDIT_KEY,
-      context.getHandler(),
-    );
+    const auditMetadata = this.reflector.get<AuditMetadata>(AUDIT_KEY, context.getHandler());
 
     if (!auditMetadata) {
       return next.handle();
@@ -74,7 +66,7 @@ export class AuditInterceptor implements NestInterceptor {
       tap({
         next: async (response) => {
           const duration = Date.now() - startTime;
-          
+
           const metadata: any = {
             ...auditData,
             duration,
@@ -94,22 +86,17 @@ export class AuditInterceptor implements NestInterceptor {
         },
         error: async (error) => {
           const duration = Date.now() - startTime;
-          
-          await this.auditService.logAction(
-            auditMetadata.entity,
-            entityId,
-            auditMetadata.action,
-            {
-              ...auditData,
-              duration,
-              success: false,
-              error: {
-                name: error.name,
-                message: error.message,
-                statusCode: error.status,
-              },
+
+          await this.auditService.logAction(auditMetadata.entity, entityId, auditMetadata.action, {
+            ...auditData,
+            duration,
+            success: false,
+            error: {
+              name: error.name,
+              message: error.message,
+              statusCode: error.status,
             },
-          );
+          });
         },
       }),
     );
@@ -120,7 +107,7 @@ export class AuditInterceptor implements NestInterceptor {
    */
   private sanitizeData(data: any, sensitive?: boolean): any {
     if (!data) return data;
-    
+
     if (sensitive) {
       return { _masked: true };
     }
@@ -146,7 +133,7 @@ export class AuditInterceptor implements NestInterceptor {
       if (typeof obj !== 'object' || obj === null) return;
 
       for (const key of Object.keys(obj)) {
-        if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
+        if (sensitiveFields.some((field) => key.toLowerCase().includes(field))) {
           obj[key] = '***REDACTED***';
         } else if (typeof obj[key] === 'object') {
           removeSensitiveFields(obj[key]);

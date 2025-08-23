@@ -19,7 +19,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     if (isPublic) {
       return true;
     }
@@ -33,7 +33,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Additional security checks
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    
+
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }

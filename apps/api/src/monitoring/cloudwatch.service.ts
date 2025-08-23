@@ -47,11 +47,7 @@ export class CloudWatchService {
     }
   }
 
-  async recordApiLatency(
-    endpoint: string,
-    latency: number,
-    statusCode: number,
-  ): Promise<void> {
+  async recordApiLatency(endpoint: string, latency: number, statusCode: number): Promise<void> {
     await this.putMetric('APILatency', latency, 'Milliseconds', {
       Endpoint: endpoint,
       StatusCode: statusCode.toString(),
@@ -74,11 +70,7 @@ export class CloudWatchService {
     });
   }
 
-  async recordFileUpload(
-    fileType: string,
-    fileSize: number,
-    success: boolean,
-  ): Promise<void> {
+  async recordFileUpload(fileType: string, fileSize: number, success: boolean): Promise<void> {
     await this.putMetric('FileUploadSize', fileSize, 'Bytes', {
       FileType: fileType,
       Status: success ? 'Success' : 'Failed',
@@ -118,22 +110,14 @@ export class CloudWatchService {
     });
   }
 
-  async recordDatabaseQuery(
-    model: string,
-    operation: string,
-    duration: number,
-  ): Promise<void> {
+  async recordDatabaseQuery(model: string, operation: string, duration: number): Promise<void> {
     await this.putMetric('DatabaseQueryTime', duration, 'Milliseconds', {
       Model: model,
       Operation: operation,
     });
   }
 
-  async recordError(
-    errorType: string,
-    errorCode: string,
-    path?: string,
-  ): Promise<void> {
+  async recordError(errorType: string, errorCode: string, path?: string): Promise<void> {
     await this.putMetric('ApplicationError', 1, 'Count', {
       ErrorType: errorType,
       ErrorCode: errorCode,

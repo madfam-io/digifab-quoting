@@ -67,10 +67,10 @@ export class ReportUploaderService {
       };
     } catch (error) {
       this.logger.error(`Failed to upload report: ${error.message}`, error.stack);
-      
+
       // Try to clean up temp file even if upload failed
       await this.cleanupTempFile(filePath).catch(() => {});
-      
+
       throw error;
     }
   }
@@ -88,11 +88,13 @@ export class ReportUploaderService {
 
   async deleteReport(key: string): Promise<void> {
     try {
-      await this.s3.deleteObject({
-        Bucket: this.bucketName,
-        Key: key,
-      }).promise();
-      
+      await this.s3
+        .deleteObject({
+          Bucket: this.bucketName,
+          Key: key,
+        })
+        .promise();
+
       this.logger.log(`Report deleted from S3: ${key}`);
     } catch (error) {
       this.logger.error(`Failed to delete report: ${error.message}`, error.stack);
@@ -102,12 +104,14 @@ export class ReportUploaderService {
 
   async copyReport(sourceKey: string, destinationKey: string): Promise<void> {
     try {
-      await this.s3.copyObject({
-        Bucket: this.bucketName,
-        CopySource: `${this.bucketName}/${sourceKey}`,
-        Key: destinationKey,
-      }).promise();
-      
+      await this.s3
+        .copyObject({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${sourceKey}`,
+          Key: destinationKey,
+        })
+        .promise();
+
       this.logger.log(`Report copied: ${sourceKey} -> ${destinationKey}`);
     } catch (error) {
       this.logger.error(`Failed to copy report: ${error.message}`, error.stack);
@@ -117,12 +121,14 @@ export class ReportUploaderService {
 
   async listReports(prefix: string, maxKeys: number = 100): Promise<S3.Object[]> {
     try {
-      const result = await this.s3.listObjectsV2({
-        Bucket: this.bucketName,
-        Prefix: prefix,
-        MaxKeys: maxKeys,
-      }).promise();
-      
+      const result = await this.s3
+        .listObjectsV2({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+          MaxKeys: maxKeys,
+        })
+        .promise();
+
       return result.Contents || [];
     } catch (error) {
       this.logger.error(`Failed to list reports: ${error.message}`, error.stack);
@@ -140,7 +146,7 @@ export class ReportUploaderService {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     // Structure: tenants/{tenantId}/reports/{year}/{month}/{day}/{reportType}/{reportId}/{fileName}
     return `tenants/${tenantId}/reports/${year}/${month}/${day}/${reportType}/${reportId}/${fileName}`;
   }
@@ -151,7 +157,7 @@ export class ReportUploaderService {
     contentType: string,
   ): Promise<S3.ManagedUpload.SendData> {
     const fileStream = createReadStream(filePath);
-    
+
     const params: S3.PutObjectRequest = {
       Bucket: this.bucketName,
       Key: key,
@@ -195,10 +201,12 @@ export class ReportUploaderService {
 
   async getReportMetadata(key: string): Promise<S3.HeadObjectOutput> {
     try {
-      return await this.s3.headObject({
-        Bucket: this.bucketName,
-        Key: key,
-      }).promise();
+      return await this.s3
+        .headObject({
+          Bucket: this.bucketName,
+          Key: key,
+        })
+        .promise();
     } catch (error) {
       this.logger.error(`Failed to get report metadata: ${error.message}`, error.stack);
       throw error;
@@ -210,22 +218,24 @@ export class ReportUploaderService {
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + daysToExpire);
 
-      await this.s3.putObjectTagging({
-        Bucket: this.bucketName,
-        Key: key,
-        Tagging: {
-          TagSet: [
-            {
-              Key: 'expiration-date',
-              Value: expirationDate.toISOString(),
-            },
-            {
-              Key: 'auto-delete',
-              Value: 'true',
-            },
-          ],
-        },
-      }).promise();
+      await this.s3
+        .putObjectTagging({
+          Bucket: this.bucketName,
+          Key: key,
+          Tagging: {
+            TagSet: [
+              {
+                Key: 'expiration-date',
+                Value: expirationDate.toISOString(),
+              },
+              {
+                Key: 'auto-delete',
+                Value: 'true',
+              },
+            ],
+          },
+        })
+        .promise();
 
       this.logger.log(`Set expiration for report ${key} to ${expirationDate.toISOString()}`);
     } catch (error) {

@@ -174,16 +174,16 @@ export class ReportDataLoaderService {
     const [quotes, orders, revenue, materials, processes] = await Promise.all([
       // Quote statistics by status
       this.getQuoteStatistics(tenantId, startDate, endDate),
-      
+
       // Order statistics by status
       this.getOrderStatistics(tenantId, startDate, endDate),
-      
+
       // Revenue by period
       this.getRevenueByPeriod(tenantId, startDate, endDate, groupBy),
-      
+
       // Top materials
       this.getTopMaterials(tenantId, startDate, endDate),
-      
+
       // Top processes
       this.getTopProcesses(tenantId, startDate, endDate),
     ]);
@@ -367,9 +367,7 @@ export class ReportDataLoaderService {
     `;
 
     const data = result[0];
-    const rate = data.total_quotes > 0 
-      ? (data.converted_quotes / data.total_quotes) * 100 
-      : 0;
+    const rate = data.total_quotes > 0 ? (data.converted_quotes / data.total_quotes) * 100 : 0;
 
     return {
       rate: parseFloat(rate.toFixed(2)),

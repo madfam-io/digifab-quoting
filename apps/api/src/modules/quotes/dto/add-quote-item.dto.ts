@@ -1,4 +1,14 @@
-import { IsString, IsEnum, IsInt, IsObject, IsOptional, IsUUID, Min, Max, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsUUID,
+  Min,
+  Max,
+  IsDateString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProcessType } from '@madfam/shared';
 
@@ -6,7 +16,7 @@ export class AddQuoteItemDto {
   @ApiProperty({
     description: 'ID of the uploaded file to quote',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    format: 'uuid'
+    format: 'uuid',
   })
   @IsUUID()
   fileId!: string;
@@ -14,32 +24,32 @@ export class AddQuoteItemDto {
   @ApiPropertyOptional({
     description: 'Custom name for the part/item',
     example: 'Custom Bracket v2',
-    maxLength: 100
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ['3d_fff', '3d_sla', 'cnc_3axis', 'laser_2d'],
     description: 'Manufacturing process type',
-    example: '3d_fff'
+    example: '3d_fff',
   })
   @IsEnum(['3d_fff', '3d_sla', 'cnc_3axis', 'laser_2d'])
   process!: ProcessType;
 
-  @ApiProperty({ 
-    minimum: 1, 
+  @ApiProperty({
+    minimum: 1,
     maximum: 10000,
     description: 'Quantity to manufacture',
-    example: 10
+    example: 10,
   })
   @IsInt()
   @Min(1)
   @Max(10000)
   quantity!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: 'object',
     description: 'Process-specific options (material, finish, etc.)',
     example: {
@@ -47,8 +57,8 @@ export class AddQuoteItemDto {
       color: 'black',
       infill: 20,
       layerHeight: 0.2,
-      supportMaterial: false
-    }
+      supportMaterial: false,
+    },
   })
   @IsObject()
   options!: Record<string, any>;
@@ -56,7 +66,7 @@ export class AddQuoteItemDto {
   @ApiPropertyOptional({
     description: 'Required delivery date (ISO 8601 format)',
     example: '2024-02-01T00:00:00.000Z',
-    format: 'date-time'
+    format: 'date-time',
   })
   @IsOptional()
   @IsDateString()
@@ -64,57 +74,57 @@ export class AddQuoteItemDto {
 }
 
 export class QuoteItemResponseDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote item ID',
-    example: 'item_123e4567' 
+    example: 'item_123e4567',
   })
   id!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Associated file ID',
-    example: '123e4567-e89b-12d3-a456-426614174000' 
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   fileId!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Item name',
-    example: 'Custom Bracket v2' 
+    example: 'Custom Bracket v2',
   })
   name!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Manufacturing process',
-    example: '3d_fff' 
+    example: '3d_fff',
   })
   process!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quantity',
-    example: 10 
+    example: 10,
   })
   quantity!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Unit price',
-    example: 25.50 
+    example: 25.5,
   })
   unitPrice!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Total price for this item',
-    example: 255.00 
+    example: 255.0,
   })
   totalPrice!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Estimated lead time in days',
-    example: 3 
+    example: 3,
   })
   leadTimeDays!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Process options applied',
-    example: { material: 'PLA', color: 'black' } 
+    example: { material: 'PLA', color: 'black' },
   })
   options!: Record<string, any>;
 }

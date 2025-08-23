@@ -103,11 +103,7 @@ export class FilesService {
     };
   }
 
-  async confirmUpload(
-    tenantId: string,
-    fileId: string,
-    ndaAcceptanceId?: string,
-  ): Promise<void> {
+  async confirmUpload(tenantId: string, fileId: string, ndaAcceptanceId?: string): Promise<void> {
     const file = await this.prisma.file.findFirst({
       where: {
         id: fileId,
@@ -121,16 +117,20 @@ export class FilesService {
 
     // Verify file exists in S3
     try {
-      const headResult = await this.s3.headObject({
-        Bucket: this.bucketName,
-        Key: file.path,
-      }).promise();
+      const headResult = await this.s3
+        .headObject({
+          Bucket: this.bucketName,
+          Key: file.path,
+        })
+        .promise();
 
       // Calculate file hash
-      const fileData = await this.s3.getObject({
-        Bucket: this.bucketName,
-        Key: file.path,
-      }).promise();
+      const fileData = await this.s3
+        .getObject({
+          Bucket: this.bucketName,
+          Key: file.path,
+        })
+        .promise();
 
       const hash = createHash('sha256')
         .update(fileData.Body as Buffer)
@@ -144,7 +144,7 @@ export class FilesService {
           size: headResult.ContentLength || file.size,
           ndaAcceptanceId,
           metadata: {
-            ...(file.metadata as any || {}),
+            ...((file.metadata as any) || {}),
             status: 'confirmed',
             confirmedAt: new Date().toISOString(),
           },
@@ -155,7 +155,7 @@ export class FilesService {
         where: { id: fileId },
         data: {
           metadata: {
-            ...(file.metadata as any || {}),
+            ...((file.metadata as any) || {}),
             status: 'failed',
             error: getErrorMessage(error),
           },
@@ -192,22 +192,26 @@ export class FilesService {
       // If it's an S3 URL, extract bucket and key
       if (fileUrl.includes('s3.amazonaws.com') || fileUrl.includes('s3://')) {
         const urlParts = new URL(fileUrl);
-        const pathParts = urlParts.pathname.split('/').filter(p => p);
+        const pathParts = urlParts.pathname.split('/').filter((p) => p);
         const bucket = urlParts.hostname.split('.')[0];
         const key = pathParts.join('/');
 
-        const result = await this.s3.getObject({
-          Bucket: bucket || this.bucketName,
-          Key: key,
-        }).promise();
+        const result = await this.s3
+          .getObject({
+            Bucket: bucket || this.bucketName,
+            Key: key,
+          })
+          .promise();
 
         return result.Body as Buffer;
       } else {
         // For presigned URLs or other URLs, download directly
-        const result = await this.s3.getObject({
-          Bucket: this.bucketName,
-          Key: fileUrl, // Assuming fileUrl is actually the key
-        }).promise();
+        const result = await this.s3
+          .getObject({
+            Bucket: this.bucketName,
+            Key: fileUrl, // Assuming fileUrl is actually the key
+          })
+          .promise();
 
         return result.Body as Buffer;
       }
@@ -229,10 +233,12 @@ export class FilesService {
     }
 
     // Delete from S3
-    await this.s3.deleteObject({
-      Bucket: this.bucketName,
-      Key: file.path,
-    }).promise();
+    await this.s3
+      .deleteObject({
+        Bucket: this.bucketName,
+        Key: file.path,
+      })
+      .promise();
 
     // Delete from database
     await this.prisma.file.delete({
@@ -240,10 +246,7 @@ export class FilesService {
     });
   }
 
-  async getFilesByQuoteItem(
-    tenantId: string,
-    quoteItemId: string,
-  ): Promise<any[]> {
+  async getFilesByQuoteItem(tenantId: string, quoteItemId: string): Promise<any[]> {
     return this.prisma.file.findMany({
       where: {
         tenantId,

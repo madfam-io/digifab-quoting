@@ -1,14 +1,22 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
+import {
+  Controller,
+  Get,
+  Post,
   Delete,
   Param,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam, ApiForbiddenResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+  ApiParam,
+  ApiForbiddenResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { CacheService } from './cache.service';
 import { RedisService } from './redis.service';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
@@ -24,11 +32,11 @@ import { ForbiddenResponseDto } from '../../common/dto/api-response.dto';
 @ApiHeader({
   name: 'X-Tenant-ID',
   description: 'Tenant identifier for multi-tenant operations',
-  required: false
+  required: false,
 })
-@ApiForbiddenResponse({ 
+@ApiForbiddenResponse({
   description: 'Insufficient permissions',
-  type: ForbiddenResponseDto 
+  type: ForbiddenResponseDto,
 })
 export class CacheController {
   constructor(
@@ -37,19 +45,19 @@ export class CacheController {
   ) {}
 
   @Get('health')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get cache health status',
-    description: 'Check Redis connection status and cache system health' 
+    description: 'Check Redis connection status and cache system health',
   })
   @ApiResponse({
     status: 200,
     description: 'Cache health status',
     schema: {
       properties: {
-        status: { 
-          type: 'string', 
+        status: {
+          type: 'string',
           enum: ['healthy', 'degraded', 'unhealthy'],
-          example: 'healthy' 
+          example: 'healthy',
         },
         redis: {
           type: 'object',
@@ -61,16 +69,16 @@ export class CacheController {
               properties: {
                 used: { type: 'number', example: 52428800 },
                 peak: { type: 'number', example: 104857600 },
-                fragmentation: { type: 'number', example: 1.2 }
-              }
+                fragmentation: { type: 'number', example: 1.2 },
+              },
             },
-            version: { type: 'string', example: '7.0.5' }
-          }
+            version: { type: 'string', example: '7.0.5' },
+          },
         },
         uptime: { type: 'number', example: 86400, description: 'Uptime in seconds' },
-        lastCheck: { type: 'string', format: 'date-time' }
-      }
-    }
+        lastCheck: { type: 'string', format: 'date-time' },
+      },
+    },
   })
   @Roles(Role.ADMIN, Role.MANAGER)
   async getHealth() {
@@ -78,9 +86,9 @@ export class CacheController {
   }
 
   @Get('statistics')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get cache statistics',
-    description: 'Retrieve detailed cache usage statistics including hit/miss ratios' 
+    description: 'Retrieve detailed cache usage statistics including hit/miss ratios',
   })
   @ApiResponse({
     status: 200,
@@ -104,18 +112,18 @@ export class CacheController {
             properties: {
               hits: { type: 'number' },
               misses: { type: 'number' },
-              hitRate: { type: 'number' }
-            }
+              hitRate: { type: 'number' },
+            },
           },
           example: {
             'config:': { hits: 500, misses: 10, hitRate: 98.0 },
             'quote:': { hits: 300, misses: 100, hitRate: 75.0 },
-            'file:': { hits: 434, misses: 346, hitRate: 55.6 }
-          }
+            'file:': { hits: 434, misses: 346, hitRate: 55.6 },
+          },
         },
-        lastReset: { type: 'string', format: 'date-time' }
-      }
-    }
+        lastReset: { type: 'string', format: 'date-time' },
+      },
+    },
   })
   @Roles(Role.ADMIN, Role.MANAGER)
   getStatistics() {
@@ -124,9 +132,9 @@ export class CacheController {
 
   @Post('statistics/reset')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Reset cache statistics',
-    description: 'Reset all cache statistics counters to zero. Admin only.' 
+    description: 'Reset all cache statistics counters to zero. Admin only.',
   })
   @ApiResponse({
     status: 200,
@@ -134,33 +142,33 @@ export class CacheController {
     schema: {
       properties: {
         message: { type: 'string', example: 'Statistics reset successfully' },
-        timestamp: { type: 'string', format: 'date-time' }
-      }
-    }
+        timestamp: { type: 'string', format: 'date-time' },
+      },
+    },
   })
   @Roles(Role.ADMIN)
   resetStatistics() {
     this.redisService.resetStatistics();
-    return { 
+    return {
       message: 'Statistics reset successfully',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Delete('invalidate/:pattern')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Invalidate cache by pattern',
-    description: 'Delete all cache keys matching the specified pattern. Use with caution.' 
+    description: 'Delete all cache keys matching the specified pattern. Use with caution.',
   })
-  @ApiParam({ 
-    name: 'pattern', 
+  @ApiParam({
+    name: 'pattern',
     description: 'Redis key pattern (supports wildcards)',
     examples: {
       'all-quotes': { value: 'quote:*' },
       'specific-tenant': { value: 'tenant:123:*' },
-      'config-cache': { value: 'config:*' }
-    }
+      'config-cache': { value: 'config:*' },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -169,25 +177,25 @@ export class CacheController {
       properties: {
         message: { type: 'string', example: 'Cache invalidated successfully' },
         keysDeleted: { type: 'number', example: 42, description: 'Number of keys deleted' },
-        pattern: { type: 'string', example: 'quote:*' }
-      }
-    }
+        pattern: { type: 'string', example: 'quote:*' },
+      },
+    },
   })
   @Roles(Role.ADMIN)
   async invalidatePattern(@Param('pattern') pattern: string) {
     const deleted = await this.cacheService.invalidate(pattern);
-    return { 
+    return {
       message: 'Cache invalidated successfully',
       keysDeleted: deleted,
-      pattern
+      pattern,
     };
   }
 
   @Delete('tenant')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Flush current tenant cache',
-    description: 'Clear all cache entries for the current tenant context' 
+    description: 'Clear all cache entries for the current tenant context',
   })
   @ApiResponse({
     status: 200,
@@ -196,24 +204,25 @@ export class CacheController {
       properties: {
         message: { type: 'string', example: 'Tenant cache flushed successfully' },
         tenantId: { type: 'string', example: 'tenant_123' },
-        timestamp: { type: 'string', format: 'date-time' }
-      }
-    }
+        timestamp: { type: 'string', format: 'date-time' },
+      },
+    },
   })
   @Roles(Role.ADMIN)
   async flushTenantCache() {
     await this.cacheService.invalidateTenantConfig();
-    return { 
+    return {
       message: 'Tenant cache flushed successfully',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('warmup')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Warm up cache with frequently accessed data',
-    description: 'Pre-load cache with commonly accessed data to improve performance. This is an async operation.' 
+    description:
+      'Pre-load cache with commonly accessed data to improve performance. This is an async operation.',
   })
   @ApiResponse({
     status: 202,
@@ -222,23 +231,27 @@ export class CacheController {
       properties: {
         message: { type: 'string', example: 'Cache warm-up initiated' },
         status: { type: 'string', example: 'processing' },
-        estimatedTime: { type: 'number', example: 30, description: 'Estimated completion time in seconds' },
+        estimatedTime: {
+          type: 'number',
+          example: 30,
+          description: 'Estimated completion time in seconds',
+        },
         items: {
           type: 'array',
           items: { type: 'string' },
-          example: ['materials', 'machines', 'process-options', 'tenant-config']
-        }
-      }
-    }
+          example: ['materials', 'machines', 'process-options', 'tenant-config'],
+        },
+      },
+    },
   })
   @Roles(Role.ADMIN)
   async warmUpCache() {
     await this.cacheService.warmUpCache();
-    return { 
+    return {
       message: 'Cache warm-up initiated',
       status: 'processing',
       estimatedTime: 30,
-      items: ['materials', 'machines', 'process-options', 'tenant-config']
+      items: ['materials', 'machines', 'process-options', 'tenant-config'],
     };
   }
 }

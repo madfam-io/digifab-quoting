@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
@@ -18,14 +13,8 @@ export class CacheInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
   ) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<any>> {
-    const options = this.reflector.get<CacheOptions>(
-      CACHE_OPTIONS_METADATA,
-      context.getHandler(),
-    );
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    const options = this.reflector.get<CacheOptions>(CACHE_OPTIONS_METADATA, context.getHandler());
 
     if (!options) {
       return next.handle();
@@ -43,20 +32,13 @@ export class CacheInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(async (data) => {
         if (data !== null && data !== undefined) {
-          await this.cacheService.set(
-            cacheKey,
-            data,
-            options.ttl,
-          );
+          await this.cacheService.set(cacheKey, data, options.ttl);
         }
       }),
     );
   }
 
-  private generateCacheKey(
-    context: ExecutionContext,
-    options: CacheOptions,
-  ): string {
+  private generateCacheKey(context: ExecutionContext, options: CacheOptions): string {
     const request = context.switchToHttp().getRequest();
     const className = context.getClass().name;
     const methodName = context.getHandler().name;
@@ -70,11 +52,7 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     // Default key generation
-    const parts = [
-      options.prefix || `${className}:${methodName}`,
-      request.method,
-      request.url,
-    ];
+    const parts = [options.prefix || `${className}:${methodName}`, request.method, request.url];
 
     // Add query params if present
     if (request.query && Object.keys(request.query).length > 0) {

@@ -74,15 +74,12 @@ export default function NewQuotePage() {
             <CardHeader>
               <CardTitle className="text-2xl">Nueva Cotización</CardTitle>
               <p className="text-muted-foreground">
-                Sube tus archivos para comenzar. Nuestro sistema analizará automáticamente
-                tus piezas y generará una cotización en minutos.
+                Sube tus archivos para comenzar. Nuestro sistema analizará automáticamente tus
+                piezas y generará una cotización en minutos.
               </p>
             </CardHeader>
             <CardContent>
-              <FileUpload
-                onFilesUploaded={handleFilesUploaded}
-                maxFiles={50}
-              />
+              <FileUpload onFilesUploaded={handleFilesUploaded} maxFiles={50} />
 
               {isCreatingQuote && (
                 <div className="mt-8 text-center">
@@ -108,15 +105,14 @@ export default function NewQuotePage() {
             <Card className="p-4">
               <h3 className="font-semibold mb-2">Análisis Automático</h3>
               <p className="text-sm text-muted-foreground">
-                Detectamos el proceso ideal, calculamos el material necesario
-                y verificamos la manufactura.
+                Detectamos el proceso ideal, calculamos el material necesario y verificamos la
+                manufactura.
               </p>
             </Card>
             <Card className="p-4">
               <h3 className="font-semibold mb-2">Precio al Instante</h3>
               <p className="text-sm text-muted-foreground">
-                Obtén tu cotización en menos de 5 minutos con opciones de
-                material y acabado.
+                Obtén tu cotización en menos de 5 minutos con opciones de material y acabado.
               </p>
             </Card>
           </div>

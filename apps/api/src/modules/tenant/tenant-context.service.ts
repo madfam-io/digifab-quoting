@@ -73,7 +73,7 @@ export class TenantContextService {
    */
   hasAnyRole(roles: string[]): boolean {
     const currentRoles = this.getCurrentUserRoles();
-    return roles.some(role => currentRoles.includes(role));
+    return roles.some((role) => currentRoles.includes(role));
   }
 
   /**

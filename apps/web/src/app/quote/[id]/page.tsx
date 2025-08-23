@@ -41,7 +41,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { data: session, status } = useSession();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [approving, setApproving] = useState(false);
@@ -52,7 +52,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
       router.push('/auth/login');
       return;
     }
-    
+
     loadQuote();
   }, [session, status, params.id]);
 
@@ -74,17 +74,17 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
 
   const handleApprove = async () => {
     setApproving(true);
-    
+
     try {
       await apiClient.post(`/quotes/${params.id}/approve`);
-      
+
       // For MVP, redirect to success page
       // In production, this would redirect to payment
       toast({
         title: 'Success',
         description: 'Quote approved successfully',
       });
-      
+
       router.push('/dashboard');
     } catch (error) {
       console.error('Error approving quote:', error);
@@ -147,7 +147,11 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
               Created on {new Date(quote.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <Badge variant={statusColors[quote.status] as 'default' | 'secondary' | 'destructive' | 'outline'}>
+          <Badge
+            variant={
+              statusColors[quote.status] as 'default' | 'secondary' | 'destructive' | 'outline'
+            }
+          >
             {quote.status.toUpperCase()}
           </Badge>
         </div>
@@ -206,7 +210,9 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span>${quote.total.toFixed(2)} {quote.currency}</span>
+                    <span>
+                      ${quote.total.toFixed(2)} {quote.currency}
+                    </span>
                   </div>
                 </div>
 
@@ -215,12 +221,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                 </div>
 
                 {quote.status === 'quoted' && (
-                  <Button
-                    onClick={handleApprove}
-                    disabled={approving}
-                    className="w-full"
-                    size="lg"
-                  >
+                  <Button onClick={handleApprove} disabled={approving} className="w-full" size="lg">
                     {approving ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -235,11 +236,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                   </Button>
                 )}
 
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadPdf}
-                  className="w-full"
-                >
+                <Button variant="outline" onClick={handleDownloadPdf} className="w-full">
                   <Download className="w-4 h-4 mr-2" />
                   Download PDF
                 </Button>

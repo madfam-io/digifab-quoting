@@ -6,7 +6,7 @@ const colors = {
   blue: '\x1b[34m',
   cyan: '\x1b[36m',
   green: '\x1b[32m',
-  yellow: '\x1b[33m'
+  yellow: '\x1b[33m',
 };
 
 console.log(`

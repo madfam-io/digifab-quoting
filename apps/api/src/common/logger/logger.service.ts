@@ -2,9 +2,7 @@ import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/c
 import * as winston from 'winston';
 import { createWinstonLogger } from './winston.config';
 import { TenantContextService } from '../../modules/tenant/tenant-context.service';
-import { 
-  formatErrorForLogging 
-} from '../utils/error-handling';
+import { formatErrorForLogging } from '../utils/error-handling';
 import {
   LogMetadata,
   HttpLogMetadata,
@@ -19,9 +17,7 @@ export class LoggerService implements NestLoggerService {
   private logger: winston.Logger;
   private context?: string;
 
-  constructor(
-    private readonly tenantContext: TenantContextService,
-  ) {
+  constructor(private readonly tenantContext: TenantContextService) {
     this.logger = createWinstonLogger();
   }
 

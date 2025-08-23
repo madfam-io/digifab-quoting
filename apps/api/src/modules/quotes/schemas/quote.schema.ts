@@ -2,14 +2,15 @@ import { z } from 'zod';
 import { QuoteStatus, ProcessType } from '@prisma/client';
 
 // Quote objective validation
-export const QuoteObjectiveSchema = z.object({
-  cost: z.number().min(0).max(1),
-  lead: z.number().min(0).max(1),
-  green: z.number().min(0).max(1),
-}).refine(
-  (data) => Math.abs(data.cost + data.lead + data.green - 1) < 0.001,
-  { message: 'Objective weights must sum to 1' }
-);
+export const QuoteObjectiveSchema = z
+  .object({
+    cost: z.number().min(0).max(1),
+    lead: z.number().min(0).max(1),
+    green: z.number().min(0).max(1),
+  })
+  .refine((data) => Math.abs(data.cost + data.lead + data.green - 1) < 0.001, {
+    message: 'Objective weights must sum to 1',
+  });
 
 // Quote filters validation
 export const QuoteFiltersSchema = z.object({
@@ -99,23 +100,21 @@ export function validateQuoteFilters(filters: unknown) {
   return QuoteFiltersSchema.parse(filters);
 }
 
-export function validateQuoteItemSelections(
-  process: ProcessType,
-  selections: unknown,
-) {
+export function validateQuoteItemSelections(process: ProcessType, selections: unknown) {
   const schema = QuoteItemSelectionsSchema.parse({ process, selections });
   return schema.selections;
 }
 
 export function validateCreateQuoteItem(item: unknown) {
   const parsed = CreateQuoteItemSchema.parse(item);
-  
+
   // Validate selections based on process
-  const validatedSelections = validateQuoteItemSelections(
-    parsed.process,
-    { ...parsed.selections, material: parsed.material, quantity: parsed.quantity }
-  );
-  
+  const validatedSelections = validateQuoteItemSelections(parsed.process, {
+    ...parsed.selections,
+    material: parsed.material,
+    quantity: parsed.quantity,
+  });
+
   return {
     ...parsed,
     selections: validatedSelections,

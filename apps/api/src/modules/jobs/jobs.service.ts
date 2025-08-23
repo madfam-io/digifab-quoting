@@ -1,11 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue, Job, JobStatus as BullJobStatus, JobStatusClean } from 'bull';
-import { 
-  JobType, 
-  JobData, 
-  JobOptions, 
-  JobMetrics, 
+import {
+  JobType,
+  JobData,
+  JobOptions,
+  JobMetrics,
   QueueMetrics,
   JobStatus,
 } from './interfaces/job.interface';
@@ -49,7 +49,7 @@ export class JobsService implements OnModuleInit {
     for (const [type, queue] of this.queues) {
       this.setupQueueListeners(type, queue);
     }
-    
+
     // Set up dead letter queue processing
     this.setupDeadLetterQueue();
   }
@@ -57,11 +57,7 @@ export class JobsService implements OnModuleInit {
   /**
    * Add a job to the appropriate queue
    */
-  async addJob<T extends JobData>(
-    type: JobType,
-    data: T,
-    options?: JobOptions,
-  ): Promise<Job<T>> {
+  async addJob<T extends JobData>(type: JobType, data: T, options?: JobOptions): Promise<Job<T>> {
     const queue = this.queues.get(type);
     if (!queue) {
       throw new Error(`Queue for job type ${type} not found`);
@@ -85,7 +81,7 @@ export class JobsService implements OnModuleInit {
     };
 
     const job = await queue.add(type, jobData, jobOptions);
-    
+
     this.logger.log(`Job ${job.id} of type ${type} added to queue`, {
       jobId: job.id,
       type,
@@ -129,18 +125,14 @@ export class JobsService implements OnModuleInit {
     }
 
     const jobName = `${type}-recurring-${data.tenantId}`;
-    
-    await queue.add(
-      jobName,
-      data,
-      {
-        ...this.DEFAULT_JOB_OPTIONS,
-        ...options,
-        repeat: {
-          cron: cronExpression,
-        },
+
+    await queue.add(jobName, data, {
+      ...this.DEFAULT_JOB_OPTIONS,
+      ...options,
+      repeat: {
+        cron: cronExpression,
       },
-    );
+    });
 
     this.logger.log(`Recurring job ${jobName} scheduled with cron: ${cronExpression}`);
   }
@@ -185,20 +177,14 @@ export class JobsService implements OnModuleInit {
       attempts: job.attemptsMade,
       error: job.failedReason,
       result: job.returnvalue,
-      duration: job.finishedOn && job.processedOn 
-        ? job.finishedOn - job.processedOn 
-        : undefined,
+      duration: job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined,
     };
   }
 
   /**
    * Update job progress
    */
-  async updateJobProgress(
-    jobId: string,
-    progress: number,
-    message?: string,
-  ): Promise<void> {
+  async updateJobProgress(jobId: string, progress: number, message?: string): Promise<void> {
     const job = await this.getJob(jobId);
     if (job) {
       await job.progress(progress);
@@ -290,11 +276,7 @@ export class JobsService implements OnModuleInit {
   /**
    * Clean old jobs from queues
    */
-  async cleanOldJobs(
-    type: JobType,
-    grace: number,
-    status?: JobStatusClean[],
-  ): Promise<string[]> {
+  async cleanOldJobs(type: JobType, grace: number, status?: JobStatusClean[]): Promise<string[]> {
     const queue = this.queues.get(type);
     if (!queue) throw new Error(`Queue ${type} not found`);
 
@@ -303,7 +285,7 @@ export class JobsService implements OnModuleInit {
 
     for (const s of statuses) {
       const jobs = await queue.clean(grace, s);
-      removed.push(...jobs.map(j => j.id as string));
+      removed.push(...jobs.map((j) => j.id as string));
     }
 
     this.logger.log(`Cleaned ${removed.length} jobs from ${type} queue`);
@@ -316,7 +298,7 @@ export class JobsService implements OnModuleInit {
   async pauseQueue(type: JobType): Promise<void> {
     const queue = this.queues.get(type);
     if (!queue) throw new Error(`Queue ${type} not found`);
-    
+
     await queue.pause();
     this.logger.log(`Queue ${type} paused`);
   }
@@ -324,7 +306,7 @@ export class JobsService implements OnModuleInit {
   async resumeQueue(type: JobType): Promise<void> {
     const queue = this.queues.get(type);
     if (!queue) throw new Error(`Queue ${type} not found`);
-    
+
     await queue.resume();
     this.logger.log(`Queue ${type} resumed`);
   }
@@ -342,7 +324,7 @@ export class JobsService implements OnModuleInit {
     },
   ): Promise<JobMetrics[]> {
     const jobs: JobMetrics[] = [];
-    const queues = options?.type 
+    const queues = options?.type
       ? [this.queues.get(options.type)].filter(Boolean)
       : Array.from(this.queues.values());
 
@@ -356,7 +338,7 @@ export class JobsService implements OnModuleInit {
 
       for (const state of states) {
         const queueJobs = await queue.getJobs([state], 0, -1);
-        
+
         for (const job of queueJobs) {
           if (job.data.tenantId === tenantId) {
             const metrics = await this.getJobStatus(job.id as string);
@@ -377,9 +359,7 @@ export class JobsService implements OnModuleInit {
       this.logger.log(`Job ${job.id} of type ${type} completed`, {
         jobId: job.id,
         type,
-        duration: job.finishedOn && job.processedOn 
-          ? job.finishedOn - job.processedOn 
-          : undefined,
+        duration: job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined,
       });
     });
 
@@ -408,24 +388,20 @@ export class JobsService implements OnModuleInit {
     // Process dead letter queue periodically
     setInterval(async () => {
       const jobs = await this.deadLetterQueue.getJobs(['waiting'], 0, 10);
-      
+
       for (const job of jobs) {
         this.logger.warn('Dead letter job found', {
           originalJobId: job.data.originalJob.id,
           reason: job.data.reason,
         });
-        
+
         // You can implement custom logic here to handle dead letter jobs
         // For example, send alerts, store in database, etc.
       }
     }, 60000); // Check every minute
   }
 
-  private async trackJob(
-    jobId: string,
-    type: JobType,
-    tenantId: string,
-  ): Promise<void> {
+  private async trackJob(jobId: string, type: JobType, tenantId: string): Promise<void> {
     const key = this.redisService.generateKey({
       prefix: 'job-tracking',
       identifier: jobId,
@@ -438,9 +414,7 @@ export class JobsService implements OnModuleInit {
     );
   }
 
-  private async getJobInfo(
-    jobId: string,
-  ): Promise<{ type: JobType; tenantId: string } | null> {
+  private async getJobInfo(jobId: string): Promise<{ type: JobType; tenantId: string } | null> {
     const key = this.redisService.generateKey({
       prefix: 'job-tracking',
       identifier: jobId,
@@ -449,18 +423,8 @@ export class JobsService implements OnModuleInit {
     return this.redisService.get(key);
   }
 
-  private async getMetricsForQueue(
-    type: JobType,
-    queue: Queue,
-  ): Promise<QueueMetrics> {
-    const [
-      waiting,
-      active,
-      completed,
-      failed,
-      delayed,
-      paused,
-    ] = await Promise.all([
+  private async getMetricsForQueue(type: JobType, queue: Queue): Promise<QueueMetrics> {
+    const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
       queue.getWaitingCount(),
       queue.getActiveCount(),
       queue.getCompletedCount(),

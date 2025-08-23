@@ -3,7 +3,11 @@ import { getSession } from 'next-auth/react';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: unknown) {
+  constructor(
+    public status: number,
+    message: string,
+    public data?: unknown,
+  ) {
     super(message);
     this.name = 'ApiError';
   }

@@ -27,7 +27,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
     app = moduleFixture.createNestApplication();
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
     tenantContext = moduleFixture.get<TenantContextService>(TenantContextService);
-    
+
     await app.init();
   });
 
@@ -151,7 +151,9 @@ describe('Multi-Tenant Isolation (Integration)', () => {
         userRoles: ['admin'],
       };
 
-      const createManySpy = jest.spyOn(prismaService.material, 'createMany').mockResolvedValue({ count: 2 });
+      const createManySpy = jest
+        .spyOn(prismaService.material, 'createMany')
+        .mockResolvedValue({ count: 2 });
 
       await tenantContext.run(context, async () => {
         await prismaService.material.createMany({
@@ -199,10 +201,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       await tenantContext.run(context, async () => {
         await prismaService.quote.findMany({
           where: {
-            OR: [
-              { status: 'draft' },
-              { status: 'pending' },
-            ],
+            OR: [{ status: 'draft' }, { status: 'pending' }],
             createdAt: {
               gte: new Date('2024-01-01'),
             },
@@ -212,10 +211,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
 
       expect(findManySpy).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { status: 'draft' },
-            { status: 'pending' },
-          ],
+          OR: [{ status: 'draft' }, { status: 'pending' }],
           createdAt: {
             gte: new Date('2024-01-01'),
           },
@@ -240,19 +236,21 @@ describe('Multi-Tenant Isolation (Integration)', () => {
         userRoles: ['admin'],
       };
 
-      const transactionSpy = jest.spyOn(prismaService, '$transaction').mockImplementation(async (fn) => {
-        if (typeof fn === 'function') {
-          return fn(prismaService);
-        }
-        return [];
-      });
+      const transactionSpy = jest
+        .spyOn(prismaService, '$transaction')
+        .mockImplementation(async (fn) => {
+          if (typeof fn === 'function') {
+            return fn(prismaService);
+          }
+          return [];
+        });
 
       await tenantContext.run(context, async () => {
         await prismaService.$transaction(async (tx) => {
           // Transaction queries should still respect tenant context
           const findSpy = jest.spyOn(tx.quote, 'findMany').mockResolvedValue([]);
           await tx.quote.findMany();
-          
+
           expect(findSpy).toHaveBeenCalledWith({
             where: { tenantId: 'tenant-123' },
           });

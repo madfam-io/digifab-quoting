@@ -4,33 +4,34 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Currency } from '@madfam/shared';
 
 export class QuoteObjectiveDto implements Record<string, number> {
-  @ApiProperty({ 
-    example: 0.5, 
-    minimum: 0, 
+  @ApiProperty({
+    example: 0.5,
+    minimum: 0,
     maximum: 1,
-    description: 'Weight for cost optimization (0-1). Higher values prioritize lower cost.'
+    description: 'Weight for cost optimization (0-1). Higher values prioritize lower cost.',
   })
   @IsNumber()
   @Min(0)
   @Max(1)
   cost!: number;
 
-  @ApiProperty({ 
-    example: 0.3, 
-    minimum: 0, 
+  @ApiProperty({
+    example: 0.3,
+    minimum: 0,
     maximum: 1,
-    description: 'Weight for lead time optimization (0-1). Higher values prioritize faster delivery.'
+    description:
+      'Weight for lead time optimization (0-1). Higher values prioritize faster delivery.',
   })
   @IsNumber()
   @Min(0)
   @Max(1)
   lead!: number;
 
-  @ApiProperty({ 
-    example: 0.2, 
-    minimum: 0, 
+  @ApiProperty({
+    example: 0.2,
+    minimum: 0,
     maximum: 1,
-    description: 'Weight for sustainability (0-1). Higher values prioritize eco-friendly options.'
+    description: 'Weight for sustainability (0-1). Higher values prioritize eco-friendly options.',
   })
   @IsNumber()
   @Min(0)
@@ -42,36 +43,36 @@ export class QuoteObjectiveDto implements Record<string, number> {
 }
 
 export class CreateQuoteDto {
-  @ApiProperty({ 
-    enum: ['MXN', 'USD'], 
+  @ApiProperty({
+    enum: ['MXN', 'USD'],
     default: 'MXN',
     description: 'Currency for the quote. Prices will be calculated in this currency.',
-    example: 'MXN'
+    example: 'MXN',
   })
   @IsEnum(['MXN', 'USD'])
   currency!: Currency;
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: QuoteObjectiveDto,
     description: 'Optimization objectives for quote calculation. Weights must sum to 1.0.',
     example: {
       cost: 0.5,
       lead: 0.3,
-      green: 0.2
-    }
+      green: 0.2,
+    },
   })
   @IsObject()
   @ValidateNested()
   @Type(() => QuoteObjectiveDto)
   objective!: QuoteObjectiveDto;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Additional metadata for the quote',
     example: {
       projectName: 'Custom Parts Q1',
       department: 'Engineering',
-      poNumber: 'PO-12345'
-    }
+      poNumber: 'PO-12345',
+    },
   })
   @IsOptional()
   @IsObject()
@@ -79,46 +80,46 @@ export class CreateQuoteDto {
 }
 
 export class QuoteResponseDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Unique quote identifier',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
   id!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote number for reference',
-    example: 'Q-2024-0001' 
+    example: 'Q-2024-0001',
   })
   quoteNumber!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote status',
     enum: ['draft', 'calculating', 'ready', 'sent', 'accepted', 'rejected', 'expired', 'cancelled'],
-    example: 'draft' 
+    example: 'draft',
   })
   status!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote currency',
-    example: 'MXN' 
+    example: 'MXN',
   })
   currency!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Total quote amount',
-    example: 1500.00 
+    example: 1500.0,
   })
   totalAmount!: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote creation timestamp',
-    example: '2024-01-01T00:00:00.000Z' 
+    example: '2024-01-01T00:00:00.000Z',
   })
   createdAt!: Date;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quote expiration date',
-    example: '2024-01-15T00:00:00.000Z' 
+    example: '2024-01-15T00:00:00.000Z',
   })
   expiresAt!: Date;
 }

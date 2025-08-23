@@ -17,20 +17,25 @@ This module provides async job processing capabilities using Bull (Redis-based q
 ## Job Types
 
 ### 1. File Analysis (`file-analysis`)
+
 Processes uploaded files asynchronously to extract geometry, perform DFM analysis, and calculate volumes.
 
 ### 2. Quote Calculation (`quote-calculation`)
+
 Calculates complex quotes in the background, including pricing, lead times, and cost breakdowns.
 
 ### 3. Email Notification (`email-notification`)
+
 Sends email notifications for various events (quote ready, accepted, expired, order shipped).
 
 ### 4. Report Generation (`report-generation`)
+
 Generates PDF, Excel, or CSV reports for quotes, orders, invoices, and analytics.
 
 ## API Endpoints
 
 ### Create Job
+
 ```http
 POST /api/v1/jobs
 Authorization: Bearer <token>
@@ -51,6 +56,7 @@ Authorization: Bearer <token>
 ```
 
 ### Schedule Job
+
 ```http
 POST /api/v1/jobs/schedule
 Authorization: Bearer <token>
@@ -67,24 +73,28 @@ Authorization: Bearer <token>
 ```
 
 ### Get Job Status
+
 ```http
 GET /api/v1/jobs/{jobId}
 Authorization: Bearer <token>
 ```
 
 ### Get Queue Metrics
+
 ```http
 GET /api/v1/jobs/queues/metrics?type=file-analysis
 Authorization: Bearer <token>
 ```
 
 ### Retry Failed Job
+
 ```http
 POST /api/v1/jobs/{jobId}/retry
 Authorization: Bearer <token>
 ```
 
 ### Cancel Job
+
 ```http
 DELETE /api/v1/jobs/{jobId}
 Authorization: Bearer <token>
@@ -93,24 +103,23 @@ Authorization: Bearer <token>
 ## Usage Examples
 
 ### Basic Job Creation
+
 ```typescript
-const job = await jobsService.addJob(
-  JobType.FILE_ANALYSIS,
-  {
-    tenantId: 'tenant-123',
-    fileId: 'file-456',
-    fileUrl: 's3://bucket/file.stl',
-    fileName: 'part.stl',
-    fileType: 'stl',
-    analysisOptions: {
-      performDfm: true,
-      extractGeometry: true,
-    }
-  }
-);
+const job = await jobsService.addJob(JobType.FILE_ANALYSIS, {
+  tenantId: 'tenant-123',
+  fileId: 'file-456',
+  fileUrl: 's3://bucket/file.stl',
+  fileName: 'part.stl',
+  fileType: 'stl',
+  analysisOptions: {
+    performDfm: true,
+    extractGeometry: true,
+  },
+});
 ```
 
 ### Scheduled Job
+
 ```typescript
 const job = await jobsService.scheduleJob(
   JobType.EMAIL_NOTIFICATION,
@@ -118,28 +127,30 @@ const job = await jobsService.scheduleJob(
     tenantId: 'tenant-123',
     type: 'quote-expired',
     recipientEmail: 'customer@example.com',
-    templateData: { quoteNumber: 'Q-123' }
+    templateData: { quoteNumber: 'Q-123' },
   },
-  86400000 // 24 hours delay
+  86400000, // 24 hours delay
 );
 ```
 
 ### Recurring Job
+
 ```typescript
 await jobsService.addRecurringJob(
   JobType.REPORT_GENERATION,
   {
     tenantId: 'tenant-123',
     reportType: 'analytics',
-    format: 'pdf'
+    format: 'pdf',
   },
-  '0 2 * * *' // Daily at 2 AM
+  '0 2 * * *', // Daily at 2 AM
 );
 ```
 
 ## Configuration
 
 ### Environment Variables
+
 ```env
 # Redis configuration
 REDIS_URL=redis://localhost:6379
@@ -161,6 +172,7 @@ S3_BUCKET=madfam-files
 ```
 
 ### Queue Options
+
 Each queue type has specific default options:
 
 ```typescript
@@ -196,11 +208,13 @@ Each queue type has specific default options:
 ## Monitoring
 
 ### Queue Health Check
+
 ```http
 GET /api/v1/jobs/health/check
 ```
 
 Response:
+
 ```json
 {
   "status": "healthy",
@@ -219,6 +233,7 @@ Response:
 ```
 
 ### Dead Letter Queue Processing
+
 Failed jobs are automatically moved to the dead letter queue after maximum attempts. Monitor and process these manually:
 
 ```typescript

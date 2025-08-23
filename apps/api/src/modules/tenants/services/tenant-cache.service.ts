@@ -34,7 +34,7 @@ export class TenantCacheService {
 
   async getTenantConfig(tenantId: string): Promise<TenantConfig> {
     const cacheKey = `tenant:config:${tenantId}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<TenantConfig>(cacheKey);
     if (cached) {
@@ -61,23 +61,20 @@ export class TenantCacheService {
       name: tenant.name,
       subdomain: tenant.subdomain,
       settings: tenant.settings || {},
-      features: tenant.tenantFeatures.map(tf => tf.feature.code),
+      features: tenant.tenantFeatures.map((tf) => tf.feature.code),
       currencies: (tenant.settings as any)?.currencies || ['MXN'],
       locales: (tenant.settings as any)?.locales || ['es', 'en'],
     };
 
     // Cache the config
     await this.cacheService.set(cacheKey, config, this.CACHE_TTL);
-    
+
     return config;
   }
 
-  async getMaterialsByProcess(
-    tenantId: string,
-    process: ProcessType,
-  ): Promise<Material[]> {
+  async getMaterialsByProcess(tenantId: string, process: ProcessType): Promise<Material[]> {
     const cacheKey = `tenant:materials:${tenantId}:${process}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<Material[]>(cacheKey);
     if (cached) {
@@ -91,21 +88,18 @@ export class TenantCacheService {
         process,
         active: true,
       },
-      orderBy: [
-        { category: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
 
     // Cache the materials
     await this.cacheService.set(cacheKey, materials, this.MATERIAL_CACHE_TTL);
-    
+
     return materials;
   }
 
   async getAllMaterials(tenantId: string): Promise<MaterialCache> {
     const cacheKey = `tenant:materials:all:${tenantId}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<MaterialCache>(cacheKey);
     if (cached) {
@@ -122,23 +116,20 @@ export class TenantCacheService {
 
     // Create indexed cache
     const materialCache: MaterialCache = {};
-    materials.forEach(material => {
+    materials.forEach((material) => {
       const key = `${material.process}:${material.code}`;
       materialCache[key] = material;
     });
 
     // Cache the materials
     await this.cacheService.set(cacheKey, materialCache, this.MATERIAL_CACHE_TTL);
-    
+
     return materialCache;
   }
 
-  async getMachinesByProcess(
-    tenantId: string,
-    process: ProcessType,
-  ): Promise<Machine[]> {
+  async getMachinesByProcess(tenantId: string, process: ProcessType): Promise<Machine[]> {
     const cacheKey = `tenant:machines:${tenantId}:${process}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<Machine[]>(cacheKey);
     if (cached) {
@@ -159,13 +150,13 @@ export class TenantCacheService {
 
     // Cache the machines
     await this.cacheService.set(cacheKey, machines, this.MATERIAL_CACHE_TTL);
-    
+
     return machines;
   }
 
   async getAllMachines(tenantId: string): Promise<MachineCache> {
     const cacheKey = `tenant:machines:all:${tenantId}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<MachineCache>(cacheKey);
     if (cached) {
@@ -185,7 +176,7 @@ export class TenantCacheService {
 
     // Group by process
     const machineCache: MachineCache = {};
-    machines.forEach(machine => {
+    machines.forEach((machine) => {
       if (!machineCache[machine.process]) {
         machineCache[machine.process] = [];
       }
@@ -194,7 +185,7 @@ export class TenantCacheService {
 
     // Cache the machines
     await this.cacheService.set(cacheKey, machineCache, this.MATERIAL_CACHE_TTL);
-    
+
     return machineCache;
   }
 
@@ -242,11 +233,11 @@ export class TenantCacheService {
         this.getTenantConfig(tenantId),
         this.getAllMaterials(tenantId),
         this.getAllMachines(tenantId),
-        ...Object.values(ProcessType).map(process =>
+        ...Object.values(ProcessType).map((process) =>
           Promise.all([
             this.getMaterialsByProcess(tenantId, process),
             this.getMachinesByProcess(tenantId, process),
-          ])
+          ]),
         ),
       ]);
 

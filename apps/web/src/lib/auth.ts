@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           const data = await response.json();
-          
+
           // Return user object that will be stored in the JWT
           return {
             id: data.user.id,

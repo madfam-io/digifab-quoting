@@ -16,7 +16,8 @@ export class QuoteControllerExample {
   @Post(':quoteId/analyze-files')
   async analyzeQuoteFiles(
     @Param('quoteId') _quoteId: string,
-    @Body() body: { files: Array<{ fileId: string; fileUrl: string; fileName: string; fileType: string }> },
+    @Body()
+    body: { files: Array<{ fileId: string; fileUrl: string; fileName: string; fileType: string }> },
   ) {
     const jobs = [];
 
@@ -56,10 +57,7 @@ export class QuoteControllerExample {
   }
 
   @Post(':quoteId/calculate')
-  async calculateQuote(
-    @Param('quoteId') quoteId: string,
-    @Body() body: { rushOrder?: boolean },
-  ) {
+  async calculateQuote(@Param('quoteId') quoteId: string, @Body() body: { rushOrder?: boolean }) {
     // Queue quote calculation job
     const job = await this.jobsService.addJob(
       JobType.QUOTE_CALCULATION,
@@ -136,11 +134,7 @@ export class NotificationServiceExample {
     return job.id;
   }
 
-  async scheduleQuoteExpiryNotification(
-    quoteId: string,
-    customerEmail: string,
-    expiryDate: Date,
-  ) {
+  async scheduleQuoteExpiryNotification(quoteId: string, customerEmail: string, expiryDate: Date) {
     const delay = expiryDate.getTime() - Date.now();
 
     // Schedule job for future execution
@@ -171,21 +165,18 @@ export class ReportServiceExample {
   constructor(private readonly jobsService: JobsService) {}
 
   async generateQuoteReport(quoteId: string, format: 'pdf' | 'excel') {
-    const job = await this.jobsService.addJob(
-      JobType.REPORT_GENERATION,
-      {
-        tenantId: 'tenant-123',
-        reportType: 'quote',
-        entityId: quoteId,
-        format,
-        options: {
-          includeItemDetails: true,
-          includeTerms: true,
-          includeTechnicalSpecs: true,
-          language: 'es',
-        },
+    const job = await this.jobsService.addJob(JobType.REPORT_GENERATION, {
+      tenantId: 'tenant-123',
+      reportType: 'quote',
+      entityId: quoteId,
+      format,
+      options: {
+        includeItemDetails: true,
+        includeTerms: true,
+        includeTechnicalSpecs: true,
+        language: 'es',
       },
-    );
+    });
 
     return {
       jobId: job.id,
@@ -231,7 +222,7 @@ export class JobMonitoringExample {
   @Get(':jobId/status')
   async getJobStatus(@Param('jobId') jobId: string) {
     const status = await this.jobsService.getJobStatus(jobId);
-    
+
     if (!status) {
       throw new Error('Job not found');
     }
@@ -251,7 +242,7 @@ export class JobMonitoringExample {
   @Get('queue/:type/metrics')
   async getQueueMetrics(@Param('type') type: JobType) {
     const metrics = await this.jobsService.getQueueMetrics(type);
-    
+
     return metrics;
   }
 }
@@ -306,38 +297,30 @@ export class JobErrorHandlingExample {
 
   async handleFailedJob(jobId: string) {
     const job = await this.jobsService.getJob(jobId);
-    
+
     if (!job) {
       throw new Error('Job not found');
     }
 
     const state = await job.getState();
-    
+
     if (state === 'failed') {
       const failedReason = job.failedReason;
-      
+
       // Check if it's a recoverable error
       if (this.isRecoverableError(failedReason)) {
         // Retry the job
         await this.jobsService.retryJob(jobId);
       } else {
         // Move to dead letter queue for manual inspection
-        await this.jobsService.moveToDeadLetter(
-          jobId,
-          'Non-recoverable error: ' + failedReason,
-        );
+        await this.jobsService.moveToDeadLetter(jobId, 'Non-recoverable error: ' + failedReason);
       }
     }
   }
 
   private isRecoverableError(error: string): boolean {
-    const recoverableErrors = [
-      'ECONNREFUSED',
-      'ETIMEDOUT',
-      'ENOTFOUND',
-      'Network error',
-    ];
-    
-    return recoverableErrors.some(e => error.includes(e));
+    const recoverableErrors = ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'Network error'];
+
+    return recoverableErrors.some((e) => error.includes(e));
   }
 }

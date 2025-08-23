@@ -1,19 +1,19 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
+import {
+  Controller,
+  Get,
+  Post,
   Delete,
-  Param, 
-  Query, 
+  Param,
+  Query,
   Body,
   UseGuards,
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
   ApiBearerAuth,
   ApiQuery,
   ApiParam,
@@ -24,13 +24,8 @@ import { RolesGuard } from '@/modules/auth/guards/roles.guard';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import { Tenant } from '@/modules/tenant/decorators/tenant.decorator';
-import { 
-  JobType, 
-  JobStatus,
-  JobData,
-  QueueMetrics,
-} from './interfaces/job.interface';
-import { 
+import { JobType, JobStatus, JobData, QueueMetrics } from './interfaces/job.interface';
+import {
   CreateJobDto,
   ScheduleJobDto,
   RecurringJobDto,
@@ -44,38 +39,39 @@ import {
 @Controller('jobs')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@ApiResponse({ 
-  status: HttpStatus.UNAUTHORIZED, 
-  description: 'Unauthorized - Invalid or missing JWT token' 
+@ApiResponse({
+  status: HttpStatus.UNAUTHORIZED,
+  description: 'Unauthorized - Invalid or missing JWT token',
 })
-@ApiResponse({ 
-  status: HttpStatus.FORBIDDEN, 
-  description: 'Forbidden - Insufficient permissions' 
+@ApiResponse({
+  status: HttpStatus.FORBIDDEN,
+  description: 'Forbidden - Insufficient permissions',
 })
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
   @Roles('admin', 'manager')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new job',
-    description: 'Create a new background job for asynchronous processing (file analysis, quote calculation, etc.)' 
+    description:
+      'Create a new background job for asynchronous processing (file analysis, quote calculation, etc.)',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
     description: 'Job created successfully',
     schema: {
       properties: {
         jobId: { type: 'string', example: 'job_123456' },
         type: { type: 'string', example: 'file-analysis' },
         status: { type: 'string', example: 'waiting' },
-        createdAt: { type: 'string', format: 'date-time' }
-      }
-    }
+        createdAt: { type: 'string', format: 'date-time' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid job data' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid job data',
   })
   async createJob(
     @Body() createJobDto: CreateJobDto,
@@ -103,9 +99,9 @@ export class JobsController {
   @Post('schedule')
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Schedule a job for future execution' })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Job scheduled successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Job scheduled successfully',
   })
   async scheduleJob(
     @Body() scheduleJobDto: ScheduleJobDto,
@@ -134,9 +130,9 @@ export class JobsController {
   @Post('recurring')
   @Roles('admin')
   @ApiOperation({ summary: 'Create a recurring job' })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Recurring job created successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Recurring job created successfully',
   })
   async createRecurringJob(
     @Body() recurringJobDto: RecurringJobDto,
@@ -162,23 +158,23 @@ export class JobsController {
   }
 
   @Get(':jobId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get job status by ID',
-    description: 'Retrieve detailed status and progress information for a specific job' 
+    description: 'Retrieve detailed status and progress information for a specific job',
   })
-  @ApiParam({ 
-    name: 'jobId', 
+  @ApiParam({
+    name: 'jobId',
     description: 'Unique job identifier',
-    example: 'job_123456' 
+    example: 'job_123456',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Job status retrieved',
     type: JobStatusDto,
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Job not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Job not found',
   })
   async getJobStatus(@Param('jobId') jobId: string): Promise<JobStatusDto> {
     const status = await this.jobsService.getJobStatus(jobId);
@@ -194,15 +190,12 @@ export class JobsController {
   @ApiQuery({ name: 'status', enum: JobStatus, required: false })
   @ApiQuery({ name: 'limit', type: Number, required: false, example: 100 })
   @ApiQuery({ name: 'offset', type: Number, required: false, example: 0 })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Jobs retrieved',
     type: [JobStatusDto],
   })
-  async getJobs(
-    @Query() query: JobQueryDto,
-    @Tenant() tenantId: string,
-  ): Promise<JobStatusDto[]> {
+  async getJobs(@Query() query: JobQueryDto, @Tenant() tenantId: string): Promise<JobStatusDto[]> {
     return this.jobsService.getJobsByTenant(tenantId, {
       type: query.type,
       status: query.status,
@@ -215,9 +208,9 @@ export class JobsController {
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Retry a failed job' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Job retried successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Job retried successfully',
   })
   async retryJob(@Param('jobId') jobId: string) {
     const job = await this.jobsService.retryJob(jobId);
@@ -236,13 +229,13 @@ export class JobsController {
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Cancel a job' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Job cancelled successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Job cancelled successfully',
   })
   async cancelJob(@Param('jobId') jobId: string) {
     const cancelled = await this.jobsService.cancelJob(jobId);
-    
+
     return {
       jobId,
       cancelled,
@@ -254,16 +247,13 @@ export class JobsController {
   @Roles('admin')
   @ApiOperation({ summary: 'Move job to dead letter queue' })
   @ApiParam({ name: 'jobId', description: 'Job ID' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Job moved to dead letter queue' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Job moved to dead letter queue',
   })
-  async moveToDeadLetter(
-    @Param('jobId') jobId: string,
-    @Body('reason') reason: string,
-  ) {
+  async moveToDeadLetter(@Param('jobId') jobId: string, @Body('reason') reason: string) {
     await this.jobsService.moveToDeadLetter(jobId, reason);
-    
+
     return {
       jobId,
       message: 'Job moved to dead letter queue',
@@ -273,24 +263,22 @@ export class JobsController {
 
   @Get('queues/metrics')
   @Roles('admin', 'manager')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get queue metrics',
-    description: 'Retrieve real-time metrics and statistics for job queues' 
+    description: 'Retrieve real-time metrics and statistics for job queues',
   })
-  @ApiQuery({ 
-    name: 'type', 
-    enum: JobType, 
+  @ApiQuery({
+    name: 'type',
+    enum: JobType,
     required: false,
-    description: 'Filter metrics by specific queue type' 
+    description: 'Filter metrics by specific queue type',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Queue metrics retrieved',
     type: [QueueStatusDto],
   })
-  async getQueueMetrics(
-    @Query('type') type?: JobType,
-  ): Promise<QueueMetrics | QueueMetrics[]> {
+  async getQueueMetrics(@Query('type') type?: JobType): Promise<QueueMetrics | QueueMetrics[]> {
     return this.jobsService.getQueueMetrics(type);
   }
 
@@ -298,13 +286,13 @@ export class JobsController {
   @Roles('admin')
   @ApiOperation({ summary: 'Pause a queue' })
   @ApiParam({ name: 'type', enum: JobType })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Queue paused successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Queue paused successfully',
   })
   async pauseQueue(@Param('type') type: JobType) {
     await this.jobsService.pauseQueue(type);
-    
+
     return {
       queue: type,
       status: 'paused',
@@ -316,13 +304,13 @@ export class JobsController {
   @Roles('admin')
   @ApiOperation({ summary: 'Resume a queue' })
   @ApiParam({ name: 'type', enum: JobType })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Queue resumed successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Queue resumed successfully',
   })
   async resumeQueue(@Param('type') type: JobType) {
     await this.jobsService.resumeQueue(type);
-    
+
     return {
       queue: type,
       status: 'active',
@@ -335,14 +323,11 @@ export class JobsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Clean old jobs from queue' })
   @ApiParam({ name: 'type', enum: JobType })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Queue cleaned successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Queue cleaned successfully',
   })
-  async cleanQueue(
-    @Param('type') type: JobType,
-    @Body() cleanJobsDto: CleanJobsDto,
-  ) {
+  async cleanQueue(@Param('type') type: JobType, @Body() cleanJobsDto: CleanJobsDto) {
     const removed = await this.jobsService.cleanOldJobs(
       type,
       cleanJobsDto.grace,
@@ -357,19 +342,19 @@ export class JobsController {
   }
 
   @Get('health/check')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Check job system health',
-    description: 'Get overall health status of the job processing system' 
+    description: 'Get overall health status of the job processing system',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Job system health status',
     schema: {
       properties: {
-        status: { 
-          type: 'string', 
+        status: {
+          type: 'string',
           enum: ['healthy', 'degraded'],
-          example: 'healthy' 
+          example: 'healthy',
         },
         queues: { type: 'number', example: 4 },
         totalJobs: { type: 'number', example: 1234 },
@@ -382,27 +367,28 @@ export class JobsController {
               active: { type: 'number', example: 5 },
               failed: { type: 'number', example: 2 },
               failedRate: { type: 'number', example: 2.5 },
-              paused: { type: 'boolean', example: false }
-            }
-          }
-        }
-      }
-    }
+              paused: { type: 'boolean', example: false },
+            },
+          },
+        },
+      },
+    },
   })
   async checkHealth() {
     const metrics = await this.jobsService.getQueueMetrics();
     const queues = Array.isArray(metrics) ? metrics : [metrics];
 
-    const healthy = queues.every(q => !q.paused && q.failedRate < 50);
-    const totalJobs = queues.reduce((sum, q) => 
-      sum + q.waiting + q.active + q.completed + q.failed + q.delayed, 0
+    const healthy = queues.every((q) => !q.paused && q.failedRate < 50);
+    const totalJobs = queues.reduce(
+      (sum, q) => sum + q.waiting + q.active + q.completed + q.failed + q.delayed,
+      0,
     );
 
     return {
       status: healthy ? 'healthy' : 'degraded',
       queues: queues.length,
       totalJobs,
-      metrics: queues.map(q => ({
+      metrics: queues.map((q) => ({
         name: q.name,
         active: q.active,
         failed: q.failed,

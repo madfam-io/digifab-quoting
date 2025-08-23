@@ -7,7 +7,16 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth, ApiForbiddenResponse, ApiParam, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiParam,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { AuditService, AuditEntity, AuditAction } from './audit.service';
 import { InternalOnly, AdminOnly } from '../auth/decorators/role-shortcuts.decorator';
 import { TenantContextService } from '../tenant/tenant-context.service';
@@ -22,7 +31,7 @@ import { ForbiddenResponseDto } from '../../common/dto/api-response.dto';
 @ApiHeader({
   name: 'X-Tenant-ID',
   description: 'Tenant identifier for multi-tenant operations',
-  required: false
+  required: false,
 })
 export class AuditController {
   constructor(
@@ -31,59 +40,60 @@ export class AuditController {
   ) {}
 
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get audit logs',
-    description: 'Retrieve audit logs with filtering options. Non-admin users can only view their own logs.' 
+    description:
+      'Retrieve audit logs with filtering options. Non-admin users can only view their own logs.',
   })
-  @ApiQuery({ 
-    name: 'entity', 
-    required: false, 
+  @ApiQuery({
+    name: 'entity',
+    required: false,
     enum: AuditEntity,
-    description: 'Filter by entity type' 
+    description: 'Filter by entity type',
   })
-  @ApiQuery({ 
-    name: 'entityId', 
+  @ApiQuery({
+    name: 'entityId',
     required: false,
     description: 'Filter by specific entity ID',
-    example: '123e4567-e89b-12d3-a456-426614174000' 
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiQuery({ 
-    name: 'actorId', 
+  @ApiQuery({
+    name: 'actorId',
     required: false,
     description: 'Filter by actor/user ID',
-    example: 'user_123' 
+    example: 'user_123',
   })
-  @ApiQuery({ 
-    name: 'action', 
-    required: false, 
+  @ApiQuery({
+    name: 'action',
+    required: false,
     enum: AuditAction,
-    description: 'Filter by action type' 
+    description: 'Filter by action type',
   })
-  @ApiQuery({ 
-    name: 'from', 
-    required: false, 
+  @ApiQuery({
+    name: 'from',
+    required: false,
     type: Date,
     description: 'Start date for date range filter',
-    example: '2024-01-01T00:00:00.000Z' 
+    example: '2024-01-01T00:00:00.000Z',
   })
-  @ApiQuery({ 
-    name: 'to', 
-    required: false, 
+  @ApiQuery({
+    name: 'to',
+    required: false,
     type: Date,
     description: 'End date for date range filter',
-    example: '2024-12-31T23:59:59.999Z' 
+    example: '2024-12-31T23:59:59.999Z',
   })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    type: Number, 
-    description: 'Maximum number of records to return (default: 50)' 
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of records to return (default: 50)',
   })
-  @ApiQuery({ 
-    name: 'offset', 
-    required: false, 
-    type: Number, 
-    description: 'Number of records to skip for pagination (default: 0)' 
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Number of records to skip for pagination (default: 0)',
   })
   @ApiResponse({
     status: 200,
@@ -106,19 +116,19 @@ export class AuditController {
               metadata: { type: 'object' },
               changes: { type: 'object' },
               requestId: { type: 'string', example: 'req_abc123' },
-              duration: { type: 'number', example: 125 }
-            }
-          }
+              duration: { type: 'number', example: 125 },
+            },
+          },
         },
         total: { type: 'number', example: 100 },
         limit: { type: 'number', example: 50 },
-        offset: { type: 'number', example: 0 }
-      }
-    }
+        offset: { type: 'number', example: 0 },
+      },
+    },
   })
-  @ApiForbiddenResponse({ 
+  @ApiForbiddenResponse({
     description: 'Insufficient permissions',
-    type: ForbiddenResponseDto 
+    type: ForbiddenResponseDto,
   })
   @RequirePermissions(Permission.AUDIT_READ)
   @Audit({
@@ -138,7 +148,12 @@ export class AuditController {
   ) {
     // Non-admin users can only see their own audit logs
     const context = this.tenantContext.getContext();
-    if (!context?.userRoles?.includes('admin') && actorId && context && actorId !== context.userId) {
+    if (
+      !context?.userRoles?.includes('admin') &&
+      actorId &&
+      context &&
+      actorId !== context.userId
+    ) {
       throw new ForbiddenException('You can only view your own audit logs');
     }
 
@@ -155,19 +170,19 @@ export class AuditController {
   }
 
   @Get('entity/:entity/:entityId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get audit trail for a specific entity',
-    description: 'Retrieve complete audit history for a specific entity instance' 
+    description: 'Retrieve complete audit history for a specific entity instance',
   })
-  @ApiParam({ 
-    name: 'entity', 
+  @ApiParam({
+    name: 'entity',
     description: 'Entity type',
-    enum: AuditEntity 
+    enum: AuditEntity,
   })
-  @ApiParam({ 
-    name: 'entityId', 
+  @ApiParam({
+    name: 'entityId',
     description: 'Entity ID',
-    example: '123e4567-e89b-12d3-a456-426614174000' 
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 200,
@@ -183,48 +198,46 @@ export class AuditController {
           actorEmail: { type: 'string' },
           at: { type: 'string', format: 'date-time' },
           changes: { type: 'object' },
-          metadata: { type: 'object' }
-        }
-      }
-    }
+          metadata: { type: 'object' },
+        },
+      },
+    },
   })
   @RequirePermissions(Permission.AUDIT_READ)
-  async getEntityAuditTrail(
-    @Param('entity') entity: string,
-    @Param('entityId') entityId: string,
-  ) {
+  async getEntityAuditTrail(@Param('entity') entity: string, @Param('entityId') entityId: string) {
     return this.auditService.getEntityAuditTrail(entity, entityId);
   }
 
   @Get('user/:userId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get audit logs for a specific user',
-    description: 'Retrieve all actions performed by a specific user. Non-admin users can only view their own logs.' 
+    description:
+      'Retrieve all actions performed by a specific user. Non-admin users can only view their own logs.',
   })
-  @ApiParam({ 
-    name: 'userId', 
+  @ApiParam({
+    name: 'userId',
     description: 'User ID',
-    example: 'user_123' 
+    example: 'user_123',
   })
-  @ApiQuery({ 
-    name: 'from', 
-    required: false, 
+  @ApiQuery({
+    name: 'from',
+    required: false,
     type: Date,
     description: 'Start date for filtering',
-    example: '2024-01-01T00:00:00.000Z' 
+    example: '2024-01-01T00:00:00.000Z',
   })
-  @ApiQuery({ 
-    name: 'to', 
-    required: false, 
+  @ApiQuery({
+    name: 'to',
+    required: false,
     type: Date,
     description: 'End date for filtering',
-    example: '2024-12-31T23:59:59.999Z' 
+    example: '2024-12-31T23:59:59.999Z',
   })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    type: Number, 
-    description: 'Maximum number of records (default: 50)' 
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of records (default: 50)',
   })
   @ApiResponse({
     status: 200,
@@ -239,14 +252,14 @@ export class AuditController {
           entityId: { type: 'string' },
           action: { type: 'string' },
           at: { type: 'string', format: 'date-time' },
-          metadata: { type: 'object' }
-        }
-      }
-    }
+          metadata: { type: 'object' },
+        },
+      },
+    },
   })
-  @ApiForbiddenResponse({ 
+  @ApiForbiddenResponse({
     description: 'Cannot view other users audit logs',
-    type: ForbiddenResponseDto 
+    type: ForbiddenResponseDto,
   })
   @RequirePermissions(Permission.AUDIT_READ)
   async getUserAuditLogs(
@@ -269,35 +282,35 @@ export class AuditController {
   }
 
   @Get('export')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Export audit logs',
-    description: 'Export audit logs for compliance and reporting purposes. Admin only.' 
+    description: 'Export audit logs for compliance and reporting purposes. Admin only.',
   })
-  @ApiQuery({ 
-    name: 'from', 
-    required: true, 
+  @ApiQuery({
+    name: 'from',
+    required: true,
     type: Date,
     description: 'Export start date',
-    example: '2024-01-01T00:00:00.000Z' 
+    example: '2024-01-01T00:00:00.000Z',
   })
-  @ApiQuery({ 
-    name: 'to', 
-    required: true, 
+  @ApiQuery({
+    name: 'to',
+    required: true,
     type: Date,
     description: 'Export end date',
-    example: '2024-12-31T23:59:59.999Z' 
+    example: '2024-12-31T23:59:59.999Z',
   })
-  @ApiQuery({ 
-    name: 'entity', 
-    required: false, 
+  @ApiQuery({
+    name: 'entity',
+    required: false,
     enum: AuditEntity,
-    description: 'Filter export by entity type' 
+    description: 'Filter export by entity type',
   })
-  @ApiQuery({ 
-    name: 'format', 
-    required: false, 
-    enum: ['json', 'csv'], 
-    description: 'Export format (default: json)' 
+  @ApiQuery({
+    name: 'format',
+    required: false,
+    enum: ['json', 'csv'],
+    description: 'Export format (default: json)',
   })
   @ApiResponse({
     status: 200,
@@ -306,20 +319,21 @@ export class AuditController {
       'application/json': {
         schema: {
           type: 'array',
-          items: { type: 'object' }
-        }
+          items: { type: 'object' },
+        },
       },
       'text/csv': {
         schema: {
           type: 'string',
-          example: 'Timestamp,Tenant ID,Actor ID,Actor Email,Entity,Entity ID,Action,Success,Duration (ms),Request ID\n2024-01-01T00:00:00.000Z,tenant_123,user_456,user@example.com,quote,quote_789,create,true,125,req_abc'
-        }
-      }
-    }
+          example:
+            'Timestamp,Tenant ID,Actor ID,Actor Email,Entity,Entity ID,Action,Success,Duration (ms),Request ID\n2024-01-01T00:00:00.000Z,tenant_123,user_456,user@example.com,quote,quote_789,create,true,125,req_abc',
+        },
+      },
+    },
   })
-  @ApiForbiddenResponse({ 
+  @ApiForbiddenResponse({
     description: 'Admin access required',
-    type: ForbiddenResponseDto 
+    type: ForbiddenResponseDto,
   })
   @AdminOnly()
   @RequirePermissions(Permission.AUDIT_EXPORT)
@@ -362,7 +376,7 @@ export class AuditController {
     ];
 
     // Convert logs to CSV rows
-    const rows = logs.map(log => [
+    const rows = logs.map((log) => [
       log.at.toISOString(),
       log.tenantId,
       log.actorId || '',
@@ -378,7 +392,7 @@ export class AuditController {
     // Combine headers and rows
     const csv = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
     ].join('\n');
 
     return csv;

@@ -12,11 +12,7 @@ export const metadata: Metadata = {
   description: 'Get instant quotes for 3D printing, CNC machining, and laser cutting',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>

@@ -9,10 +9,13 @@ export const loginRequestSchema = z.object({
 
 export const registerRequestSchema = z.object({
   email: z.string().email(),
-  password: z.string()
+  password: z
+    .string()
     .min(8)
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    ),
   name: z.string().min(2).max(100).optional(),
   tenantId: z.string().uuid(),
 });
@@ -23,7 +26,8 @@ export const refreshTokenRequestSchema = z.object({
 
 export const changePasswordRequestSchema = z.object({
   currentPassword: z.string(),
-  newPassword: z.string()
+  newPassword: z
+    .string()
     .min(8)
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
 });

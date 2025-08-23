@@ -27,15 +27,13 @@ export class ApiKeyService {
     const rawKey = crypto.randomBytes(32).toString('hex');
     const keyPrefix = 'mfm_'; // MADFAM prefix
     const apiKey = `${keyPrefix}${rawKey}`;
-    
+
     // Hash the key for storage
     const hashedKey = await bcrypt.hash(apiKey, 10);
-    
+
     // Calculate expiration
-    const expiresAt = expiresIn
-      ? new Date(Date.now() + expiresIn * 1000)
-      : undefined;
-    
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : undefined;
+
     // Store in database
     const keyData = await this.prisma.apiKey.create({
       data: {
@@ -49,7 +47,7 @@ export class ApiKeyService {
         createdAt: new Date(),
       },
     });
-    
+
     return {
       key: apiKey,
       keyData: {
@@ -66,9 +64,9 @@ export class ApiKeyService {
     if (!apiKey || !apiKey.startsWith('mfm_')) {
       return null;
     }
-    
+
     const keyPrefix = apiKey.substring(0, 8);
-    
+
     // Find potential matches by prefix
     const potentialKeys = await this.prisma.apiKey.findMany({
       where: {
@@ -76,7 +74,7 @@ export class ApiKeyService {
         isActive: true,
       },
     });
-    
+
     // Verify the key hash
     for (const keyRecord of potentialKeys) {
       const isValid = await bcrypt.compare(apiKey, keyRecord.keyHash);
@@ -86,7 +84,7 @@ export class ApiKeyService {
           where: { id: keyRecord.id },
           data: { lastUsedAt: new Date() },
         });
-        
+
         return {
           id: keyRecord.id,
           tenantId: keyRecord.tenantId,
@@ -98,7 +96,7 @@ export class ApiKeyService {
         };
       }
     }
-    
+
     return null;
   }
 
@@ -147,7 +145,7 @@ export class ApiKeyService {
   async getUsageStats(keyId: string, days: number = 7): Promise<any> {
     const since = new Date();
     since.setDate(since.getDate() - days);
-    
+
     return this.prisma.apiKeyUsage.groupBy({
       by: ['endpoint'],
       where: {

@@ -11,7 +11,18 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam, ApiBadRequestResponse, ApiNotFoundResponse, ApiUnauthorizedResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiParam,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiUnauthorizedResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto, QuoteResponseDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
@@ -22,7 +33,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { QuoteStatus } from '@madfam/shared';
 import { Audit } from '../audit/audit.interceptor';
 import { AuditAction, AuditEntity } from '../audit/audit.service';
-import { ValidationErrorResponseDto, NotFoundResponseDto, UnauthorizedResponseDto } from '../../common/dto/api-response.dto';
+import {
+  ValidationErrorResponseDto,
+  NotFoundResponseDto,
+  UnauthorizedResponseDto,
+} from '../../common/dto/api-response.dto';
 import { AuthenticatedRequest } from '../../types/auth-request';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
@@ -31,32 +46,32 @@ import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-resp
 @Controller('quotes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ 
+@ApiUnauthorizedResponse({
   description: 'Unauthorized - Invalid or missing JWT token',
-  type: UnauthorizedResponseDto 
+  type: UnauthorizedResponseDto,
 })
 @ApiHeader({
   name: 'X-Tenant-ID',
   description: 'Tenant identifier for multi-tenant operations',
-  required: false
+  required: false,
 })
 export class QuotesController {
   constructor(private readonly quotesService: QuotesService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create new quote',
-    description: 'Creates a new quote with specified currency and optimization objectives' 
+    description: 'Creates a new quote with specified currency and optimization objectives',
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Quote successfully created',
-    type: QuoteResponseDto 
+    type: QuoteResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Invalid input data',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   @Audit({
     entity: AuditEntity.QUOTE,
@@ -65,29 +80,25 @@ export class QuotesController {
     includeResponse: true,
   })
   create(@Request() req: AuthenticatedRequest, @Body() createQuoteDto: CreateQuoteDto) {
-    return this.quotesService.create(
-      req.user.tenantId,
-      req.user.id,
-      createQuoteDto,
-    );
+    return this.quotesService.create(req.user.tenantId, req.user.id, createQuoteDto);
   }
 
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'List quotes',
-    description: 'Retrieve a paginated list of quotes with optional filtering' 
+    description: 'Retrieve a paginated list of quotes with optional filtering',
   })
-  @ApiQuery({ 
-    name: 'status', 
-    required: false, 
+  @ApiQuery({
+    name: 'status',
+    required: false,
     enum: QuoteStatus,
-    description: 'Filter by quote status' 
+    description: 'Filter by quote status',
   })
-  @ApiQuery({ 
-    name: 'customerId', 
+  @ApiQuery({
+    name: 'customerId',
     required: false,
     description: 'Filter by customer ID',
-    example: '123e4567-e89b-12d3-a456-426614174000' 
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiPaginatedResponse(QuoteResponseDto)
   findAll(
@@ -105,23 +116,23 @@ export class QuotesController {
   }
 
   @Get(':id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get quote details',
-    description: 'Retrieve detailed information about a specific quote' 
+    description: 'Retrieve detailed information about a specific quote',
   })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     description: 'Quote ID',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 200,
     description: 'Quote details',
-    type: QuoteResponseDto
+    type: QuoteResponseDto,
   })
-  @ApiNotFoundResponse({ 
+  @ApiNotFoundResponse({
     description: 'Quote not found',
-    type: NotFoundResponseDto 
+    type: NotFoundResponseDto,
   })
   findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.quotesService.findOne(req.user.tenantId, id);
@@ -139,111 +150,103 @@ export class QuotesController {
 
   @Post(':id/items')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Add item to quote',
-    description: 'Add a new part/item to an existing quote for pricing' 
+    description: 'Add a new part/item to an existing quote for pricing',
   })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     description: 'Quote ID',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 201,
     description: 'Item added successfully',
-    type: QuoteItemResponseDto
+    type: QuoteItemResponseDto,
   })
-  @ApiNotFoundResponse({ 
+  @ApiNotFoundResponse({
     description: 'Quote not found',
-    type: NotFoundResponseDto 
+    type: NotFoundResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Invalid item data or quote is not in draft status',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   addItem(
     @Request() req: AuthenticatedRequest,
     @Param('id') quoteId: string,
     @Body() addQuoteItemDto: AddQuoteItemDto,
   ) {
-    return this.quotesService.addItem(
-      req.user.tenantId,
-      quoteId,
-      addQuoteItemDto,
-    );
+    return this.quotesService.addItem(req.user.tenantId, quoteId, addQuoteItemDto);
   }
 
   @Post(':id/calculate')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Calculate quote pricing',
-    description: 'Triggers pricing calculation for all items in the quote based on objectives' 
+    description: 'Triggers pricing calculation for all items in the quote based on objectives',
   })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     description: 'Quote ID',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Quote calculation initiated',
     schema: {
       properties: {
         message: { type: 'string', example: 'Calculation started' },
         jobId: { type: 'string', example: 'job_123456' },
-        estimatedTime: { type: 'number', example: 30 }
-      }
-    }
+        estimatedTime: { type: 'number', example: 30 },
+      },
+    },
   })
-  @ApiNotFoundResponse({ 
+  @ApiNotFoundResponse({
     description: 'Quote not found',
-    type: NotFoundResponseDto 
+    type: NotFoundResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Quote has no items or is already calculated',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   calculate(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() calculateQuoteDto: CalculateQuoteDto,
   ) {
-    return this.quotesService.calculate(
-      req.user.tenantId,
-      id,
-      calculateQuoteDto,
-    );
+    return this.quotesService.calculate(req.user.tenantId, id, calculateQuoteDto);
   }
 
   @Post(':id/approve')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Customer approves quote',
-    description: 'Customer accepts the quote and proceeds to order placement' 
+    description: 'Customer accepts the quote and proceeds to order placement',
   })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     description: 'Quote ID',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Quote approved successfully',
     schema: {
       properties: {
         message: { type: 'string', example: 'Quote approved' },
         orderId: { type: 'string', example: 'order_123456' },
-        paymentUrl: { type: 'string', example: 'https://payment.stripe.com/...' }
-      }
-    }
+        paymentUrl: { type: 'string', example: 'https://payment.stripe.com/...' },
+      },
+    },
   })
-  @ApiNotFoundResponse({ 
+  @ApiNotFoundResponse({
     description: 'Quote not found',
-    type: NotFoundResponseDto 
+    type: NotFoundResponseDto,
   })
-  @ApiBadRequestResponse({ 
+  @ApiBadRequestResponse({
     description: 'Quote is not in ready status or has expired',
-    type: ValidationErrorResponseDto 
+    type: ValidationErrorResponseDto,
   })
   approve(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.quotesService.approve(req.user.tenantId, id, req.user.id);
@@ -257,42 +260,42 @@ export class QuotesController {
   }
 
   @Get(':id/pdf')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Generate quote PDF',
-    description: 'Generate and return a PDF version of the quote for download/sharing' 
+    description: 'Generate and return a PDF version of the quote for download/sharing',
   })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     description: 'Quote ID',
-    example: 'quote_123e4567-e89b-12d3-a456-426614174000' 
+    example: 'quote_123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'PDF URL returned',
     schema: {
       properties: {
-        url: { 
-          type: 'string', 
+        url: {
+          type: 'string',
           example: 'https://s3.amazonaws.com/quotes/quote_123.pdf',
-          description: 'Presigned URL for PDF download (valid for 1 hour)'
+          description: 'Presigned URL for PDF download (valid for 1 hour)',
         },
         expiresAt: {
           type: 'string',
           format: 'date-time',
-          example: '2024-01-01T01:00:00.000Z'
-        }
-      }
-    }
+          example: '2024-01-01T01:00:00.000Z',
+        },
+      },
+    },
   })
-  @ApiNotFoundResponse({ 
+  @ApiNotFoundResponse({
     description: 'Quote not found',
-    type: NotFoundResponseDto 
+    type: NotFoundResponseDto,
   })
   async generatePdf(@Request() _req: AuthenticatedRequest, @Param('id') _id: string) {
     // TODO: Implement PDF generation
-    return { 
+    return {
       url: 'https://example.com/quote.pdf',
-      expiresAt: new Date(Date.now() + 3600000).toISOString()
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
     };
   }
 }

@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Handle direct locale access (e.g., /en or /es)
-  if (locales.some(locale => pathname === `/${locale}`)) {
+  if (locales.some((locale) => pathname === `/${locale}`)) {
     // Redirect /en to / or /es to /
     const response = NextResponse.redirect(new URL('/', request.url));
     response.headers.set('x-locale-redirect', 'true');

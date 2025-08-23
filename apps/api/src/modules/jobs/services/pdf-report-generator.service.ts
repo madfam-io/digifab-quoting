@@ -48,7 +48,8 @@ export class PdfReportGeneratorService {
       }
 
       // Add footer
-      doc.fontSize(10)
+      doc
+        .fontSize(10)
         .text(`Generated on ${new Date().toLocaleString()}`, 50, doc.page.height - 50, {
           align: 'center',
         });
@@ -92,7 +93,8 @@ export class PdfReportGeneratorService {
   private addQuoteContent(doc: InstanceType<typeof PDFDocument>, quote: any, options: any): void {
     // Customer information
     doc.fontSize(14).text('Customer Information', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Name: ${quote.customer?.name || 'N/A'}`)
       .text(`Email: ${quote.customer?.email || 'N/A'}`)
       .text(`Phone: ${quote.customer?.phone || 'N/A'}`)
@@ -100,7 +102,8 @@ export class PdfReportGeneratorService {
 
     // Quote details
     doc.fontSize(14).text('Quote Details', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Quote Number: ${quote.number}`)
       .text(`Date: ${new Date(quote.createdAt).toLocaleDateString()}`)
       .text(`Valid Until: ${new Date(quote.validUntil).toLocaleDateString()}`)
@@ -120,12 +123,17 @@ export class PdfReportGeneratorService {
     this.addPricingSummary(doc, quote);
   }
 
-  private addQuoteItemDetails(doc: InstanceType<typeof PDFDocument>, item: any, index: number): void {
+  private addQuoteItemDetails(
+    doc: InstanceType<typeof PDFDocument>,
+    item: any,
+    index: number,
+  ): void {
     const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
     const materialName = item.material?.name || 'Unknown material';
     const processName = item.manufacturingProcess?.name || item.processCode || 'Unknown process';
-    
-    doc.fontSize(12)
+
+    doc
+      .fontSize(12)
       .text(`${index}. ${fileName}`)
       .text(`   Material: ${materialName}`)
       .text(`   Process: ${processName}`)
@@ -138,7 +146,8 @@ export class PdfReportGeneratorService {
   private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: any, options: any): void {
     // Order header
     doc.fontSize(14).text('Order Information', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Order Number: ${order.number}`)
       .text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`)
       .text(`Status: ${order.status}`)
@@ -147,7 +156,8 @@ export class PdfReportGeneratorService {
     // Customer information
     if (order.customer) {
       doc.fontSize(14).text('Customer Information', { underline: true });
-      doc.fontSize(12)
+      doc
+        .fontSize(12)
         .text(`Name: ${order.customer.name}`)
         .text(`Email: ${order.customer.email}`)
         .text(`Phone: ${order.customer.phone || 'N/A'}`)
@@ -157,9 +167,7 @@ export class PdfReportGeneratorService {
     // Quote information
     if (order.quote) {
       doc.fontSize(14).text('Quote Details', { underline: true });
-      doc.fontSize(12)
-        .text(`Quote Number: ${order.quote.number}`)
-        .moveDown();
+      doc.fontSize(12).text(`Quote Number: ${order.quote.number}`).moveDown();
 
       // Add quote items if requested
       if (options?.includeItemDetails && order.quote.items) {
@@ -171,14 +179,19 @@ export class PdfReportGeneratorService {
     this.addPaymentInformation(doc, order);
   }
 
-  private addInvoiceContent(doc: InstanceType<typeof PDFDocument>, invoice: any, options: any): void {
+  private addInvoiceContent(
+    doc: InstanceType<typeof PDFDocument>,
+    invoice: any,
+    options: any,
+  ): void {
     // Invoice header
     doc.fontSize(16).text(`INVOICE #${invoice.number}`, { align: 'right' });
     doc.moveDown();
 
     // Company information (from tenant)
     if (invoice.tenant) {
-      doc.fontSize(12)
+      doc
+        .fontSize(12)
         .text(invoice.tenant.name, { align: 'left' })
         .text(invoice.tenant.taxId || '', { align: 'left' })
         .moveDown();
@@ -187,18 +200,22 @@ export class PdfReportGeneratorService {
     // Billing information
     doc.fontSize(14).text('Bill To:', { underline: true });
     if (invoice.customer) {
-      doc.fontSize(12)
+      doc
+        .fontSize(12)
         .text(invoice.customer.name)
         .text(invoice.customer.company || '')
         .text(invoice.customer.billingAddress?.street || '')
-        .text(`${invoice.customer.billingAddress?.city || ''}, ${invoice.customer.billingAddress?.state || ''} ${invoice.customer.billingAddress?.postalCode || ''}`)
+        .text(
+          `${invoice.customer.billingAddress?.city || ''}, ${invoice.customer.billingAddress?.state || ''} ${invoice.customer.billingAddress?.postalCode || ''}`,
+        )
         .text(invoice.customer.billingAddress?.country || '')
         .moveDown();
     }
 
     // Invoice details
     doc.fontSize(14).text('Invoice Details', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Invoice Date: ${new Date(invoice.issuedAt).toLocaleDateString()}`)
       .text(`Due Date: ${new Date(invoice.dueAt).toLocaleDateString()}`)
       .text(`Status: ${invoice.status}`)
@@ -213,9 +230,14 @@ export class PdfReportGeneratorService {
     this.addInvoiceTotals(doc, invoice);
   }
 
-  private addAnalyticsContent(doc: InstanceType<typeof PDFDocument>, data: any, options: any): void {
+  private addAnalyticsContent(
+    doc: InstanceType<typeof PDFDocument>,
+    data: any,
+    options: any,
+  ): void {
     doc.fontSize(14).text('Analytics Period', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`From: ${new Date(data.criteria.startDate).toLocaleDateString()}`)
       .text(`To: ${new Date(data.criteria.endDate).toLocaleDateString()}`)
       .moveDown();
@@ -224,8 +246,11 @@ export class PdfReportGeneratorService {
     if (data.quotes) {
       doc.fontSize(14).text('Quote Statistics', { underline: true });
       data.quotes.forEach((stat: any) => {
-        doc.fontSize(12)
-          .text(`${stat.status}: ${stat._count} quotes, Total: ${this.formatCurrency(stat._sum.total || 0)}`);
+        doc
+          .fontSize(12)
+          .text(
+            `${stat.status}: ${stat._count} quotes, Total: ${this.formatCurrency(stat._sum.total || 0)}`,
+          );
       });
       doc.moveDown();
     }
@@ -234,8 +259,11 @@ export class PdfReportGeneratorService {
     if (data.orders) {
       doc.fontSize(14).text('Order Statistics', { underline: true });
       data.orders.forEach((stat: any) => {
-        doc.fontSize(12)
-          .text(`${stat.status}: ${stat._count} orders, Total: ${this.formatCurrency(stat._sum.totalPaid || 0)}`);
+        doc
+          .fontSize(12)
+          .text(
+            `${stat.status}: ${stat._count} orders, Total: ${this.formatCurrency(stat._sum.totalPaid || 0)}`,
+          );
       });
       doc.moveDown();
     }
@@ -244,32 +272,41 @@ export class PdfReportGeneratorService {
     if (data.revenue && data.revenue.length > 0) {
       doc.fontSize(14).text('Revenue by Period', { underline: true });
       data.revenue.forEach((period: any) => {
-        doc.fontSize(12)
-          .text(`${new Date(period.period).toLocaleDateString()}: ${this.formatCurrency(period.revenue)}`);
+        doc
+          .fontSize(12)
+          .text(
+            `${new Date(period.period).toLocaleDateString()}: ${this.formatCurrency(period.revenue)}`,
+          );
       });
     }
   }
 
   private addPricingSummary(doc: InstanceType<typeof PDFDocument>, quote: any): void {
     doc.fontSize(14).text('Pricing Summary', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Subtotal: ${this.formatCurrency(quote.subtotal, quote.currency)}`)
       .text(`Tax: ${this.formatCurrency(quote.tax, quote.currency)}`)
       .text(`Shipping: ${this.formatCurrency(quote.shipping, quote.currency)}`)
-      .text(`Total: ${this.formatCurrency(quote.total, quote.currency)}`, { 
-        underline: true 
+      .text(`Total: ${this.formatCurrency(quote.total, quote.currency)}`, {
+        underline: true,
       });
   }
 
   private addPaymentInformation(doc: InstanceType<typeof PDFDocument>, order: any): void {
     doc.fontSize(14).text('Payment Information', { underline: true });
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Payment Status: ${order.paymentStatus}`)
       .text(`Total Amount: ${this.formatCurrency(order.totalAmount, order.currency)}`)
       .text(`Amount Paid: ${this.formatCurrency(order.totalPaid, order.currency)}`);
   }
 
-  private addInvoiceLineItems(doc: InstanceType<typeof PDFDocument>, items: any[], currency: string): void {
+  private addInvoiceLineItems(
+    doc: InstanceType<typeof PDFDocument>,
+    items: any[],
+    currency: string,
+  ): void {
     doc.fontSize(14).text('Line Items', { underline: true });
     doc.moveDown(0.5);
 
@@ -277,33 +314,47 @@ export class PdfReportGeneratorService {
     items.forEach((item: any, index: number) => {
       const total = item.unitPrice * item.quantity;
       subtotal += total;
-      
-      doc.fontSize(11)
+
+      doc
+        .fontSize(11)
         .text(`${index + 1}. ${item.name || 'Item'}`, { continued: true })
-        .text(`${item.quantity} x ${this.formatCurrency(item.unitPrice, currency)} = ${this.formatCurrency(total, currency)}`, { align: 'right' });
+        .text(
+          `${item.quantity} x ${this.formatCurrency(item.unitPrice, currency)} = ${this.formatCurrency(total, currency)}`,
+          { align: 'right' },
+        );
     });
 
     doc.moveDown();
-    doc.fontSize(12)
+    doc
+      .fontSize(12)
       .text(`Subtotal: ${this.formatCurrency(subtotal, currency)}`, { align: 'right' });
   }
 
   private addInvoiceTotals(doc: InstanceType<typeof PDFDocument>, invoice: any): void {
     doc.moveDown();
-    doc.fontSize(12)
-      .text(`Subtotal: ${this.formatCurrency(invoice.subtotal, invoice.currency)}`, { align: 'right' })
-      .text(`Tax: ${this.formatCurrency(invoice.tax, invoice.currency)}`, { align: 'right' })
-      .text(`Total: ${this.formatCurrency(invoice.total, invoice.currency)}`, { 
+    doc
+      .fontSize(12)
+      .text(`Subtotal: ${this.formatCurrency(invoice.subtotal, invoice.currency)}`, {
         align: 'right',
-        underline: true 
+      })
+      .text(`Tax: ${this.formatCurrency(invoice.tax, invoice.currency)}`, { align: 'right' })
+      .text(`Total: ${this.formatCurrency(invoice.total, invoice.currency)}`, {
+        align: 'right',
+        underline: true,
       });
 
     if (invoice.totalPaid > 0) {
-      doc.text(`Paid: ${this.formatCurrency(invoice.totalPaid, invoice.currency)}`, { align: 'right' })
-        .text(`Balance Due: ${this.formatCurrency(invoice.total - invoice.totalPaid, invoice.currency)}`, { 
+      doc
+        .text(`Paid: ${this.formatCurrency(invoice.totalPaid, invoice.currency)}`, {
           align: 'right',
-          underline: true 
-        });
+        })
+        .text(
+          `Balance Due: ${this.formatCurrency(invoice.total - invoice.totalPaid, invoice.currency)}`,
+          {
+            align: 'right',
+            underline: true,
+          },
+        );
     }
   }
 

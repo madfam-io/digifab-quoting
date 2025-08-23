@@ -298,7 +298,7 @@ async function main() {
     data: {
       base: 'USD',
       quote: 'MXN',
-      rate: 17.50,
+      rate: 17.5,
       asOf: new Date(),
       source: 'manual',
     },

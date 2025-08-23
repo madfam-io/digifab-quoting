@@ -118,7 +118,7 @@ export class ExcelReportGeneratorService {
     }
 
     // Auto-fit columns
-    sheet.columns.forEach(column => {
+    sheet.columns.forEach((column) => {
       column.width = 15;
     });
   }
@@ -191,7 +191,7 @@ export class ExcelReportGeneratorService {
     sheet.getCell(`F${row}`).font = { bold: true };
 
     // Auto-fit columns
-    sheet.columns.forEach(column => {
+    sheet.columns.forEach((column) => {
       column.width = 15;
     });
   }
@@ -293,7 +293,8 @@ export class ExcelReportGeneratorService {
     sheet.getCell('A1').font = { bold: true, size: 16 };
 
     sheet.getCell('A3').value = 'Period:';
-    sheet.getCell('B3').value = `${new Date(data.criteria.startDate).toLocaleDateString()} - ${new Date(data.criteria.endDate).toLocaleDateString()}`;
+    sheet.getCell('B3').value =
+      `${new Date(data.criteria.startDate).toLocaleDateString()} - ${new Date(data.criteria.endDate).toLocaleDateString()}`;
 
     let row = 5;
     sheet.getCell(`A${row}`).value = 'Key Metrics';
@@ -303,7 +304,8 @@ export class ExcelReportGeneratorService {
     // Add summary metrics
     const totalQuotes = data.quotes?.reduce((sum: number, q: any) => sum + q._count, 0) || 0;
     const totalOrders = data.orders?.reduce((sum: number, o: any) => sum + o._count, 0) || 0;
-    const totalRevenue = data.revenue?.reduce((sum: number, r: any) => sum + (r.revenue || 0), 0) || 0;
+    const totalRevenue =
+      data.revenue?.reduce((sum: number, r: any) => sum + (r.revenue || 0), 0) || 0;
 
     sheet.getCell(`A${row}`).value = 'Total Quotes:';
     sheet.getCell(`B${row}`).value = totalQuotes;

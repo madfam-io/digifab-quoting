@@ -30,7 +30,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    
+
     // Try to get context, but don't fail if it's not available
     let context: any;
     try {
@@ -48,7 +48,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as any;
         message = responseObj.message || exception.message;
@@ -60,32 +60,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       message = exception.message;
       error = exception.name;
-      
+
       // Log stack trace for non-HTTP exceptions
-      this.logger.error(
-        `Unhandled exception: ${exception.message}`,
-        exception.stack,
-        {
-          tenantId: context?.tenantId,
-          userId: context?.userId,
-          requestId: context?.requestId,
-          path: request.url,
-          method: request.method,
-        },
-      );
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack, {
+        tenantId: context?.tenantId,
+        userId: context?.userId,
+        requestId: context?.requestId,
+        path: request.url,
+        method: request.method,
+      });
     } else {
       // Unknown error type
-      this.logger.error(
-        'Unknown exception type',
-        exception,
-        {
-          tenantId: context?.tenantId,
-          userId: context?.userId,
-          requestId: context?.requestId,
-          path: request.url,
-          method: request.method,
-        },
-      );
+      this.logger.error('Unknown exception type', exception, {
+        tenantId: context?.tenantId,
+        userId: context?.userId,
+        requestId: context?.requestId,
+        path: request.url,
+        method: request.method,
+      });
     }
 
     const errorResponse: ErrorResponse = {

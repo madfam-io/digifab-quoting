@@ -27,7 +27,7 @@ export class AuditService {
    */
   async log(entry: AuditLogEntry): Promise<void> {
     const context = this.tenantContext.getContext();
-    
+
     if (!context?.tenantId) {
       // Skip audit logging if no tenant context
       return;
@@ -59,7 +59,12 @@ export class AuditService {
   /**
    * Log a create action
    */
-  async logCreate(entity: string, entityId: string, data: any, metadata?: Record<string, any>): Promise<void> {
+  async logCreate(
+    entity: string,
+    entityId: string,
+    data: any,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
     await this.log({
       entity,
       entityId,
@@ -97,7 +102,12 @@ export class AuditService {
   /**
    * Log a delete action
    */
-  async logDelete(entity: string, entityId: string, data: any, metadata?: Record<string, any>): Promise<void> {
+  async logDelete(
+    entity: string,
+    entityId: string,
+    data: any,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
     await this.log({
       entity,
       entityId,
@@ -138,7 +148,7 @@ export class AuditService {
     offset?: number;
   }) {
     const context = this.tenantContext.getContext();
-    
+
     if (!context?.tenantId) {
       return { logs: [], total: 0 };
     }
@@ -151,7 +161,7 @@ export class AuditService {
     if (params.entityId) where.entityId = params.entityId;
     if (params.actorId) where.actorId = params.actorId;
     if (params.action) where.action = params.action;
-    
+
     if (params.from || params.to) {
       where.at = {};
       if (params.from) where.at.gte = params.from;
@@ -217,15 +227,10 @@ export class AuditService {
     });
 
     // Log the export action itself
-    await this.logAction(
-      AuditEntity.CONFIG,
-      'audit_export',
-      AuditAction.EXPORT,
-      {
-        exportParams: params,
-        recordCount: logs.length,
-      },
-    );
+    await this.logAction(AuditEntity.CONFIG, 'audit_export', AuditAction.EXPORT, {
+      exportParams: params,
+      recordCount: logs.length,
+    });
 
     return logs;
   }

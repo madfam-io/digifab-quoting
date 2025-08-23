@@ -3,6 +3,7 @@
 Common issues and solutions for the MADFAM development environment.
 
 ## Table of Contents
+
 - [Startup Issues](#startup-issues)
 - [Port Conflicts](#port-conflicts)
 - [Database Issues](#database-issues)
@@ -14,7 +15,9 @@ Common issues and solutions for the MADFAM development environment.
 ## Startup Issues
 
 ### Error: "PostgreSQL is not available"
+
 **Solution:**
+
 ```bash
 # macOS
 brew install postgresql@15
@@ -29,7 +32,9 @@ createdb madfam_dev
 ```
 
 ### Error: "Redis is not available"
+
 **Solution:**
+
 ```bash
 # macOS
 brew install redis
@@ -41,7 +46,9 @@ sudo systemctl start redis
 ```
 
 ### Error: "Node.js 18.0.0 or higher is required"
+
 **Solution:**
+
 ```bash
 # Install Node.js 18+ using nvm
 nvm install 18
@@ -53,7 +60,9 @@ nvm use 18
 ## Port Conflicts
 
 ### Error: "Port 4000 is in use"
+
 The orchestrator should handle this automatically, but if needed:
+
 ```bash
 # Find process using port
 lsof -ti:4000
@@ -63,6 +72,7 @@ kill -9 $(lsof -ti:4000)
 ```
 
 ### Error: "Port 3002 is in use"
+
 ```bash
 # Find and kill process
 kill -9 $(lsof -ti:3002)
@@ -71,30 +81,39 @@ kill -9 $(lsof -ti:3002)
 ## Database Issues
 
 ### Error: "Database connection failed"
+
 **Check PostgreSQL is running:**
+
 ```bash
 pg_isready
 ```
 
 **Check DATABASE_URL in .env.local:**
+
 ```
 DATABASE_URL="postgresql://username:password@localhost:5432/madfam_dev"
 ```
 
 ### Error: "Migrations are pending"
+
 **Run migrations:**
+
 ```bash
 npm run db:migrate
 ```
 
 ### Error: "Database does not exist"
+
 **Create database:**
+
 ```bash
 createdb madfam_dev
 ```
 
 ### Error: "Permission denied for schema public"
+
 **Grant permissions:**
+
 ```sql
 psql madfam_dev
 GRANT ALL ON SCHEMA public TO your_username;
@@ -103,19 +122,24 @@ GRANT ALL ON SCHEMA public TO your_username;
 ## Redis Issues
 
 ### Error: "Could not connect to Redis"
+
 **Check Redis is running:**
+
 ```bash
 redis-cli ping
 # Should return "PONG"
 ```
 
 **Check REDIS_URL in .env.local:**
+
 ```
 REDIS_URL="redis://localhost:6379"
 ```
 
 ### Error: "Redis connection timeout"
+
 **Restart Redis:**
+
 ```bash
 # macOS
 brew services restart redis
@@ -127,7 +151,9 @@ sudo systemctl restart redis
 ## Environment Variables
 
 ### Error: "Missing environment variables"
+
 **Create .env.local with required variables:**
+
 ```bash
 # Run setup wizard
 npm run setup
@@ -138,6 +164,7 @@ cp .env.example .env.local
 ```
 
 ### Required Variables
+
 - `DATABASE_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
 - `JWT_SECRET` - Secret for JWT tokens
@@ -146,7 +173,9 @@ cp .env.example .env.local
 ## Performance Issues
 
 ### Slow startup times
+
 **Solutions:**
+
 1. Check disk space: `df -h`
 2. Clear node_modules and reinstall:
    ```bash
@@ -159,12 +188,15 @@ cp .env.example .env.local
    ```
 
 ### High memory usage
+
 **Check for memory leaks:**
+
 ```bash
 npm run health
 ```
 
 **Restart services:**
+
 ```bash
 # Stop all services
 Ctrl+C
@@ -176,7 +208,9 @@ npm run dev
 ## Build Errors
 
 ### Error: "Module not found"
+
 **Solutions:**
+
 ```bash
 # Regenerate Prisma client
 npm run db:generate
@@ -188,7 +222,9 @@ npm install
 ```
 
 ### Error: "TypeScript errors"
+
 **Solutions:**
+
 ```bash
 # Check for type errors
 npm run typecheck
@@ -198,7 +234,9 @@ npm update
 ```
 
 ### Error: "Turbo cache issues"
+
 **Clear Turbo cache:**
+
 ```bash
 rm -rf .turbo
 npm run clean
@@ -207,6 +245,7 @@ npm run clean
 ## Debug Mode
 
 Enable verbose logging to diagnose issues:
+
 ```bash
 DEBUG=1 npm run dev
 ```
@@ -221,6 +260,7 @@ DEBUG=1 npm run dev
 ## Resetting Everything
 
 If all else fails, reset your environment:
+
 ```bash
 # Stop all services
 npm run dev # Then Ctrl+C

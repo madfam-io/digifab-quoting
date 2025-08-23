@@ -46,7 +46,7 @@ export class HealthController {
       // Redis not ready
     }
 
-    const allReady = Object.values(checks).every(check => check === true);
+    const allReady = Object.values(checks).every((check) => check === true);
 
     return {
       status: allReady ? 'ready' : 'not ready',
@@ -60,7 +60,7 @@ export class HealthController {
   @ApiOperation({ summary: 'Detailed health check with cache statistics' })
   async detailed() {
     const redisStats = this.redisService.getStatistics();
-    
+
     const health = {
       status: 'ok',
       timestamp: new Date().toISOString(),

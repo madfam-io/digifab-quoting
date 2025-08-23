@@ -5,7 +5,7 @@ export class RefreshTokenDto {
   @ApiProperty({
     description: 'Valid refresh token obtained from login',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    format: 'jwt'
+    format: 'jwt',
   })
   @IsString()
   @IsJWT()
@@ -15,25 +15,25 @@ export class RefreshTokenDto {
 export class RefreshTokenResponseDto {
   @ApiProperty({
     description: 'New JWT access token',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   accessToken!: string;
 
   @ApiProperty({
     description: 'New refresh token',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   refreshToken!: string;
 
   @ApiProperty({
     description: 'Token type',
-    example: 'Bearer'
+    example: 'Bearer',
   })
   tokenType!: string;
 
   @ApiProperty({
     description: 'Access token expiration time in seconds',
-    example: 3600
+    example: 3600,
   })
   expiresIn!: number;
 }

@@ -84,28 +84,140 @@ async function main() {
   // Create materials
   const materials = [
     // FFF Materials
-    { code: 'PLA-STD', name: 'PLA Standard', process: 'FFF', density: 1.24, costPerUnit: 25, color: 'white' },
-    { code: 'ABS-STD', name: 'ABS', process: 'FFF', density: 1.04, costPerUnit: 30, color: 'white' },
-    { code: 'PETG-STD', name: 'PETG', process: 'FFF', density: 1.27, costPerUnit: 35, color: 'clear' },
-    { code: 'TPU-95A', name: 'TPU 95A', process: 'FFF', density: 1.21, costPerUnit: 45, color: 'black' },
-    { code: 'NYLON-STD', name: 'Nylon', process: 'FFF', density: 1.14, costPerUnit: 50, color: 'white' },
-    
+    {
+      code: 'PLA-STD',
+      name: 'PLA Standard',
+      process: 'FFF',
+      density: 1.24,
+      costPerUnit: 25,
+      color: 'white',
+    },
+    {
+      code: 'ABS-STD',
+      name: 'ABS',
+      process: 'FFF',
+      density: 1.04,
+      costPerUnit: 30,
+      color: 'white',
+    },
+    {
+      code: 'PETG-STD',
+      name: 'PETG',
+      process: 'FFF',
+      density: 1.27,
+      costPerUnit: 35,
+      color: 'clear',
+    },
+    {
+      code: 'TPU-95A',
+      name: 'TPU 95A',
+      process: 'FFF',
+      density: 1.21,
+      costPerUnit: 45,
+      color: 'black',
+    },
+    {
+      code: 'NYLON-STD',
+      name: 'Nylon',
+      process: 'FFF',
+      density: 1.14,
+      costPerUnit: 50,
+      color: 'white',
+    },
+
     // SLA Materials
-    { code: 'RESIN-STD', name: 'Standard Resin', process: 'SLA', density: 1.18, costPerUnit: 80, color: 'grey' },
-    { code: 'RESIN-TOUGH', name: 'Tough Resin', process: 'SLA', density: 1.20, costPerUnit: 120, color: 'grey' },
-    { code: 'RESIN-FLEX', name: 'Flexible Resin', process: 'SLA', density: 1.15, costPerUnit: 150, color: 'black' },
-    
+    {
+      code: 'RESIN-STD',
+      name: 'Standard Resin',
+      process: 'SLA',
+      density: 1.18,
+      costPerUnit: 80,
+      color: 'grey',
+    },
+    {
+      code: 'RESIN-TOUGH',
+      name: 'Tough Resin',
+      process: 'SLA',
+      density: 1.2,
+      costPerUnit: 120,
+      color: 'grey',
+    },
+    {
+      code: 'RESIN-FLEX',
+      name: 'Flexible Resin',
+      process: 'SLA',
+      density: 1.15,
+      costPerUnit: 150,
+      color: 'black',
+    },
+
     // CNC Materials
-    { code: 'AL-6061', name: 'Aluminum 6061', process: 'CNC_3AXIS', density: 2.70, costPerUnit: 50, color: 'silver' },
-    { code: 'STEEL-1018', name: 'Steel 1018', process: 'CNC_3AXIS', density: 7.87, costPerUnit: 40, color: 'silver' },
-    { code: 'SS-304', name: 'Stainless Steel 304', process: 'CNC_3AXIS', density: 8.00, costPerUnit: 60, color: 'silver' },
-    { code: 'POM-STD', name: 'Delrin (POM)', process: 'CNC_3AXIS', density: 1.41, costPerUnit: 35, color: 'white' },
-    { code: 'NYLON-6', name: 'Nylon 6', process: 'CNC_3AXIS', density: 1.14, costPerUnit: 30, color: 'white' },
-    
+    {
+      code: 'AL-6061',
+      name: 'Aluminum 6061',
+      process: 'CNC_3AXIS',
+      density: 2.7,
+      costPerUnit: 50,
+      color: 'silver',
+    },
+    {
+      code: 'STEEL-1018',
+      name: 'Steel 1018',
+      process: 'CNC_3AXIS',
+      density: 7.87,
+      costPerUnit: 40,
+      color: 'silver',
+    },
+    {
+      code: 'SS-304',
+      name: 'Stainless Steel 304',
+      process: 'CNC_3AXIS',
+      density: 8.0,
+      costPerUnit: 60,
+      color: 'silver',
+    },
+    {
+      code: 'POM-STD',
+      name: 'Delrin (POM)',
+      process: 'CNC_3AXIS',
+      density: 1.41,
+      costPerUnit: 35,
+      color: 'white',
+    },
+    {
+      code: 'NYLON-6',
+      name: 'Nylon 6',
+      process: 'CNC_3AXIS',
+      density: 1.14,
+      costPerUnit: 30,
+      color: 'white',
+    },
+
     // Laser Materials
-    { code: 'ACRYLIC-3MM', name: 'Acrylic 3mm', process: 'LASER_2D', density: 1.19, costPerUnit: 15, color: 'clear' },
-    { code: 'PLYWOOD-3MM', name: 'Plywood 3mm', process: 'LASER_2D', density: 0.60, costPerUnit: 10, color: 'natural' },
-    { code: 'MDF-3MM', name: 'MDF 3mm', process: 'LASER_2D', density: 0.75, costPerUnit: 8, color: 'natural' },
+    {
+      code: 'ACRYLIC-3MM',
+      name: 'Acrylic 3mm',
+      process: 'LASER_2D',
+      density: 1.19,
+      costPerUnit: 15,
+      color: 'clear',
+    },
+    {
+      code: 'PLYWOOD-3MM',
+      name: 'Plywood 3mm',
+      process: 'LASER_2D',
+      density: 0.6,
+      costPerUnit: 10,
+      color: 'natural',
+    },
+    {
+      code: 'MDF-3MM',
+      name: 'MDF 3mm',
+      process: 'LASER_2D',
+      density: 0.75,
+      costPerUnit: 8,
+      color: 'natural',
+    },
   ];
 
   for (const material of materials) {
@@ -134,18 +246,54 @@ async function main() {
   // Create machines
   const machines = [
     // FFF Machines
-    { name: 'Prusa MK3S+', model: 'MK3S+', process: 'FFF', buildVolume: { x: 250, y: 210, z: 210 }, hourlyRate: 500 },
-    { name: 'Ultimaker S5', model: 'S5', process: 'FFF', buildVolume: { x: 330, y: 240, z: 300 }, hourlyRate: 600 },
-    
+    {
+      name: 'Prusa MK3S+',
+      model: 'MK3S+',
+      process: 'FFF',
+      buildVolume: { x: 250, y: 210, z: 210 },
+      hourlyRate: 500,
+    },
+    {
+      name: 'Ultimaker S5',
+      model: 'S5',
+      process: 'FFF',
+      buildVolume: { x: 330, y: 240, z: 300 },
+      hourlyRate: 600,
+    },
+
     // SLA Machines
-    { name: 'Form 3', model: 'Form 3', process: 'SLA', buildVolume: { x: 145, y: 145, z: 185 }, hourlyRate: 800 },
-    
+    {
+      name: 'Form 3',
+      model: 'Form 3',
+      process: 'SLA',
+      buildVolume: { x: 145, y: 145, z: 185 },
+      hourlyRate: 800,
+    },
+
     // CNC Machines
-    { name: 'Haas VF-2', model: 'VF-2', process: 'CNC_3AXIS', buildVolume: { x: 762, y: 406, z: 508 }, hourlyRate: 1500 },
-    { name: 'Tormach 1100M', model: '1100M', process: 'CNC_3AXIS', buildVolume: { x: 457, y: 254, z: 406 }, hourlyRate: 1200 },
-    
+    {
+      name: 'Haas VF-2',
+      model: 'VF-2',
+      process: 'CNC_3AXIS',
+      buildVolume: { x: 762, y: 406, z: 508 },
+      hourlyRate: 1500,
+    },
+    {
+      name: 'Tormach 1100M',
+      model: '1100M',
+      process: 'CNC_3AXIS',
+      buildVolume: { x: 457, y: 254, z: 406 },
+      hourlyRate: 1200,
+    },
+
     // Laser Machines
-    { name: 'Epilog Fusion Pro 48', model: 'Fusion Pro 48', process: 'LASER_2D', buildVolume: { x: 1219, y: 914, z: 311 }, hourlyRate: 1000 },
+    {
+      name: 'Epilog Fusion Pro 48',
+      model: 'Fusion Pro 48',
+      process: 'LASER_2D',
+      buildVolume: { x: 1219, y: 914, z: 311 },
+      hourlyRate: 1000,
+    },
   ];
 
   for (const machine of machines) {
@@ -168,65 +316,65 @@ async function main() {
 
   // Create process options
   const processOptions = [
-    { 
-      process: 'FFF', 
+    {
+      process: 'FFF',
       optionsSchema: {
         finish: {
           type: 'select',
           options: ['standard', 'sanded', 'painted'],
           default: 'standard',
-          costs: { standard: 0, sanded: 50, painted: 100 }
+          costs: { standard: 0, sanded: 50, painted: 100 },
         },
         precision: {
           type: 'select',
           options: ['standard', 'high'],
           default: 'standard',
-          costs: { standard: 0, high: 100 }
-        }
+          costs: { standard: 0, high: 100 },
+        },
       },
-      marginFloorPercent: 20
+      marginFloorPercent: 20,
     },
-    { 
-      process: 'SLA', 
+    {
+      process: 'SLA',
       optionsSchema: {
         finish: {
           type: 'select',
           options: ['standard', 'clear_coated'],
           default: 'standard',
-          costs: { standard: 0, clear_coated: 80 }
-        }
+          costs: { standard: 0, clear_coated: 80 },
+        },
       },
-      marginFloorPercent: 25
+      marginFloorPercent: 25,
     },
-    { 
-      process: 'CNC_3AXIS', 
+    {
+      process: 'CNC_3AXIS',
       optionsSchema: {
         finish: {
           type: 'select',
           options: ['as_machined', 'anodized'],
           default: 'as_machined',
-          costs: { as_machined: 0, anodized: 150 }
+          costs: { as_machined: 0, anodized: 150 },
         },
         precision: {
           type: 'select',
           options: ['standard', 'high'],
           default: 'standard',
-          costs: { standard: 0, high: 200 }
-        }
+          costs: { standard: 0, high: 200 },
+        },
       },
-      marginFloorPercent: 30
+      marginFloorPercent: 30,
     },
-    { 
-      process: 'LASER_2D', 
+    {
+      process: 'LASER_2D',
       optionsSchema: {
         finish: {
           type: 'select',
           options: ['standard', 'engraved'],
           default: 'standard',
-          costs: { standard: 0, engraved: 50 }
-        }
+          costs: { standard: 0, engraved: 50 },
+        },
       },
-      marginFloorPercent: 15
+      marginFloorPercent: 15,
     },
   ];
 
@@ -278,7 +426,8 @@ async function main() {
     {
       name: 'CNC Base Pricing',
       process: 'CNC_3AXIS',
-      formula: '(material_volume * material_cost + machine_time * machine_rate) * complexity_factor',
+      formula:
+        '(material_volume * material_cost + machine_time * machine_rate) * complexity_factor',
       parameters: {
         setup_cost: 200,
         min_price: 500,
@@ -313,26 +462,26 @@ async function main() {
 
   // Create margins
   const margins = [
-    { 
-      type: 'default', 
-      marginPercent: 35, 
+    {
+      type: 'default',
+      marginPercent: 35,
       floorPercent: 20,
       targetPercent: 40,
-      maxDiscountPercent: 15
+      maxDiscountPercent: 15,
     },
-    { 
-      type: 'rush', 
-      marginPercent: 50, 
+    {
+      type: 'rush',
+      marginPercent: 50,
       floorPercent: 35,
       targetPercent: 55,
-      maxDiscountPercent: 10
+      maxDiscountPercent: 10,
     },
-    { 
-      type: 'volume', 
-      marginPercent: 25, 
+    {
+      type: 'volume',
+      marginPercent: 25,
       floorPercent: 15,
       targetPercent: 30,
-      maxDiscountPercent: 20
+      maxDiscountPercent: 20,
     },
   ];
 

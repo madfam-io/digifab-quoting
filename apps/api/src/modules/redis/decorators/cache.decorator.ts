@@ -1,8 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { 
-  CacheOptions, 
-  CacheContext
-} from '../interfaces/cache-options.interface';
+import { CacheOptions, CacheContext } from '../interfaces/cache-options.interface';
 
 export const CACHE_KEY_METADATA = 'cache_key_metadata';
 export const CACHE_OPTIONS_METADATA = 'cache_options_metadata';
@@ -14,29 +11,30 @@ export const CACHE_INVALIDATE_METADATA = 'cache_invalidate_metadata';
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
   return (
-    target: Object, 
-    propertyKey: string | symbol, 
-    descriptor: PropertyDescriptor
+    target: Object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
     SetMetadata(CACHE_OPTIONS_METADATA, options || {})(target, propertyKey, descriptor);
-    
+
     const originalMethod = descriptor.value as Function;
-    
+
     if (!originalMethod) return descriptor;
-    
+
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
-      
+
       if (!cacheService) {
         // No cache service available, execute method normally
         return originalMethod.apply(this, args);
       }
 
       // Generate cache key
-      const keyPrefix = options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
+      const keyPrefix =
+        options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
       const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
       const cacheKey = keyGenerator(keyPrefix, ...args);
-      
+
       // Check condition
       if (options?.condition && !options.condition(...args)) {
         return originalMethod.apply(this, args);
@@ -61,25 +59,25 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
   return (
-    target: Object, 
-    propertyKey: string | symbol, 
-    descriptor: PropertyDescriptor
+    target: Object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
     SetMetadata(CACHE_INVALIDATE_METADATA, patterns)(target, propertyKey, descriptor);
-    
+
     const originalMethod = descriptor.value as Function;
-    
+
     if (!originalMethod) return descriptor;
-    
+
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const result = await originalMethod.apply(this, args);
-      
+
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
         // Invalidate cache after successful execution
         await cacheService.invalidate(patterns);
       }
-      
+
       return result;
     } as any;
 
@@ -93,31 +91,29 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
   return (
-    target: Object, 
-    propertyKey: string | symbol, 
-    descriptor: PropertyDescriptor
+    target: Object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value as Function;
-    
+
     if (!originalMethod) return descriptor;
-    
+
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const result = await originalMethod.apply(this, args);
-      
+
       const cacheService = this.cacheService || this.cache;
       if (cacheService && result !== null && result !== undefined) {
-        const keyPrefix = options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
+        const keyPrefix =
+          options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
         const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
         const cacheKey = keyGenerator(keyPrefix, ...args);
-        
-        await (cacheService as any).redisService.set(
-          cacheKey,
-          result,
-          options?.ttl,
-          { tenantId: this.tenantContext?.getTenantId() }
-        );
+
+        await (cacheService as any).redisService.set(cacheKey, result, options?.ttl, {
+          tenantId: this.tenantContext?.getTenantId(),
+        });
       }
-      
+
       return result;
     } as any;
 
@@ -131,21 +127,21 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
   return (
-    _target: Object, 
-    _propertyKey: string | symbol, 
-    descriptor: PropertyDescriptor
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value as Function;
-    
+
     if (!originalMethod) return descriptor;
-    
+
     descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
         // Evict cache before execution
         await cacheService.invalidate(patterns);
       }
-      
+
       return originalMethod.apply(this, args);
     } as any;
 
@@ -158,13 +154,13 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
  */
 function defaultKeyGenerator(prefix: string, ...args: unknown[]): string {
   const argKey = args
-    .map(arg => {
+    .map((arg) => {
       if (typeof arg === 'object' && arg !== null) {
         return JSON.stringify(arg, Object.keys(arg as object).sort());
       }
       return String(arg);
     })
     .join(':');
-  
+
   return `${prefix}:${argKey}`;
 }

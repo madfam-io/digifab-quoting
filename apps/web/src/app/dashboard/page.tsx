@@ -32,7 +32,9 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {session.user?.name || session.user?.email}</p>
+          <p className="text-gray-600 mt-2">
+            Welcome back, {session.user?.name || session.user?.email}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -86,9 +88,7 @@ export default function DashboardPage() {
             <p>No quotes yet</p>
             <p className="text-sm mt-2">Create your first quote to get started</p>
             <Link href="/quote/new">
-              <Button className="mt-4">
-                Create Quote
-              </Button>
+              <Button className="mt-4">Create Quote</Button>
             </Link>
           </div>
         </div>

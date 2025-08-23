@@ -1,20 +1,5 @@
-import { 
-  Controller, 
-  Get, 
-  Post,
-  Patch,
-  Param, 
-  Query,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantContext } from '../../common/decorators/tenant.decorator';
@@ -57,10 +42,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Order retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async getOrder(
-    @Param('id') id: string,
-    @TenantContext() tenantId: string,
-  ) {
+  async getOrder(@Param('id') id: string, @TenantContext() tenantId: string) {
     return this.ordersService.getOrder(id, tenantId);
   }
 
@@ -91,10 +73,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'Generate invoice for order' })
   @ApiResponse({ status: 201, description: 'Invoice generated successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async generateInvoice(
-    @Param('id') id: string,
-    @TenantContext() tenantId: string,
-  ) {
+  async generateInvoice(@Param('id') id: string, @TenantContext() tenantId: string) {
     return this.ordersService.generateInvoice(id, tenantId);
   }
 }

@@ -144,7 +144,7 @@ describe('PricingEngine', () => {
       const results = engine.calculateBatch(inputs);
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.unitPrice.toNumber()).toBeGreaterThan(0);
       });
 
@@ -208,10 +208,12 @@ describe('PricingEngine', () => {
     });
 
     it('should handle batch async with concurrency', async () => {
-      const inputs = Array(20).fill(null).map((_, i) => ({
-        ...validInput,
-        quantity: i + 1,
-      }));
+      const inputs = Array(20)
+        .fill(null)
+        .map((_, i) => ({
+          ...validInput,
+          quantity: i + 1,
+        }));
 
       const results = await engine.calculateBatchAsync(inputs, 5);
       expect(results).toHaveLength(20);

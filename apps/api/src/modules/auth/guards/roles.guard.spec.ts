@@ -10,13 +10,14 @@ describe('RolesGuard', () => {
   let reflector: Reflector;
   let tenantContext: TenantContextService;
 
-  const mockExecutionContext = (user?: any): ExecutionContext => ({
-    switchToHttp: jest.fn().mockReturnValue({
-      getRequest: jest.fn().mockReturnValue({ user }),
-    }),
-    getHandler: jest.fn(),
-    getClass: jest.fn(),
-  } as any);
+  const mockExecutionContext = (user?: any): ExecutionContext =>
+    ({
+      switchToHttp: jest.fn().mockReturnValue({
+        getRequest: jest.fn().mockReturnValue({ user }),
+      }),
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+    }) as any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -71,7 +72,7 @@ describe('RolesGuard', () => {
     it('should return true when user has required role', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 
@@ -81,7 +82,7 @@ describe('RolesGuard', () => {
     it('should return true when user has higher role (hierarchy)', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.CUSTOMER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.ADMIN] };
       const context = mockExecutionContext(user);
 
@@ -91,7 +92,7 @@ describe('RolesGuard', () => {
     it('should return true when admin requires manager role', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.ADMIN] };
       const context = mockExecutionContext(user);
 
@@ -101,7 +102,7 @@ describe('RolesGuard', () => {
     it('should return true when manager requires operator role', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.OPERATOR]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 
@@ -111,7 +112,7 @@ describe('RolesGuard', () => {
     it('should throw ForbiddenException when user lacks required role', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.ADMIN]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
@@ -122,7 +123,7 @@ describe('RolesGuard', () => {
     it('should throw ForbiddenException when customer requires manager role', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
@@ -132,7 +133,7 @@ describe('RolesGuard', () => {
     it('should use roles from both JWT and tenant context', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
-      
+
       const user = { roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
@@ -145,7 +146,7 @@ describe('RolesGuard', () => {
         USER_ROLES.OPERATOR,
       ]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.OPERATOR] };
       const context = mockExecutionContext(user);
 
@@ -155,7 +156,7 @@ describe('RolesGuard', () => {
     it('should handle user with multiple roles', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.SUPPORT]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
-      
+
       const user = { roles: [USER_ROLES.CUSTOMER, USER_ROLES.SUPPORT] };
       const context = mockExecutionContext(user);
 
@@ -168,7 +169,7 @@ describe('RolesGuard', () => {
         USER_ROLES.MANAGER,
         USER_ROLES.MANAGER,
       ]);
-      
+
       const user = { roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 

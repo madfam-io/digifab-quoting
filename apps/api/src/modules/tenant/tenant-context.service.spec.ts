@@ -51,11 +51,11 @@ describe('TenantContextService', () => {
 
       service.run(context1, () => {
         expect(service.getContext()).toEqual(context1);
-        
+
         service.run(context2, () => {
           expect(service.getContext()).toEqual(context2);
         });
-        
+
         // Context should be restored
         expect(service.getContext()).toEqual(context1);
       });

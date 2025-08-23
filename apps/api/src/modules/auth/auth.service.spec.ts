@@ -155,7 +155,7 @@ describe('AuthService', () => {
         active: mockUser.active,
         lastLogin: undefined,
       };
-      
+
       (jwtService.sign as jest.Mock).mockReturnValueOnce('access-token');
       (jwtService.sign as jest.Mock).mockReturnValueOnce('refresh-token');
       (prismaService.session.create as jest.Mock).mockResolvedValue({});
@@ -165,7 +165,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
       expect(result).toHaveProperty('expiresIn');
-      
+
       expect(prismaService.session.create).toHaveBeenCalled();
       expect(usersService.updateLastLogin).toHaveBeenCalledWith(user.id);
     });
@@ -198,18 +198,14 @@ describe('AuthService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(service.refreshTokens('invalid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshTokens('invalid-token')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when session not found', async () => {
       (jwtService.verify as jest.Mock).mockReturnValue({ sub: mockUser.id });
       (prismaService.session.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.refreshTokens('token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshTokens('token')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when session is expired', async () => {
@@ -223,9 +219,7 @@ describe('AuthService', () => {
       (jwtService.verify as jest.Mock).mockReturnValue({ sub: mockUser.id });
       (prismaService.session.findUnique as jest.Mock).mockResolvedValue(expiredSession);
 
-      await expect(service.refreshTokens('refresh-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshTokens('refresh-token')).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -265,9 +259,7 @@ describe('AuthService', () => {
     it('should throw ConflictException when email already exists', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
     });
 
     it('should create default tenant if not exists', async () => {

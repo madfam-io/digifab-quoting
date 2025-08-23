@@ -20,13 +20,15 @@ export const processTypeSchema = z.enum(['3d_fff', '3d_sla', 'cnc_3axis', 'laser
 
 export const fileTypeSchema = z.enum(['stl', 'step', 'iges', 'dxf', 'dwg', 'pdf']);
 
-export const quoteObjectiveSchema = z.object({
-  cost: z.number().min(0).max(1),
-  lead: z.number().min(0).max(1),
-  green: z.number().min(0).max(1),
-}).refine((obj) => Math.abs(obj.cost + obj.lead + obj.green - 1) < 0.01, {
-  message: 'Objective weights must sum to 1',
-});
+export const quoteObjectiveSchema = z
+  .object({
+    cost: z.number().min(0).max(1),
+    lead: z.number().min(0).max(1),
+    green: z.number().min(0).max(1),
+  })
+  .refine((obj) => Math.abs(obj.cost + obj.lead + obj.green - 1) < 0.01, {
+    message: 'Objective weights must sum to 1',
+  });
 
 export const createQuoteRequestSchema = z.object({
   currency: currencySchema,
@@ -37,16 +39,22 @@ export const createQuoteRequestSchema = z.object({
 export const fileUploadRequestSchema = z.object({
   filename: z.string().min(1).max(255),
   type: fileTypeSchema,
-  size: z.number().int().positive().max(200 * 1024 * 1024), // 200MB
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(200 * 1024 * 1024), // 200MB
 });
 
-export const quoteItemSelectionsSchema = z.object({
-  material: z.string(),
-  finish: z.string().optional(),
-  tolerance: z.string().optional(),
-  layerHeight: z.number().positive().optional(),
-  infill: z.number().min(0).max(100).optional(),
-}).passthrough();
+export const quoteItemSelectionsSchema = z
+  .object({
+    material: z.string(),
+    finish: z.string().optional(),
+    tolerance: z.string().optional(),
+    layerHeight: z.number().positive().optional(),
+    infill: z.number().min(0).max(100).optional(),
+  })
+  .passthrough();
 
 export const addQuoteItemRequestSchema = z.object({
   fileId: uuidSchema,

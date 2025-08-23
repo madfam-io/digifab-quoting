@@ -72,6 +72,7 @@ npm run dev
 ### Environment Setup
 
 1. **Clone and install**:
+
 ```bash
 git clone https://github.com/madfam-io/digifab-quoting.git
 cd digifab-quoting
@@ -79,6 +80,7 @@ npm install
 ```
 
 2. **Configure environment**:
+
 ```bash
 cp .env.example .env
 cp apps/api/.env.example apps/api/.env
@@ -86,6 +88,7 @@ cp apps/web/.env.example apps/web/.env
 ```
 
 3. **Required environment variables**:
+
 ```env
 # Database
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/madfam_quoting
@@ -115,6 +118,7 @@ DEFAULT_LOCALE=es
 ```
 
 4. **Database setup**:
+
 ```bash
 # Start PostgreSQL and Redis
 docker-compose up -d postgres redis
@@ -229,11 +233,13 @@ curl -H "Authorization: Bearer <token>" \
 ### Key Endpoints
 
 #### Authentication
+
 - `POST /auth/login` - User login
 - `POST /auth/refresh` - Refresh access token
 - `POST /auth/logout` - Logout and invalidate tokens
 
 #### Quotes
+
 - `POST /quotes/upload` - Upload files for quoting
 - `POST /quotes` - Create quote from uploaded files
 - `GET /quotes` - List quotes (paginated)
@@ -242,27 +248,32 @@ curl -H "Authorization: Bearer <token>" \
 - `GET /quotes/{id}/pdf` - Download quote PDF
 
 #### Quote Items
+
 - `GET /quotes/{id}/items` - List quote items
 - `PUT /quotes/{id}/items/{itemId}` - Update item selections
 - `POST /quotes/{id}/items/{itemId}/recalculate` - Recalculate pricing
 
 #### Orders
+
 - `GET /orders` - List orders
 - `GET /orders/{id}` - Get order details
 - `PUT /orders/{id}/status` - Update order status
 - `GET /orders/{id}/tracking` - Get tracking info
 
 #### Payment
+
 - `POST /payment/session` - Create Stripe checkout session
 - `POST /payment/webhook` - Stripe webhook handler
 - `GET /payment/history` - Payment history
 
 #### Files
+
 - `POST /files/upload` - Get presigned upload URL
 - `GET /files/{id}/download` - Get presigned download URL
 - `DELETE /files/{id}` - Delete file
 
 #### Admin
+
 - `GET /admin/materials` - List materials
 - `POST /admin/materials` - Create material
 - `PUT /admin/materials/{id}` - Update material
@@ -313,24 +324,28 @@ curl -H "Authorization: Bearer <token>" \
 ### Process-Specific Features
 
 #### 3D Printing (FFF)
+
 - Layer height impact on time
 - Infill percentage calculations
 - Support material estimation
 - Build volume validation
 
 #### 3D Printing (SLA)
+
 - Resin volume with tank minimums
 - Layer exposure time
 - Post-processing (wash, cure)
 - Support structure calculations
 
 #### CNC Machining
+
 - Material removal rate (MRR)
 - Tool wear calculations
 - Tolerance-based pricing
 - Feature complexity factors
 
 #### Laser Cutting
+
 - Cut length and pierce count
 - Material thickness factors
 - Nesting efficiency
@@ -364,6 +379,7 @@ terraform apply tfplan
 ### CI/CD Pipeline
 
 GitHub Actions workflow:
+
 1. Run tests and linting
 2. Build Docker images
 3. Push to Amazon ECR
@@ -386,24 +402,28 @@ GitHub Actions workflow:
 ## 🔒 Security
 
 ### Authentication & Authorization
+
 - JWT with refresh token rotation
 - Role-based access control (Admin, Manager, Operator, Customer)
 - API key authentication for service-to-service
 - Session invalidation on logout
 
 ### Data Protection
+
 - TLS 1.2+ for all connections
 - AES-256 encryption at rest (S3/RDS)
 - KMS key rotation
 - PCI DSS compliance for payments
 
 ### Multi-Tenant Security
+
 - Row-level security in PostgreSQL
 - Tenant context validation
 - Isolated S3 prefixes per tenant
 - Separate encryption keys
 
 ### API Security
+
 - Input validation with Zod schemas
 - SQL injection prevention (Prisma)
 - XSS protection
@@ -414,6 +434,7 @@ GitHub Actions workflow:
 ## 📊 Monitoring & Observability
 
 ### Health Checks
+
 ```bash
 GET /health
 GET /health/live
@@ -421,6 +442,7 @@ GET /health/ready
 ```
 
 ### Metrics
+
 - API latency (p50, p95, p99)
 - Error rates by endpoint
 - Queue depth and processing time
@@ -428,6 +450,7 @@ GET /health/ready
 - Cache hit rates
 
 ### Logging
+
 - Structured JSON logs
 - Correlation IDs
 - Request/response logging
@@ -435,6 +458,7 @@ GET /health/ready
 - Audit trail for admin actions
 
 ### Alerts
+
 - API error rate > 1%
 - Response time > 1s (p95)
 - Queue depth > 1000
@@ -477,6 +501,7 @@ chore: Update dependencies
 ### Common Issues
 
 **Database connection errors**
+
 ```bash
 # Check PostgreSQL is running
 docker ps | grep postgres
@@ -486,6 +511,7 @@ psql $DATABASE_URL
 ```
 
 **Redis connection errors**
+
 ```bash
 # Check Redis is running
 docker ps | grep redis
@@ -495,6 +521,7 @@ redis-cli ping
 ```
 
 **S3 upload failures**
+
 ```bash
 # Check AWS credentials
 aws s3 ls s3://$S3_BUCKET
@@ -504,6 +531,7 @@ aws s3api get-bucket-cors --bucket $S3_BUCKET
 ```
 
 **Build failures**
+
 ```bash
 # Clear cache and reinstall
 npm run clean

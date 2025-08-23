@@ -2,65 +2,65 @@ import { IsEmail, IsString, MinLength, IsOptional, IsUUID, Matches } from 'class
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
     description: 'User email address (must be unique)',
-    format: 'email'
+    format: 'email',
   })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'SecurePass123!',
     description: 'User password (minimum 6 characters)',
     minLength: 6,
-    format: 'password'
+    format: 'password',
   })
   @IsString()
   @MinLength(6)
   password!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'John',
     description: 'User first name',
     minLength: 1,
-    maxLength: 50
+    maxLength: 50,
   })
   @IsString()
   firstName!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Doe',
     description: 'User last name',
     minLength: 1,
-    maxLength: 50
+    maxLength: 50,
   })
   @IsString()
   lastName!: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '+1234567890',
     description: 'Contact phone number (optional)',
-    pattern: '^\+?[1-9]\d{1,14}$'
+    pattern: '^\+?[1-9]\d{1,14}$',
   })
   @IsOptional()
   @IsString()
   @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Phone must be a valid E.164 format' })
   phone?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'ACME Corp',
     description: 'Company or organization name',
     minLength: 1,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   company!: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'Tenant ID for multi-tenant registration (UUID format)',
-    format: 'uuid'
+    format: 'uuid',
   })
   @IsOptional()
   @IsUUID()
@@ -70,18 +70,18 @@ export class RegisterDto {
 export class RegisterResponseDto {
   @ApiProperty({
     description: 'Indicates successful registration',
-    example: true
+    example: true,
   })
   success!: boolean;
 
   @ApiProperty({
     description: 'Registration confirmation message',
-    example: 'User registered successfully'
+    example: 'User registered successfully',
   })
   message!: string;
 
   @ApiProperty({
-    description: 'Created user information'
+    description: 'Created user information',
   })
   user!: {
     id: string;

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsUrl } from 'class-validator';
 
 export class CreatePaymentSessionDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Custom success URL (optional)',
     required: false,
   })
@@ -10,7 +10,7 @@ export class CreatePaymentSessionDto {
   @IsUrl()
   successUrl?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Custom cancel URL (optional)',
     required: false,
   })

@@ -81,7 +81,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       // Mock file stream
       const mockStream = {
@@ -101,7 +103,9 @@ describe('PdfReportGeneratorService', () => {
       expect(result).toHaveProperty('filePath');
       expect(result).toHaveProperty('fileName');
       expect(result.fileName).toMatch(/^quote-quote-123-\d+\.pdf$/);
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('Generating PDF report'));
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('Generating PDF report'),
+      );
       expect(mockDoc.text).toHaveBeenCalledWith('Quote Report', expect.any(Object));
     });
 
@@ -128,7 +132,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -143,7 +149,9 @@ describe('PdfReportGeneratorService', () => {
 
       expect(result.fileName).toMatch(/^order-order-123-\d+\.pdf$/);
       expect(mockDoc.text).toHaveBeenCalledWith('Order Report', expect.any(Object));
-      expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Order Number: O-2024-001'));
+      expect(mockDoc.text).toHaveBeenCalledWith(
+        expect.stringContaining('Order Number: O-2024-001'),
+      );
     });
 
     it('should handle invoice reports', async () => {
@@ -189,7 +197,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -216,9 +226,7 @@ describe('PdfReportGeneratorService', () => {
           { status: 'accepted', _count: 10, _sum: { total: 10000 } },
           { status: 'pending', _count: 5, _sum: { total: 5000 } },
         ],
-        orders: [
-          { status: 'completed', _count: 8, _sum: { totalPaid: 8000 } },
-        ],
+        orders: [{ status: 'completed', _count: 8, _sum: { totalPaid: 8000 } }],
         revenue: [
           { period: '2024-01-01', order_count: 3, revenue: 3000 },
           { period: '2024-01-02', order_count: 5, revenue: 5000 },
@@ -234,7 +242,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -261,7 +271,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -287,7 +299,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -300,8 +314,12 @@ describe('PdfReportGeneratorService', () => {
 
       jest.spyOn(fs, 'createWriteStream').mockReturnValue(mockStream as any);
 
-      await expect(service.generateReport('quote', mockQuoteData, mockOptions)).rejects.toThrow('Stream error');
-      expect(loggerService.error).toHaveBeenCalledWith(expect.stringContaining('Error generating PDF report'));
+      await expect(service.generateReport('quote', mockQuoteData, mockOptions)).rejects.toThrow(
+        'Stream error',
+      );
+      expect(loggerService.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error generating PDF report'),
+      );
     });
 
     it('should format currency correctly', async () => {
@@ -314,7 +332,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -344,7 +364,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -381,7 +403,9 @@ describe('PdfReportGeneratorService', () => {
         page: { height: 800 },
       };
 
-      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(() => mockDoc as any);
+      (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        () => mockDoc as any,
+      );
 
       const mockStream = {
         on: jest.fn((event, callback) => {
@@ -400,7 +424,9 @@ describe('PdfReportGeneratorService', () => {
       await service.generateReport('quote', quoteWithNoItems, { includeItemDetails: true });
 
       // Should complete without errors
-      expect(loggerService.log).toHaveBeenCalledWith(expect.stringContaining('PDF report generated successfully'));
+      expect(loggerService.log).toHaveBeenCalledWith(
+        expect.stringContaining('PDF report generated successfully'),
+      );
     });
   });
 });

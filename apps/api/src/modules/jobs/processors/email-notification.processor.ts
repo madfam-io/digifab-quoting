@@ -1,11 +1,7 @@
 import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
-import { 
-  JobType, 
-  EmailNotificationJobData, 
-  JobResult,
-} from '../interfaces/job.interface';
+import { JobType, EmailNotificationJobData, JobResult } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
@@ -53,7 +49,9 @@ export class EmailNotificationProcessor {
   }
 
   @Process()
-  async handleEmailNotification(job: Job<EmailNotificationJobData>): Promise<JobResult<EmailResult>> {
+  async handleEmailNotification(
+    job: Job<EmailNotificationJobData>,
+  ): Promise<JobResult<EmailResult>> {
     const startTime = Date.now();
     const { type, recipientEmail, recipientName, templateData, attachments, tenantId } = job.data;
 
@@ -377,10 +375,7 @@ export class EmailNotificationProcessor {
     }
   }
 
-  private getEmailSubject(
-    type: EmailNotificationJobData['type'],
-    data: any,
-  ): string {
+  private getEmailSubject(type: EmailNotificationJobData['type'], data: any): string {
     const subjects = {
       'quote-ready': `Your Quote #${data.quoteNumber} is Ready!`,
       'quote-accepted': `Order Confirmed - #${data.orderNumber}`,
@@ -398,7 +393,7 @@ export class EmailNotificationProcessor {
       return [];
     }
 
-    return attachments.map(attachment => ({
+    return attachments.map((attachment) => ({
       filename: attachment.filename,
       path: attachment.path,
       content: attachment.content,

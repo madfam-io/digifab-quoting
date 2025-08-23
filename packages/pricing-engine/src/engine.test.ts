@@ -270,7 +270,9 @@ describe('PricingEngine', () => {
         process: 'invalid_process' as ProcessType,
       };
 
-      expect(() => engine.calculate(invalidInput)).toThrow('No calculator found for process: invalid_process');
+      expect(() => engine.calculate(invalidInput)).toThrow(
+        'No calculator found for process: invalid_process',
+      );
     });
 
     it('should handle calculator errors gracefully', () => {
@@ -305,10 +307,12 @@ describe('PricingEngine', () => {
     });
 
     it('should process batch asynchronously with concurrency control', async () => {
-      const inputs: PricingInput[] = Array(10).fill(null).map((_, i) => ({
-        ...basePricingInput,
-        quantity: i + 1,
-      }));
+      const inputs: PricingInput[] = Array(10)
+        .fill(null)
+        .map((_, i) => ({
+          ...basePricingInput,
+          quantity: i + 1,
+        }));
 
       const startTime = Date.now();
       const results = await engine.calculateBatchAsync(inputs, { concurrency: 3 });
@@ -481,7 +485,8 @@ describe('PricingEngine', () => {
       const rushResult = engine.calculate(rushInput);
       const standardResult = engine.calculate(basePricingInput);
 
-      const rushUpcharge = rushResult.unitPrice.sub(standardResult.unitPrice)
+      const rushUpcharge = rushResult.unitPrice
+        .sub(standardResult.unitPrice)
         .div(standardResult.unitPrice)
         .mul(100);
 
@@ -498,13 +503,13 @@ describe('PricingEngine', () => {
 
       quantities.forEach((qty, index) => {
         const result = engine.calculate({ ...basePricingInput, quantity: qty });
-        
+
         if (qty === 1) {
           expect(result.costBreakdown.discount).toBeUndefined();
         } else {
           expect(result.costBreakdown.discount).toBeDefined();
-          const discountPercent = result.costBreakdown.discount!
-            .div(result.unitPrice.add(result.costBreakdown.discount!))
+          const discountPercent = result.costBreakdown
+            .discount!.div(result.unitPrice.add(result.costBreakdown.discount!))
             .mul(100);
           expect(discountPercent.toNumber()).toBeCloseTo(expectedDiscounts[index], 1);
         }
@@ -514,10 +519,15 @@ describe('PricingEngine', () => {
 
   describe('Cross-Process Pricing', () => {
     it('should price same geometry differently for each process', () => {
-      const processes: ProcessType[] = [ProcessType.FFF, ProcessType.SLA, ProcessType.CNC_3AXIS, ProcessType.LASER_2D];
+      const processes: ProcessType[] = [
+        ProcessType.FFF,
+        ProcessType.SLA,
+        ProcessType.CNC_3AXIS,
+        ProcessType.LASER_2D,
+      ];
       const results: Record<string, number> = {};
 
-      processes.forEach(process => {
+      processes.forEach((process) => {
         try {
           const input: PricingInput = {
             ...basePricingInput,
@@ -525,17 +535,28 @@ describe('PricingEngine', () => {
             material: {
               ...basePricingInput.material,
               process,
-              name: process === ProcessType.FFF ? 'PLA' : 
-                    process === ProcessType.SLA ? 'Standard Resin' :
-                    process === ProcessType.CNC_3AXIS ? 'Aluminum 6061' : 'Mild Steel',
+              name:
+                process === ProcessType.FFF
+                  ? 'PLA'
+                  : process === ProcessType.SLA
+                    ? 'Standard Resin'
+                    : process === ProcessType.CNC_3AXIS
+                      ? 'Aluminum 6061'
+                      : 'Mild Steel',
             },
             machine: {
               ...basePricingInput.machine,
               process,
-              model: process === ProcessType.FFF ? 'Prusa MK3S' :
-                     process === ProcessType.SLA ? 'Form 3' :
-                     process === ProcessType.CNC_3AXIS ? 'Haas VF-2' : 'Trumpf Laser',
-              hourlyRate: process === ProcessType.CNC_3AXIS || process === ProcessType.LASER_2D ? 75 : 25,
+              model:
+                process === ProcessType.FFF
+                  ? 'Prusa MK3S'
+                  : process === ProcessType.SLA
+                    ? 'Form 3'
+                    : process === ProcessType.CNC_3AXIS
+                      ? 'Haas VF-2'
+                      : 'Trumpf Laser',
+              hourlyRate:
+                process === ProcessType.CNC_3AXIS || process === ProcessType.LASER_2D ? 75 : 25,
             },
           };
 
@@ -571,9 +592,7 @@ describe('PricingEngine', () => {
         .plus(result.costBreakdown.labor)
         .plus(result.costBreakdown.overhead);
 
-      const marginPercent = result.costBreakdown.margin
-        .div(result.unitPrice)
-        .mul(100);
+      const marginPercent = result.costBreakdown.margin.div(result.unitPrice).mul(100);
 
       expect(marginPercent.toNumber()).toBeGreaterThanOrEqual(30);
     });

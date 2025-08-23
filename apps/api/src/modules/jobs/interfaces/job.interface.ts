@@ -135,10 +135,10 @@ export interface QueueMetrics {
   avgProcessingTime: number;
 }
 
-export type JobData = 
-  | FileAnalysisJobData 
-  | QuoteCalculationJobData 
-  | EmailNotificationJobData 
+export type JobData =
+  | FileAnalysisJobData
+  | QuoteCalculationJobData
+  | EmailNotificationJobData
   | ReportGenerationJobData;
 
 export type TypedJob<T extends JobData> = Job<T>;

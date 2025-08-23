@@ -80,10 +80,10 @@ describe('ReportDataLoaderService', () => {
           quoteItems: expect.any(Object),
         }),
       });
-      expect(loggerService.log).toHaveBeenCalledWith(
-        'Loading data for quote report',
-        { entityId: 'quote-123', tenantId },
-      );
+      expect(loggerService.log).toHaveBeenCalledWith('Loading data for quote report', {
+        entityId: 'quote-123',
+        tenantId,
+      });
     });
 
     it('should load order data', async () => {
@@ -157,10 +157,23 @@ describe('ReportDataLoaderService', () => {
         { period: '2024-01-01', order_count: 3, revenue: 3000, avg_order_value: 1000 },
       ];
       const mockMaterials = [
-        { material_name: 'PLA', material_code: 'PLA', usage_count: 5, total_quantity: 50, total_revenue: 5000 },
+        {
+          material_name: 'PLA',
+          material_code: 'PLA',
+          usage_count: 5,
+          total_quantity: 50,
+          total_revenue: 5000,
+        },
       ];
       const mockProcesses = [
-        { process_name: '3D Printing', process_code: '3D', category: 'additive', usage_count: 5, total_quantity: 50, total_revenue: 5000 },
+        {
+          process_name: '3D Printing',
+          process_code: '3D',
+          category: 'additive',
+          usage_count: 5,
+          total_quantity: 50,
+          total_revenue: 5000,
+        },
       ];
 
       prismaService.quote.groupBy.mockResolvedValue(mockQuoteStats as any);
@@ -173,11 +186,13 @@ describe('ReportDataLoaderService', () => {
         _avg: { total: 1000 },
         _sum: { total: 10000 },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([{
-        total_quotes: 10,
-        converted_quotes: 5,
-        avg_hours_to_convert: 24,
-      }]);
+      prismaService.$queryRaw.mockResolvedValueOnce([
+        {
+          total_quotes: 10,
+          converted_quotes: 5,
+          avg_hours_to_convert: 24,
+        },
+      ]);
       prismaService.quote.findMany.mockResolvedValue([
         { customerId: 'customer-1' },
         { customerId: 'customer-2' },
@@ -203,29 +218,33 @@ describe('ReportDataLoaderService', () => {
     });
 
     it('should throw error for unknown report type', async () => {
-      await expect(service.loadReportData('unknown' as any, 'id', tenantId))
-        .rejects.toThrow('Unknown report type: unknown');
+      await expect(service.loadReportData('unknown' as any, 'id', tenantId)).rejects.toThrow(
+        'Unknown report type: unknown',
+      );
     });
 
     it('should throw error when quote not found', async () => {
       prismaService.quote.findUnique.mockResolvedValue(null);
 
-      await expect(service.loadReportData('quote', 'quote-123', tenantId))
-        .rejects.toThrow('Quote quote-123 not found');
+      await expect(service.loadReportData('quote', 'quote-123', tenantId)).rejects.toThrow(
+        'Quote quote-123 not found',
+      );
     });
 
     it('should throw error when order not found', async () => {
       prismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.loadReportData('order', 'order-123', tenantId))
-        .rejects.toThrow('Order order-123 not found');
+      await expect(service.loadReportData('order', 'order-123', tenantId)).rejects.toThrow(
+        'Order order-123 not found',
+      );
     });
 
     it('should throw error when invoice not found', async () => {
       prismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.loadReportData('invoice', 'inv-123', tenantId))
-        .rejects.toThrow('Invoice inv-123 not found');
+      await expect(service.loadReportData('invoice', 'inv-123', tenantId)).rejects.toThrow(
+        'Invoice inv-123 not found',
+      );
     });
   });
 
@@ -249,11 +268,13 @@ describe('ReportDataLoaderService', () => {
         _avg: { total: 1000 },
         _sum: { total: 20000 },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([{
-        total_quotes: 20,
-        converted_quotes: 10,
-        avg_hours_to_convert: 48.5,
-      }]);
+      prismaService.$queryRaw.mockResolvedValueOnce([
+        {
+          total_quotes: 20,
+          converted_quotes: 10,
+          avg_hours_to_convert: 48.5,
+        },
+      ]);
       prismaService.quote.findMany.mockResolvedValue([]);
 
       const result = await service.loadReportData('analytics', criteriaJson, tenantId);
@@ -277,11 +298,13 @@ describe('ReportDataLoaderService', () => {
         _avg: { total: null },
         _sum: { total: null },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([{
-        total_quotes: 0,
-        converted_quotes: 0,
-        avg_hours_to_convert: null,
-      }]);
+      prismaService.$queryRaw.mockResolvedValueOnce([
+        {
+          total_quotes: 0,
+          converted_quotes: 0,
+          avg_hours_to_convert: null,
+        },
+      ]);
       prismaService.quote.findMany.mockResolvedValue([]);
 
       const result = await service.loadReportData('analytics', criteriaJson, tenantId);
@@ -305,11 +328,13 @@ describe('ReportDataLoaderService', () => {
         _avg: { total: null },
         _sum: { total: null },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([{
-        total_quotes: 0,
-        converted_quotes: 0,
-        avg_hours_to_convert: null,
-      }]);
+      prismaService.$queryRaw.mockResolvedValueOnce([
+        {
+          total_quotes: 0,
+          converted_quotes: 0,
+          avg_hours_to_convert: null,
+        },
+      ]);
       prismaService.quote.findMany.mockResolvedValue([
         { customerId: 'customer-1' },
         { customerId: 'customer-2' },
@@ -353,16 +378,16 @@ describe('ReportDataLoaderService', () => {
     const tenantId = 'tenant-123';
 
     it('should handle invalid JSON in analytics criteria', async () => {
-      await expect(service.loadReportData('analytics', 'invalid-json', tenantId))
-        .rejects.toThrow();
+      await expect(service.loadReportData('analytics', 'invalid-json', tenantId)).rejects.toThrow();
     });
 
     it('should handle database errors gracefully', async () => {
       const dbError = new Error('Database connection failed');
       prismaService.quote.findUnique.mockRejectedValue(dbError);
 
-      await expect(service.loadReportData('quote', 'quote-123', tenantId))
-        .rejects.toThrow('Database connection failed');
+      await expect(service.loadReportData('quote', 'quote-123', tenantId)).rejects.toThrow(
+        'Database connection failed',
+      );
     });
 
     it('should log errors for analytics data loading', async () => {
@@ -372,8 +397,9 @@ describe('ReportDataLoaderService', () => {
       const error = new Error('Query failed');
       prismaService.quote.groupBy.mockRejectedValue(error);
 
-      await expect(service.loadReportData('analytics', criteriaJson, tenantId))
-        .rejects.toThrow('Query failed');
+      await expect(service.loadReportData('analytics', criteriaJson, tenantId)).rejects.toThrow(
+        'Query failed',
+      );
     });
   });
 });

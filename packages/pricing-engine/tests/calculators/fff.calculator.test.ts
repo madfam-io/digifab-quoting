@@ -50,12 +50,12 @@ describe('FFFPricingCalculator', () => {
   describe('calculateProcessingTime', () => {
     it('should calculate standard print time', () => {
       const time = calculator.calculateProcessingTime();
-      
+
       expect(time.setupMinutes).toBe(15);
       expect(time.processingMinutes).toBeGreaterThan(0);
       expect(time.postProcessingMinutes).toBeGreaterThan(0);
       expect(time.totalMinutes).toBe(
-        time.setupMinutes + time.processingMinutes + time.postProcessingMinutes
+        time.setupMinutes + time.processingMinutes + time.postProcessingMinutes,
       );
     });
 
@@ -80,7 +80,7 @@ describe('FFFPricingCalculator', () => {
       const withSupportTime = withSupportCalc.calculateProcessingTime();
 
       expect(withSupportTime.postProcessingMinutes).toBeGreaterThan(
-        noSupportTime.postProcessingMinutes
+        noSupportTime.postProcessingMinutes,
       );
     });
   });
@@ -88,7 +88,7 @@ describe('FFFPricingCalculator', () => {
   describe('calculateMaterialUsage', () => {
     it('should calculate material usage with infill', () => {
       const usage = calculator.calculateMaterialUsage();
-      
+
       const expectedNetVolume = 10 * 0.35; // 35% infill
       expect(usage.netVolumeCm3).toBeCloseTo(expectedNetVolume, 2);
       expect(usage.grossVolumeCm3).toBeGreaterThan(usage.netVolumeCm3);
@@ -99,7 +99,7 @@ describe('FFFPricingCalculator', () => {
       input.geometry.overhangArea = 20;
       const calc = new FFFPricingCalculator(input);
       const usage = calc.calculateMaterialUsage();
-      
+
       expect(usage.supportVolumeCm3).toBeGreaterThan(0);
     });
 
@@ -141,7 +141,7 @@ describe('FFFPricingCalculator', () => {
 
     it('should calculate sustainability metrics', () => {
       const result = calculator.calculate();
-      
+
       expect(result.sustainability).toBeDefined();
       expect(result.sustainability.co2Kg).toBeGreaterThan(0);
       expect(result.sustainability.energyKwh).toBeGreaterThan(0);
@@ -158,9 +158,7 @@ describe('FFFPricingCalculator', () => {
       const bulkCalc = new FFFPricingCalculator(input);
       const bulkResult = bulkCalc.calculate();
 
-      expect(bulkResult.unitPrice.toNumber()).toBeLessThan(
-        singleResult.unitPrice.toNumber()
-      );
+      expect(bulkResult.unitPrice.toNumber()).toBeLessThan(singleResult.unitPrice.toNumber());
     });
 
     it('should generate warnings for edge cases', () => {
@@ -176,17 +174,17 @@ describe('FFFPricingCalculator', () => {
       const fineCalc = new FFFPricingCalculator(input);
       const fineResult = fineCalc.calculate();
       expect(fineResult.warnings).toContain(
-        'Very fine layer height will significantly increase print time'
+        'Very fine layer height will significantly increase print time',
       );
     });
 
     it('should enforce minimum order value', () => {
       input.geometry.volumeCm3 = 0.1; // Very small part
       input.tenantConfig.minOrderValue = new Decimal(50);
-      
+
       const calc = new FFFPricingCalculator(input);
       const result = calc.calculate();
-      
+
       expect(result.totalPrice.toNumber()).toBeGreaterThanOrEqual(50);
     });
   });
@@ -201,20 +199,20 @@ describe('FFFPricingCalculator', () => {
     it('should handle missing optional selections', () => {
       delete input.selections.infill;
       delete input.selections.layerHeight;
-      
+
       const calc = new FFFPricingCalculator(input);
       const result = calc.calculate();
-      
+
       expect(result.unitPrice.toNumber()).toBeGreaterThan(0);
     });
 
     it('should handle very large volumes', () => {
       input.geometry.volumeCm3 = 10000;
       input.geometry.bboxMm = { x: 500, y: 500, z: 500 };
-      
+
       const calc = new FFFPricingCalculator(input);
       const result = calc.calculate();
-      
+
       expect(result.unitPrice.toNumber()).toBeGreaterThan(0);
       expect(result.warnings.length).toBeGreaterThan(0);
     });

@@ -41,7 +41,7 @@ export class PaymentService {
     }
 
     // Calculate line items for Stripe
-    const lineItems = quote.quoteItems.map(item => ({
+    const lineItems = quote.quoteItems.map((item) => ({
       name: item.part.name,
       description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
       amount: Math.round(item.unitPrice * 100), // Convert to cents
@@ -86,17 +86,23 @@ export class PaymentService {
 
     switch (event.type) {
       case 'checkout.session.completed':
-        await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, tenantId);
+        await this.handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session,
+          tenantId,
+        );
         break;
-      
+
       case 'payment_intent.succeeded':
-        await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent, tenantId);
+        await this.handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent,
+          tenantId,
+        );
         break;
-      
+
       case 'payment_intent.payment_failed':
         await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent, tenantId);
         break;
-      
+
       default:
         this.logger.log(`Unhandled event type: ${event.type}`);
     }
@@ -115,19 +121,18 @@ export class PaymentService {
 
     // Create order from quote directly using Prisma
     // This avoids circular dependency with OrdersService
-    const order = await this.createOrderFromQuote(
-      paymentIntent.quoteId,
-      tenantId,
-      {
-        stripeSessionId: session.id,
-        stripePaymentIntentId: session.payment_intent as string,
-      }
-    );
+    const order = await this.createOrderFromQuote(paymentIntent.quoteId, tenantId, {
+      stripeSessionId: session.id,
+      stripePaymentIntentId: session.payment_intent as string,
+    });
 
     this.logger.log(`Order ${order.id} created from quote ${paymentIntent.quoteId}`);
   }
 
-  private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent, tenantId: string) {
+  private async handlePaymentIntentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+    tenantId: string,
+  ) {
     await this.prisma.paymentIntent.updateMany({
       where: {
         stripePaymentIntentId: paymentIntent.id,
@@ -225,11 +230,13 @@ export class PaymentService {
     }
 
     const paymentIntent = paymentIntents[0];
-    
+
     // Refresh status from Stripe if pending
     if (paymentIntent.status === PaymentStatus.PENDING && paymentIntent.stripePaymentIntentId) {
-      const stripeIntent = await this.stripe.retrievePaymentIntent(paymentIntent.stripePaymentIntentId);
-      
+      const stripeIntent = await this.stripe.retrievePaymentIntent(
+        paymentIntent.stripePaymentIntentId,
+      );
+
       if (stripeIntent.status === 'succeeded') {
         await this.handlePaymentIntentSucceeded(stripeIntent, tenantId);
       }
@@ -244,12 +251,12 @@ export class PaymentService {
   }
 
   private async createOrderFromQuote(
-    quoteId: string, 
+    quoteId: string,
     tenantId: string,
     paymentInfo?: {
       stripeSessionId?: string;
       stripePaymentIntentId?: string;
-    }
+    },
   ) {
     // Basic order creation logic - simplified version
     const quote = await this.prisma.quote.findFirst({

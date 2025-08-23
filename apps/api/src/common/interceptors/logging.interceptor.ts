@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
@@ -20,7 +14,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
-    
+
     // Try to get context, but don't fail if it's not available
     let tenantContext: any;
     try {
@@ -36,19 +30,16 @@ export class LoggingInterceptor implements NestInterceptor {
     const now = Date.now();
 
     // Log request
-    this.logger.log(
-      `${method} ${url} - Request`,
-      {
-        tenantId: tenantContext?.tenantId,
-        userId: tenantContext?.userId,
-        requestId: tenantContext?.requestId,
-        ip,
-        userAgent,
-        body: this.sanitizeBody(body),
-        query,
-        params,
-      },
-    );
+    this.logger.log(`${method} ${url} - Request`, {
+      tenantId: tenantContext?.tenantId,
+      userId: tenantContext?.userId,
+      requestId: tenantContext?.requestId,
+      ip,
+      userAgent,
+      body: this.sanitizeBody(body),
+      query,
+      params,
+    });
 
     return next.handle().pipe(
       tap({
@@ -57,32 +48,26 @@ export class LoggingInterceptor implements NestInterceptor {
           const { statusCode } = response;
 
           // Log successful response
-          this.logger.log(
-            `${method} ${url} - ${statusCode} - ${responseTime}ms`,
-            {
-              tenantId: tenantContext?.tenantId,
-              userId: tenantContext?.userId,
-              requestId: tenantContext?.requestId,
-              responseTime,
-              responseSize: data ? JSON.stringify(data).length : 0,
-            },
-          );
+          this.logger.log(`${method} ${url} - ${statusCode} - ${responseTime}ms`, {
+            tenantId: tenantContext?.tenantId,
+            userId: tenantContext?.userId,
+            requestId: tenantContext?.requestId,
+            responseTime,
+            responseSize: data ? JSON.stringify(data).length : 0,
+          });
         },
         error: (error) => {
           const responseTime = Date.now() - now;
-          
+
           // Error logging is handled by AllExceptionsFilter
           // This is just for tracking response time
-          this.logger.error(
-            `${method} ${url} - ${error.status || 500} - ${responseTime}ms`,
-            {
-              tenantId: tenantContext?.tenantId,
-              userId: tenantContext?.userId,
-              requestId: tenantContext?.requestId,
-              responseTime,
-              error: error.message,
-            },
-          );
+          this.logger.error(`${method} ${url} - ${error.status || 500} - ${responseTime}ms`, {
+            tenantId: tenantContext?.tenantId,
+            userId: tenantContext?.userId,
+            requestId: tenantContext?.requestId,
+            responseTime,
+            error: error.message,
+          });
         },
       }),
     );

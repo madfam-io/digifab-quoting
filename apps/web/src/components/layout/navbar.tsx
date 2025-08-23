@@ -24,7 +24,7 @@ export function Navbar() {
             <Link href="/" className="text-xl font-bold">
               MADFAM Quoting
             </Link>
-            
+
             {session && (
               <div className="hidden md:flex items-center gap-6">
                 <Link

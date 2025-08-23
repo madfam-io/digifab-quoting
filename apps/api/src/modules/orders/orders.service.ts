@@ -25,12 +25,12 @@ export class OrdersService {
   ) {}
 
   async createOrderFromQuote(
-    quoteId: string, 
+    quoteId: string,
     tenantId: string,
     paymentInfo?: {
       stripeSessionId?: string;
       stripePaymentIntentId?: string;
-    }
+    },
   ) {
     const quote = await this.prisma.quote.findFirst({
       where: { id: quoteId, tenantId },
@@ -81,7 +81,7 @@ export class OrdersService {
           currency: quote.currency,
           tenantId,
           orderItems: {
-            create: quote.quoteItems.map(item => ({
+            create: quote.quoteItems.map((item) => ({
               partId: item.partId,
               quantity: item.quantity,
               process: item.process,
@@ -141,7 +141,7 @@ export class OrdersService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
-      data: { 
+      data: {
         status,
         ...(status === OrderStatus.IN_PRODUCTION && { productionStartedAt: new Date() }),
         ...(status === OrderStatus.COMPLETED && { completedAt: new Date() }),
@@ -197,13 +197,16 @@ export class OrdersService {
     return order;
   }
 
-  async listOrders(tenantId: string, filters?: {
-    customerId?: string;
-    status?: OrderStatus;
-    paymentStatus?: PaymentStatus;
-    page?: number;
-    limit?: number;
-  }) {
+  async listOrders(
+    tenantId: string,
+    filters?: {
+      customerId?: string;
+      status?: OrderStatus;
+      paymentStatus?: PaymentStatus;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     const page = filters?.page || 1;
     const limit = filters?.limit || 20;
     const skip = (page - 1) * limit;
@@ -273,7 +276,7 @@ export class OrdersService {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         tenantId,
         lineItems: {
-          create: order.orderItems.map(item => ({
+          create: order.orderItems.map((item) => ({
             description: `${item.part.name} - ${item.process} - ${item.material}`,
             quantity: item.quantity,
             unitPrice: item.unitPrice,

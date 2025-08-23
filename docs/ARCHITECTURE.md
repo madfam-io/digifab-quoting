@@ -10,29 +10,29 @@ graph TB
         WEB[Next.js Web App]
         ADMIN[Admin Dashboard]
     end
-    
+
     subgraph "API Gateway"
         NGINX[Nginx/ALB]
     end
-    
+
     subgraph "Backend Services"
         API[NestJS API]
         WORKER[Python Worker]
         QUEUE[SQS Queue]
     end
-    
+
     subgraph "Data Layer"
         PG[(PostgreSQL)]
         REDIS[(Redis)]
         S3[S3 Storage]
     end
-    
+
     subgraph "External Services"
         STRIPE[Stripe]
         EMAIL[SES]
         MONITORING[CloudWatch]
     end
-    
+
     WEB --> NGINX
     ADMIN --> NGINX
     NGINX --> API
@@ -51,23 +51,27 @@ graph TB
 ## Architecture Principles
 
 ### 1. Multi-Tenant Isolation
+
 - Row-level security in PostgreSQL
 - Tenant context propagated through all layers
 - Separate S3 prefixes per tenant
 - Isolated encryption keys via AWS KMS
 
 ### 2. Microservices Design
+
 - API: Business logic and orchestration
 - Worker: CPU-intensive geometry analysis
 - Frontend: Customer-facing UI
 - Admin: Internal management tools
 
 ### 3. Event-Driven Processing
+
 - Asynchronous file processing via SQS
 - Real-time updates via WebSockets (future)
 - Event sourcing for audit trail
 
 ### 4. Scalability First
+
 - Horizontal scaling via ECS Fargate
 - Database read replicas
 - CDN for static assets
@@ -95,6 +99,7 @@ apps/web/
 ```
 
 **Key Features:**
+
 - Server-side rendering for SEO
 - Incremental static regeneration
 - Optimistic UI updates
@@ -121,6 +126,7 @@ apps/api/src/
 ```
 
 **Design Patterns:**
+
 - Repository pattern for data access
 - Command/Query separation
 - Dependency injection
@@ -144,6 +150,7 @@ apps/worker/
 ```
 
 **Processing Pipeline:**
+
 1. Receive message from SQS
 2. Download file from S3
 3. Parse geometry
@@ -166,6 +173,7 @@ packages/pricing-engine/
 ```
 
 **Calculation Flow:**
+
 1. Material usage calculation
 2. Processing time estimation
 3. Cost component aggregation
@@ -209,6 +217,7 @@ discount_rules
 ### Data Flow
 
 1. **Quote Creation:**
+
    ```
    Client → Upload File → S3
           ↓
@@ -233,6 +242,7 @@ discount_rules
 ### Caching Strategy
 
 **Redis Usage:**
+
 - Session storage (15 min TTL)
 - API response cache (5 min TTL)
 - Rate limiting counters
@@ -240,6 +250,7 @@ discount_rules
 - Feature flags
 
 **Cache Invalidation:**
+
 - Quote changes: Invalidate quote cache
 - Material updates: Invalidate pricing cache
 - Configuration changes: Clear tenant cache
@@ -254,14 +265,14 @@ sequenceDiagram
     participant API
     participant DB
     participant Redis
-    
+
     Client->>API: POST /auth/login
     API->>DB: Validate credentials
     DB-->>API: User data
     API->>API: Generate JWT tokens
     API->>Redis: Store refresh token
     API-->>Client: Access + Refresh tokens
-    
+
     Client->>API: GET /quotes (with token)
     API->>API: Validate JWT
     API->>DB: Fetch quotes
@@ -334,23 +345,23 @@ graph LR
     subgraph "Development"
         DEV[Local Docker]
     end
-    
+
     subgraph "CI/CD"
         GH[GitHub] --> GA[GitHub Actions]
         GA --> ECR[Amazon ECR]
     end
-    
+
     subgraph "Staging"
         ECR --> STAGE[ECS Staging]
         STAGE --> RDS_STAGE[(RDS Staging)]
     end
-    
+
     subgraph "Production"
         ECR --> PROD[ECS Production]
         PROD --> RDS_PROD[(RDS Production)]
         PROD --> BACKUP[Automated Backups]
     end
-    
+
     GA --> STAGE
     GA --> PROD
 ```
@@ -378,18 +389,21 @@ graph LR
 ### Metrics
 
 **Application Metrics:**
+
 - Request rate and latency
 - Error rates by endpoint
 - Queue depth and processing time
 - Database query performance
 
 **Business Metrics:**
+
 - Quotes created per hour
 - Conversion rate (quote to order)
 - Average quote value
 - Processing time by file type
 
 **Infrastructure Metrics:**
+
 - CPU and memory utilization
 - Network throughput
 - Disk I/O
@@ -398,6 +412,7 @@ graph LR
 ### Logging
 
 **Log Structure:**
+
 ```json
 {
   "timestamp": "2024-01-20T10:30:00Z",
@@ -410,12 +425,13 @@ graph LR
   "metadata": {
     "quoteId": "quote_123",
     "itemCount": 3,
-    "totalValue": 1500.00
+    "totalValue": 1500.0
   }
 }
 ```
 
 **Log Aggregation:**
+
 - CloudWatch Logs for storage
 - CloudWatch Insights for analysis
 - Alerts on error patterns
@@ -433,6 +449,7 @@ Client → API → Database
 ```
 
 **Trace Points:**
+
 - HTTP request entry
 - Database queries
 - External API calls
@@ -514,6 +531,7 @@ npm run dev
 ### Deployment Process
 
 1. **Feature Development:**
+
    ```
    feature/* → develop → staging → main
    ```

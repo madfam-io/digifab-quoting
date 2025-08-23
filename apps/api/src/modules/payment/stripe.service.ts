@@ -11,14 +11,14 @@ export class StripeService {
   constructor(private configService: ConfigService) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
-    
+
     if (!secretKey) {
       throw new Error('STRIPE_SECRET_KEY is not configured');
     }
     if (!webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
     }
-    
+
     this.webhookSecret = webhookSecret;
     this.stripe = new Stripe(secretKey, {
       apiVersion: '2023-10-16',
@@ -43,7 +43,7 @@ export class StripeService {
     try {
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: params.lineItems.map(item => ({
+        line_items: params.lineItems.map((item) => ({
           price_data: {
             currency: item.currency,
             product_data: {
@@ -73,7 +73,9 @@ export class StripeService {
       this.logger.log(`Created checkout session ${session.id} for quote ${params.quoteId}`);
       return session;
     } catch (error) {
-      this.logger.error(`Failed to create checkout session: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to create checkout session: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -97,7 +99,9 @@ export class StripeService {
       this.logger.log(`Created payment intent ${paymentIntent.id}`);
       return paymentIntent;
     } catch (error) {
-      this.logger.error(`Failed to create payment intent: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to create payment intent: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -114,13 +118,11 @@ export class StripeService {
 
   constructWebhookEvent(payload: string | Buffer, signature: string): Stripe.Event {
     try {
-      return this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        this.webhookSecret
-      );
+      return this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
     } catch (error) {
-      this.logger.error(`Webhook signature verification failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Webhook signature verification failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -135,7 +137,9 @@ export class StripeService {
       this.logger.log(`Created refund ${refund.id} for payment intent ${paymentIntentId}`);
       return refund;
     } catch (error) {
-      this.logger.error(`Failed to create refund: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to create refund: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }

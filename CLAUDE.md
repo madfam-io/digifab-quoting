@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 MADFAM Quoting MVP is a multi-tenant quoting system for digital fabrication services. The system provides automated quoting for:
+
 - 3D printing (FFF and SLA)
 - CNC machining (3-axis for aluminum, steel, and plastics)
 - 2D laser cutting
@@ -12,6 +13,7 @@ MADFAM Quoting MVP is a multi-tenant quoting system for digital fabrication serv
 ## Commands
 
 ### Development Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -47,6 +49,7 @@ npm run clean
 ```
 
 ### Docker Commands
+
 ```bash
 # Build Docker images
 docker build -t madfam-frontend ./frontend
@@ -59,6 +62,7 @@ docker-compose down
 ```
 
 ### Infrastructure (Terraform)
+
 ```bash
 # Initialize Terraform
 terraform init
@@ -76,6 +80,7 @@ terraform destroy
 ## Architecture
 
 ### Tech Stack
+
 - **Frontend**: Next.js (App Router) with TypeScript, TailwindCSS, shadcn/ui, i18next (ES/EN), React Query
 - **Backend**: NestJS with TypeScript, REST API, OpenAPI docs, Zod validation
 - **Worker**: Python microservice (FastAPI) for geometry/DFM analysis
@@ -86,6 +91,7 @@ terraform destroy
 - **Payments**: Stripe for card payments
 
 ### Project Structure
+
 ```
 /
 ├── apps/               # Application workspaces
@@ -102,12 +108,14 @@ terraform destroy
 ```
 
 ### Multi-Tenant Architecture
+
 - All database tables include `tenant_id` for row-level security
 - Tenant context derived from subdomain or API header
 - Per-tenant S3 prefixes and KMS keys
 - Prisma middleware enforces tenant isolation
 
 ### Key API Endpoints
+
 - `POST /api/v1/quotes/upload` - File upload and presigned URL generation
 - `POST /api/v1/quotes` - Create quote from uploaded files
 - `GET /api/v1/quotes/{id}` - Get quote details
@@ -115,7 +123,9 @@ terraform destroy
 - `GET /api/v1/admin/*` - Admin configuration endpoints (role-protected)
 
 ### Environment Variables
+
 Key environment variables required:
+
 ```
 NODE_ENV
 DATABASE_URL
@@ -134,17 +144,20 @@ FX_SOURCE=openexchangerates
 ```
 
 ### Deployment
+
 - **Branches**: `main` (production), `develop` (staging)
 - **CI/CD**: GitHub Actions → Docker → ECR → ECS Fargate
 - **Environments**: `dev`, `staging`, `prod`
 - PR checks include: lint, unit tests, E2E smoke tests
 
 ### Performance Targets
+
 - p95 API latency < 400ms
 - Auto-quote completion: <60s for 3D/laser, <120s for CNC
 - 99.9% availability SLO
 
 ### Security Considerations
+
 - RBAC with roles: Admin, Manager, Operator, Support, Customer
 - All API endpoints require authentication except public quote viewing
 - Audit logging for all configuration changes and sensitive operations
@@ -152,12 +165,14 @@ FX_SOURCE=openexchangerates
 - Support for NDA acceptance tracking
 
 ### Testing Strategy
+
 - Unit tests for pricing calculations, margin enforcement, FX conversion
 - Integration tests for file upload → DFM → pricing pipeline
 - E2E tests (Playwright) for critical user journeys
 - Performance tests for concurrent quote processing
 
 ### Development Notes
+
 - Use Prisma migrations for database schema changes
 - Feature flags configured in database (e.g., `features.supplier_portal`)
 - Bilingual support (ES/EN) using i18next

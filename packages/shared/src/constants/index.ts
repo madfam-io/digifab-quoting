@@ -22,8 +22,8 @@ export const FILE_SIZE_LIMITS = {
 export const QUOTE_TIMEOUTS = {
   '3d_fff': 60,
   '3d_sla': 60,
-  'cnc_3axis': 120,
-  'laser_2d': 60,
+  cnc_3axis: 120,
+  laser_2d: 60,
 } as const;
 
 export const DEFAULT_QUOTE_VALIDITY_DAYS = 14;
@@ -37,7 +37,7 @@ export const MATERIAL_DENSITIES = {
   // CNC Materials (g/cm³)
   'Al 6061': 2.7,
   'Steel 1018': 7.87,
-  'Acrylic': 1.18,
+  Acrylic: 1.18,
 } as const;
 
 export const CO2E_FACTORS = {
@@ -54,7 +54,7 @@ export const CO2E_FACTORS = {
     'Resin Standard': 6.0,
     'Al 6061': 10.0,
     'Steel 1018': 2.1,
-    'Acrylic': 6.3,
+    Acrylic: 6.3,
   },
   // Logistics (kg CO₂e per kg·km)
   logistics: 0.0002,
@@ -66,18 +66,18 @@ export const ERROR_CODES = {
   TOKEN_EXPIRED: 'AUTH002',
   UNAUTHORIZED: 'AUTH003',
   FORBIDDEN: 'AUTH004',
-  
+
   // Validation
   VALIDATION_ERROR: 'VAL001',
   INVALID_FILE_TYPE: 'VAL002',
   FILE_TOO_LARGE: 'VAL003',
-  
+
   // Business Logic
   QUOTE_EXPIRED: 'BIZ001',
   MARGIN_VIOLATION: 'BIZ002',
   STOCK_UNAVAILABLE: 'BIZ003',
   GEOMETRY_PARSE_ERROR: 'BIZ004',
-  
+
   // System
   INTERNAL_ERROR: 'SYS001',
   SERVICE_UNAVAILABLE: 'SYS002',

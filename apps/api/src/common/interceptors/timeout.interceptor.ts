@@ -18,7 +18,7 @@ export class TimeoutInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       timeout(timeoutDuration),
-      catchError(err => {
+      catchError((err) => {
         if (err instanceof TimeoutError) {
           return throwError(() => new RequestTimeoutException('Request timeout'));
         }

@@ -29,10 +29,12 @@ import { OrdersModule } from './modules/orders/orders.module';
       isGlobal: true,
       load: [configuration],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     TenantModule,
     PrismaModule,
     LoggerModule,
@@ -59,8 +61,6 @@ import { OrdersModule } from './modules/orders/orders.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantContextMiddleware)
-      .forRoutes('*');
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
   }
 }
