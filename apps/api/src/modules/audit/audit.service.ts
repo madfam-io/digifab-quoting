@@ -52,6 +52,7 @@ export class AuditService {
       });
     } catch (error) {
       // Log error but don't throw - audit logging should not break the application
+      // eslint-disable-next-line no-console
       console.error('Failed to create audit log:', error);
     }
   }
