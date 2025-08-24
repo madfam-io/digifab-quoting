@@ -65,7 +65,7 @@ export class SecurityValidator {
   /**
    * Validate and sanitize input against NoSQL injection
    */
-  static validateNoSQLInjection(value: any): any {
+  static validateNoSQLInjection<T>(value: T): T {
     if (typeof value === 'string') {
       for (const pattern of NOSQL_INJECTION_PATTERNS) {
         if (pattern.test(value)) {
@@ -149,7 +149,7 @@ export class SecurityValidator {
   /**
    * Validate and sanitize JSON input
    */
-  static sanitizeJSON(value: any): any {
+  static sanitizeJSON<T = unknown>(value: T): T | Record<string, unknown> | Array<unknown> {
     if (typeof value === 'string') {
       try {
         value = JSON.parse(value);
@@ -166,13 +166,13 @@ export class SecurityValidator {
     return value;
   }
 
-  private static deepSanitizeObject(obj: any): any {
+  private static deepSanitizeObject(obj: unknown): unknown {
     if (Array.isArray(obj)) {
       return obj.map((item) => this.deepSanitizeObject(item));
     }
 
     if (obj !== null && typeof obj === 'object') {
-      const sanitized: any = {};
+      const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         // Validate key
         if (key.startsWith('$') || key.includes('__proto__')) {

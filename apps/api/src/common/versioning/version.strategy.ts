@@ -48,8 +48,10 @@ export const DEPRECATED_VERSIONS = {
   },
 };
 
+import { Request } from 'express';
+
 export function createVersionExtractor() {
-  return (request: any) => {
+  return (request: Request) => {
     // Priority order: header > query param > accept header > default
     
     // 1. Check custom header

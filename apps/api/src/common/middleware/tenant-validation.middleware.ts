@@ -2,7 +2,10 @@ import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/commo
 import { Request, Response, NextFunction } from 'express';
 
 export interface RequestWithTenant extends Request {
-  user?: any;
+  user?: {
+    tenantId?: string;
+    [key: string]: unknown;
+  };
   tenantId?: string;
 }
 

@@ -82,7 +82,11 @@ export class SentryService {
     this.logger.log('Sentry monitoring initialized');
   }
 
-  private sanitizeRequestData(request: any) {
+  private sanitizeRequestData(request: {
+    headers?: Record<string, string>;
+    query_string?: string;
+    data?: unknown;
+  }) {
     // Remove sensitive headers
     if (request.headers) {
       const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
@@ -113,19 +117,22 @@ export class SentryService {
     }
   }
 
-  private sanitizeObject(obj: any, sensitiveFields: string[]) {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+  private sanitizeObject(obj: unknown, sensitiveFields: string[]) {
+    if (typeof obj !== 'object' || obj === null) return;
+    
+    const objRecord = obj as Record<string, unknown>;
+    for (const key in objRecord) {
+      if (Object.prototype.hasOwnProperty.call(objRecord, key)) {
         if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
-          obj[key] = '[Sanitized]';
-        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-          this.sanitizeObject(obj[key], sensitiveFields);
+          objRecord[key] = '[Sanitized]';
+        } else if (typeof objRecord[key] === 'object' && objRecord[key] !== null) {
+          this.sanitizeObject(objRecord[key], sensitiveFields);
         }
       }
     }
   }
 
-  captureException(error: Error, context?: Record<string, any>) {
+  captureException(error: Error, context?: Record<string, unknown>) {
     if (!this.initialized) return;
 
     Sentry.withScope((scope) => {
@@ -138,7 +145,7 @@ export class SentryService {
     });
   }
 
-  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, any>) {
+  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, unknown>) {
     if (!this.initialized) return;
 
     Sentry.withScope((scope) => {
@@ -152,7 +159,7 @@ export class SentryService {
     });
   }
 
-  addBreadcrumb(message: string, category?: string, level?: Sentry.SeverityLevel, data?: any) {
+  addBreadcrumb(message: string, category?: string, level?: Sentry.SeverityLevel, data?: Record<string, unknown>) {
     if (!this.initialized) return;
 
     Sentry.addBreadcrumb({
@@ -180,7 +187,7 @@ export class SentryService {
     Sentry.setTag(key, value);
   }
 
-  setContext(key: string, context: Record<string, any>) {
+  setContext(key: string, context: Record<string, unknown>) {
     if (!this.initialized) return;
     Sentry.setContext(key, context);
   }
@@ -193,50 +200,53 @@ export class SentryService {
       setStatus: (_status: string) => {},
       finish: () => {},
       setTag: (_key: string, _value: string) => {},
-      setData: (_key: string, _value: any) => {},
+      setData: (_key: string, _value: unknown) => {},
     };
   }
 
   // Middleware for automatic request monitoring
   getRequestMiddleware() {
     if (!this.initialized) {
-      return (_req: any, _res: any, next: any) => next();
+      return (_req: unknown, _res: unknown, next: () => void) => next();
     }
 
     // Updated for Sentry v8 - middleware is handled by integration
-    return (_req: any, _res: any, next: any) => next();
+    return (_req: unknown, _res: unknown, next: () => void) => next();
   }
 
   getTracingMiddleware() {
     if (!this.initialized) {
-      return (_req: any, _res: any, next: any) => next();
+      return (_req: unknown, _res: unknown, next: () => void) => next();
     }
 
     // Tracing is now handled automatically in Sentry v8
-    return (_req: any, _res: any, next: any) => next();
+    return (_req: unknown, _res: unknown, next: () => void) => next();
   }
 
   getErrorHandler() {
     if (!this.initialized) {
-      return (error: any, _req: any, _res: any, next: any) => next(error);
+      return (error: unknown, _req: unknown, _res: unknown, next: (error: unknown) => void) => next(error);
     }
 
-    return (error: any, __req: any, __res: any, next: any) => {
+    return (error: unknown, __req: unknown, __res: unknown, next: (error: unknown) => void) => {
       // Manually capture errors for Sentry v8
-      if (error?.statusCode >= 500) {
-        Sentry.captureException(error);
+      if (typeof error === 'object' && error !== null && 'statusCode' in error) {
+        const errorWithStatus = error as { statusCode: number };
+        if (errorWithStatus.statusCode >= 500) {
+          Sentry.captureException(error);
+        }
       }
       next(error);
     };
   }
 
   // Performance monitoring helpers
-  measureAsyncFunction<T extends (...args: any[]) => Promise<any>>(
+  measureAsyncFunction<T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
     name: string,
     operation: string = 'function'
   ): T {
-    return (async (...args: any[]) => {
+    return (async (...args: unknown[]) => {
       if (!this.initialized) {
         return fn(...args);
       }
@@ -257,12 +267,12 @@ export class SentryService {
     }) as T;
   }
 
-  measureFunction<T extends (...args: any[]) => any>(
+  measureFunction<T extends (...args: unknown[]) => unknown>(
     fn: T,
     name: string,
     operation: string = 'function'
   ): T {
-    return ((...args: any[]) => {
+    return ((...args: unknown[]) => {
       if (!this.initialized) {
         return fn(...args);
       }

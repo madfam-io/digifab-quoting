@@ -6,52 +6,94 @@ import { RateLimitExceededException } from '../exceptions/business.exceptions';
 import { RedisService } from '../../modules/redis/redis.service';
 import { LoggerService } from '../logger/logger.service';
 
+// Test interfaces to replace 'any' types
+interface MockUser {
+  id: string;
+}
+
+interface MockRequestWithUser extends Partial<Request> {
+  ip?: string;
+  user?: MockUser;
+  headers?: Record<string, string>;
+  path?: string;
+  get?: jest.Mock;
+  connection?: {
+    remoteAddress?: string;
+  };
+}
+
+interface MockResponse extends Partial<Response> {
+  setHeader?: jest.Mock;
+}
+
+interface MockRedisService {
+  get: jest.Mock;
+  set: jest.Mock;
+  expire: jest.Mock;
+}
+
+interface MockLoggerService {
+  log: jest.Mock;
+  error: jest.Mock;
+  warn: jest.Mock;
+  debug: jest.Mock;
+}
+
+interface MockConfigService {
+  get: jest.Mock;
+}
+
+interface TestableRateLimitMiddleware extends RateLimitMiddleware {
+  getClientIdentifier(req: Request): string;
+  configs: Map<string, unknown>;
+}
+
 describe('RateLimitMiddleware', () => {
   let middleware: RateLimitMiddleware;
-  let mockRedisService: jest.Mocked<RedisService>;
-  let mockLoggerService: jest.Mocked<LoggerService>;
-  let mockConfigService: jest.Mocked<ConfigService>;
+  let mockRedisService: MockRedisService;
+  let mockLoggerService: MockLoggerService;
+  let mockConfigService: MockConfigService;
 
-  const mockRequest = {
+  const mockRequest: MockRequestWithUser = {
     ip: '127.0.0.1',
     user: { id: 'user-123' },
     headers: { 'x-tenant-id': 'tenant-123' },
     path: '/api/test',
     get: jest.fn(),
-  } as unknown as Request;
+  };
 
-  const mockResponse = {
+  const mockResponse: MockResponse = {
     setHeader: jest.fn(),
-  } as unknown as Response;
+  };
 
-  const mockNext = jest.fn() as NextFunction;
+  const mockNext = jest.fn();
 
   beforeEach(async () => {
     mockRedisService = {
       get: jest.fn(),
       set: jest.fn(),
       expire: jest.fn(),
-    } as any;
+    };
 
     mockLoggerService = {
       log: jest.fn(),
       error: jest.fn(),
       warn: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    };
 
     mockConfigService = {
-      get: jest.fn((key: string, defaultValue?: any) => {
-        const config = {
+      get: jest.fn((key: string, defaultValue?: unknown) => {
+        const config: Record<string, number> = {
           RATE_LIMIT_GLOBAL: 1000,
           RATE_LIMIT_API: 100,
           RATE_LIMIT_AUTH: 5,
           RATE_LIMIT_UPLOAD: 10,
           RATE_LIMIT_GUEST: 50,
         };
-        return config[key as keyof typeof config] || defaultValue;
+        return config[key] || defaultValue;
       }),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -144,7 +186,7 @@ describe('RateLimitMiddleware', () => {
 
       const rateLimiter = middleware.createRateLimiter('global');
 
-      await rateLimiter(mockRequest, mockResponse, mockNext);
+      await rateLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Rate-Limit-Limit', expect.any(Number));
       expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Rate-Limit-Remaining', expect.any(Number));
@@ -158,7 +200,7 @@ describe('RateLimitMiddleware', () => {
 
       const rateLimiter = middleware.createRateLimiter('global');
 
-      await expect(rateLimiter(mockRequest, mockResponse, mockNext))
+      await expect(rateLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction))
         .rejects.toThrow(RateLimitExceededException);
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(Number));
@@ -170,7 +212,7 @@ describe('RateLimitMiddleware', () => {
 
       // Test auth limiter (very restrictive)
       const authLimiter = middleware.createRateLimiter('auth');
-      await authLimiter(mockRequest, mockResponse, mockNext);
+      await authLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Rate-Limit-Limit', 5);
     });
@@ -178,7 +220,7 @@ describe('RateLimitMiddleware', () => {
     it('should handle unknown config gracefully', async () => {
       const unknownLimiter = middleware.createRateLimiter('unknown-config');
 
-      await unknownLimiter(mockRequest, mockResponse, mockNext);
+      await unknownLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
 
       expect(mockLoggerService.warn).toHaveBeenCalledWith(
         expect.stringContaining('not found')
@@ -189,43 +231,43 @@ describe('RateLimitMiddleware', () => {
 
   describe('getClientIdentifier', () => {
     it('should use user ID for authenticated requests', () => {
-      const request = {
+      const request: MockRequestWithUser = {
         user: { id: 'user-123' },
         headers: {},
         connection: { remoteAddress: '127.0.0.1' },
-      } as any;
+      };
 
-      const identifier = (middleware as any).getClientIdentifier(request);
+      const identifier = (middleware as TestableRateLimitMiddleware).getClientIdentifier(request as Request);
       expect(identifier).toBe('user:user-123');
     });
 
     it('should use tenant ID when available', () => {
-      const request = {
+      const request: MockRequestWithUser = {
         headers: { 'x-tenant-id': 'tenant-456' },
         connection: { remoteAddress: '127.0.0.1' },
-      } as any;
+      };
 
-      const identifier = (middleware as any).getClientIdentifier(request);
+      const identifier = (middleware as TestableRateLimitMiddleware).getClientIdentifier(request as Request);
       expect(identifier).toBe('tenant:tenant-456');
     });
 
     it('should fallback to IP address', () => {
-      const request = {
+      const request: MockRequestWithUser = {
         headers: {},
         connection: { remoteAddress: '192.168.1.100' },
-      } as any;
+      };
 
-      const identifier = (middleware as any).getClientIdentifier(request);
+      const identifier = (middleware as TestableRateLimitMiddleware).getClientIdentifier(request as Request);
       expect(identifier).toBe('ip:192.168.1.100');
     });
 
     it('should handle forwarded IPs', () => {
-      const request = {
+      const request: MockRequestWithUser = {
         headers: { 'x-forwarded-for': '203.0.113.1, 192.168.1.100' },
         connection: { remoteAddress: '192.168.1.100' },
-      } as any;
+      };
 
-      const identifier = (middleware as any).getClientIdentifier(request);
+      const identifier = (middleware as TestableRateLimitMiddleware).getClientIdentifier(request as Request);
       expect(identifier).toBe('ip:203.0.113.1');
     });
   });
@@ -243,7 +285,7 @@ describe('RateLimitMiddleware', () => {
 
     it('should handle errors in stats collection', async () => {
       // Mock an error in one of the configs
-      jest.spyOn(middleware as any, 'configs').mockImplementation(() => {
+      jest.spyOn(middleware as TestableRateLimitMiddleware, 'configs', 'get').mockImplementation(() => {
         throw new Error('Config error');
       });
 
@@ -259,7 +301,7 @@ describe('RateLimitMiddleware', () => {
       mockRedisService.get.mockResolvedValueOnce('5').mockResolvedValueOnce(Date.now().toString());
       mockRedisService.set.mockResolvedValue(true);
 
-      await middleware.use(mockRequest, mockResponse, mockNext);
+      await middleware.use(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Rate-Limit-Limit', expect.any(Number));
@@ -269,7 +311,7 @@ describe('RateLimitMiddleware', () => {
       mockRedisService.get.mockRejectedValue(new Error('Redis error'));
 
       // Should not throw, but continue with request
-      await middleware.use(mockRequest, mockResponse, mockNext);
+      await middleware.use(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockLoggerService.error).toHaveBeenCalled();
@@ -288,7 +330,7 @@ describe('RateLimitMiddleware', () => {
 
       // Simulate 100 concurrent requests
       for (let i = 0; i < requestCount; i++) {
-        promises.push(rateLimiter(mockRequest, mockResponse, mockNext));
+        promises.push(rateLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction));
       }
 
       const startTime = Date.now();
@@ -309,7 +351,7 @@ describe('RateLimitMiddleware', () => {
 
       // Make many requests
       for (let i = 0; i < 1000; i++) {
-        await rateLimiter(mockRequest, mockResponse, mockNext);
+        await rateLimiter(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
         mockNext.mockClear();
       }
 

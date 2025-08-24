@@ -9,7 +9,7 @@ export interface QuoteCacheKey {
   service: string;
   material: string;
   quantity: number;
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
 }
 
 export interface CachedQuoteResult {
@@ -26,7 +26,7 @@ export interface CachedQuoteResult {
   };
   geometry?: {
     volume: number;
-    boundingBox: any;
+    boundingBox: { x: number; y: number; z: number };
     surface_area?: number;
   };
   timestamp: number;
@@ -98,14 +98,14 @@ export class QuoteCacheService {
   /**
    * Cache pricing configuration
    */
-  async cachePricingConfig(service: string, material: string, config: any): Promise<void> {
+  async cachePricingConfig(service: string, material: string, config: Record<string, unknown>): Promise<void> {
     await this.cacheService.cachePricingRules(service, material, config, this.PRICING_CACHE_TTL);
   }
 
   /**
    * Get cached pricing configuration
    */
-  async getCachedPricingConfig(service: string, material: string): Promise<any | null> {
+  async getCachedPricingConfig(service: string, material: string): Promise<Record<string, unknown> | null> {
     return await this.cacheService.getCachedPricingRules(service, material);
   }
 
@@ -220,7 +220,7 @@ export class QuoteCacheService {
   /**
    * Hash object for consistent key generation
    */
-  private hashObject(obj: any): string {
+  private hashObject(obj: Record<string, unknown>): string {
     const str = JSON.stringify(obj, Object.keys(obj).sort());
     return createHash('md5').update(str).digest('hex').substring(0, 8);
   }

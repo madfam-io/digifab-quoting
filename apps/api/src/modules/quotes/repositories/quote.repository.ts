@@ -8,10 +8,40 @@ import {
   QueryOptions,
 } from '@/common/interfaces/base-repository.interface';
 
+interface Customer {
+  id: string;
+  email: string;
+  name: string;
+  tenantId?: string;
+}
+
+interface QuoteItemWithRelations {
+  id: string;
+  quoteId: string;
+  process: string;
+  material: string;
+  quantity: number;
+  unitPrice?: number;
+  totalPrice?: number;
+  leadDays?: number;
+  files: Array<{
+    id: string;
+    name: string;
+    url: string;
+    analyzedAt?: Date | null;
+  }>;
+  dfmReport?: {
+    id: string;
+    metrics: Record<string, unknown>;
+  } | null;
+}
+
 export type QuoteWithRelations = Quote & {
-  customer?: any;
-  items?: any[];
-  _count?: any;
+  customer?: Customer;
+  items?: QuoteItemWithRelations[];
+  _count?: {
+    items?: number;
+  };
 };
 
 @Injectable()
@@ -39,11 +69,11 @@ export class QuoteRepository extends BaseRepositoryImpl<
   async findMany(
     tenantId: string,
     options?: {
-      where?: any;
-      orderBy?: any;
+      where?: Prisma.QuoteWhereInput;
+      orderBy?: Prisma.QuoteOrderByWithRelationInput;
       skip?: number;
       take?: number;
-      include?: any;
+      include?: Prisma.QuoteInclude;
     },
   ): Promise<QuoteWithRelations[]> {
     return this.prisma.quote.findMany({
@@ -79,14 +109,14 @@ export class QuoteRepository extends BaseRepositoryImpl<
     };
   }
 
-  async count(tenantId: string, where?: any): Promise<number> {
+  async count(tenantId: string, where?: Prisma.QuoteWhereInput): Promise<number> {
     return this.prisma.quote.count({
       where: { tenantId, ...where },
     });
   }
 
   async create(data: Prisma.QuoteCreateInput & { tenantId: string }): Promise<QuoteWithRelations> {
-    return this.prisma.quote.create({ data: data as any });
+    return this.prisma.quote.create({ data });
   }
 
   async update(
@@ -211,7 +241,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     tenantId: string,
     filters?: TFilter,
   ): Prisma.QuoteWhereInput {
-    const baseWhere = super.buildWhereClause(tenantId, filters) as any;
+    const baseWhere = super.buildWhereClause(tenantId, filters) as Prisma.QuoteWhereInput;
     const where: Prisma.QuoteWhereInput = { ...baseWhere };
 
     // Handle special filters
@@ -235,9 +265,14 @@ export class QuoteRepository extends BaseRepositoryImpl<
 
     // Remove processed filters from base where
     const cleanedWhere = { ...where };
-    delete (cleanedWhere as any).dateFrom;
-    delete (cleanedWhere as any).dateTo;
-    delete (cleanedWhere as any).search;
+    type FilteredWhere = Prisma.QuoteWhereInput & {
+      dateFrom?: unknown;
+      dateTo?: unknown;
+      search?: unknown;
+    };
+    delete (cleanedWhere as FilteredWhere).dateFrom;
+    delete (cleanedWhere as FilteredWhere).dateTo;
+    delete (cleanedWhere as FilteredWhere).search;
 
     return cleanedWhere;
   }

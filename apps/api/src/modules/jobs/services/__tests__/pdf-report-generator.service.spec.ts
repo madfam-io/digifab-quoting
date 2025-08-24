@@ -81,6 +81,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -132,6 +133,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -197,6 +199,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -242,6 +245,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -271,6 +275,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -299,6 +304,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -332,6 +338,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -364,6 +371,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 
@@ -403,6 +411,7 @@ describe('PdfReportGeneratorService', () => {
       };
 
       (PDFDocument as jest.MockedClass<typeof PDFDocument>).mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => mockDoc as any,
       );
 

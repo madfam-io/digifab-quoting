@@ -367,7 +367,7 @@ export class JobsService implements OnModuleInit {
       this.logger.error(`Job ${job.id} of type ${type} failed`, toError(err));
 
       // Move to dead letter queue after max attempts
-      if (job.attemptsMade >= (job.opts.attempts || this.DEFAULT_JOB_OPTIONS.attempts!)) {
+      if (job.attemptsMade >= (job.opts.attempts || this.DEFAULT_JOB_OPTIONS.attempts || 3)) {
         this.moveToDeadLetter(job.id as string, 'Max attempts reached');
       }
     });

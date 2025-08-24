@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
 import { OrderStatus, PaymentStatus, QuoteStatus } from '@madfam/shared';
 import { JobType } from '../jobs/interfaces/job.interface';
+import { QuoteItem } from '@prisma/client';
 
 // TODO: Add InvoiceStatus to shared enums
 // enum InvoiceStatus {
@@ -83,7 +84,7 @@ export class OrdersService {
           currency: quote.currency,
           tenantId,
           orderItems: {
-            create: quote.items.map((item: any) => ({
+            create: quote.items.map((item: QuoteItem) => ({
               partId: item.partId,
               quantity: item.quantity,
               process: item.process,

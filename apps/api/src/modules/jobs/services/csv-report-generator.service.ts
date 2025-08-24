@@ -4,6 +4,17 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { ReportGenerationJobData } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
+import {
+  ReportItem,
+  QuoteOrderData,
+  QuoteStatistic,
+  OrderStatistic,
+  RevenueByPeriod,
+  AnalyticsData,
+  InvoiceData,
+} from '../interfaces/report.interface';
+
+// All interfaces moved to report.interface.ts
 
 @Injectable()
 export class CsvReportGeneratorService {
@@ -11,7 +22,7 @@ export class CsvReportGeneratorService {
 
   async generateReport(
     reportType: ReportGenerationJobData['reportType'],
-    data: any,
+    data: QuoteOrderData | InvoiceData | AnalyticsData,
     _options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.csv`;
@@ -42,7 +53,7 @@ export class CsvReportGeneratorService {
     return { filePath, fileName };
   }
 
-  private generateQuoteOrderCsv(data: any, reportType: 'quote' | 'order'): string {
+  private generateQuoteOrderCsv(data: QuoteOrderData, reportType: 'quote' | 'order'): string {
     const lines: string[] = [];
 
     // Header
@@ -77,7 +88,7 @@ export class CsvReportGeneratorService {
       lines.push('ITEMS');
       lines.push('Item #,File Name,Material,Process,Quantity,Unit Price,Total');
 
-      items.forEach((item: any, index: number) => {
+      items.forEach((item: ReportItem, index: number) => {
         const fileName = this.escapeCsvValue(
           item.files?.[0]?.originalName || item.name || 'Unknown',
         );
@@ -104,7 +115,7 @@ export class CsvReportGeneratorService {
     return lines.join('\n');
   }
 
-  private generateInvoiceCsv(invoice: any): string {
+  private generateInvoiceCsv(invoice: InvoiceData): string {
     const lines: string[] = [];
 
     // Header
@@ -151,7 +162,7 @@ export class CsvReportGeneratorService {
       lines.push('LINE ITEMS');
       lines.push('Item #,Description,Quantity,Unit Price,Total');
 
-      invoice.order.quote.items.forEach((item: any, index: number) => {
+      invoice.order.quote.items.forEach((item: ReportItem, index: number) => {
         const description = this.escapeCsvValue(item.name || 'Item');
         const total = item.unitPrice * item.quantity;
         lines.push(`${index + 1},${description},${item.quantity},${item.unitPrice},${total}`);
@@ -170,7 +181,7 @@ export class CsvReportGeneratorService {
     return lines.join('\n');
   }
 
-  private generateAnalyticsCsv(data: any): string {
+  private generateAnalyticsCsv(data: AnalyticsData): string {
     const lines: string[] = [];
 
     // Header
@@ -184,7 +195,7 @@ export class CsvReportGeneratorService {
     if (data.quotes && data.quotes.length > 0) {
       lines.push('QUOTE STATISTICS');
       lines.push('Status,Count,Total Value');
-      data.quotes.forEach((stat: any) => {
+      data.quotes.forEach((stat: QuoteStatistic) => {
         lines.push(`${stat.status},${stat._count},${stat._sum.total || 0}`);
       });
       lines.push('');
@@ -194,7 +205,7 @@ export class CsvReportGeneratorService {
     if (data.orders && data.orders.length > 0) {
       lines.push('ORDER STATISTICS');
       lines.push('Status,Count,Total Paid');
-      data.orders.forEach((stat: any) => {
+      data.orders.forEach((stat: OrderStatistic) => {
         lines.push(`${stat.status},${stat._count},${stat._sum.totalPaid || 0}`);
       });
       lines.push('');
@@ -204,7 +215,7 @@ export class CsvReportGeneratorService {
     if (data.revenue && data.revenue.length > 0) {
       lines.push('REVENUE BY PERIOD');
       lines.push('Date,Order Count,Revenue');
-      data.revenue.forEach((period: any) => {
+      data.revenue.forEach((period: RevenueByPeriod) => {
         lines.push(
           `${new Date(period.period).toLocaleDateString()},${period.order_count},${period.revenue}`,
         );
@@ -214,10 +225,10 @@ export class CsvReportGeneratorService {
     // Summary
     lines.push('');
     lines.push('SUMMARY');
-    const totalQuotes = data.quotes?.reduce((sum: number, q: any) => sum + q._count, 0) || 0;
-    const totalOrders = data.orders?.reduce((sum: number, o: any) => sum + o._count, 0) || 0;
+    const totalQuotes = data.quotes?.reduce((sum: number, q: QuoteStatistic) => sum + q._count, 0) || 0;
+    const totalOrders = data.orders?.reduce((sum: number, o: OrderStatistic) => sum + o._count, 0) || 0;
     const totalRevenue =
-      data.revenue?.reduce((sum: number, r: any) => sum + (r.revenue || 0), 0) || 0;
+      data.revenue?.reduce((sum: number, r: RevenueByPeriod) => sum + (r.revenue || 0), 0) || 0;
 
     lines.push(`Total Quotes,${totalQuotes}`);
     lines.push(`Total Orders,${totalOrders}`);

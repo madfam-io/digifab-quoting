@@ -46,7 +46,7 @@ export class GuestQuoteService {
         // For demo purposes, create mock analysis
         // In production, this would get actual file analysis
         const analysis = {
-          recommendedProcess: '3D_PRINTING' as any,
+          recommendedProcess: '3D_PRINTING' as ProcessType,
           recommendedMaterial: 'PLA',
           volume: 1000,
           boundingBox: { x: 100, y: 100, z: 50 },
@@ -225,7 +225,7 @@ export class GuestQuoteService {
     await this.redis.expire(quotesKey, this.quoteTTL);
   }
 
-  private parseQuote(data: any): GuestQuote {
+  private parseQuote(data: Record<string, unknown>): GuestQuote {
     return {
       ...data,
       createdAt: new Date(data.createdAt),
@@ -245,7 +245,7 @@ export class GuestQuoteService {
 
     // Create authenticated quote
     const quote = await this.quotesService.create(tenantId, userId, {
-      currency: guestQuote.currency as any,
+      currency: guestQuote.currency,
       objective: { cost: 0.5, lead: 0.3, green: 0.2 },
     });
 

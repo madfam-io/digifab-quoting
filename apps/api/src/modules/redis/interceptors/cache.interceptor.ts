@@ -13,7 +13,7 @@ export class CacheInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept<T>(context: ExecutionContext, next: CallHandler<T>): Promise<Observable<T>> {
     const options = this.reflector.get<CacheOptions>(CACHE_OPTIONS_METADATA, context.getHandler());
 
     if (!options) {

@@ -68,8 +68,32 @@ describe('ExcelReportGeneratorService', () => {
       includeItemDetails: true,
     };
 
-    let mockWorkbook: any;
-    let mockWorksheet: any;
+    interface MockCell {
+      value: unknown;
+      font: Record<string, unknown>;
+      alignment: Record<string, unknown>;
+      fill: Record<string, unknown>;
+      border: Record<string, unknown>;
+      numFmt?: string;
+    }
+
+    interface MockWorksheet {
+      mergeCells: jest.Mock;
+      getCell: jest.Mock<MockCell>;
+      columns: Array<{ key?: string; header?: string; width?: number }>;
+      addRow: jest.Mock;
+      getRow: jest.Mock;
+    }
+
+    interface MockWorkbook {
+      addWorksheet: jest.Mock<MockWorksheet>;
+      xlsx: {
+        writeFile: jest.Mock<Promise<void>>;
+      };
+    }
+
+    let mockWorkbook: MockWorkbook;
+    let mockWorksheet: MockWorksheet;
 
     beforeEach(() => {
       mockWorksheet = {
@@ -211,7 +235,7 @@ describe('ExcelReportGeneratorService', () => {
 
       // Verify that item details were added
       const cellSetCalls = mockWorksheet.getRow.mock.results.flatMap(
-        (result: any) => result.value.getCell.mock.calls,
+        (result: { value: { getCell: jest.Mock } }) => result.value.getCell.mock.calls,
       );
 
       expect(cellSetCalls.length).toBeGreaterThan(0);
@@ -233,10 +257,10 @@ describe('ExcelReportGeneratorService', () => {
 
       // Check that currency format was applied
       const cellsWithNumFmt = mockGetCell.mock.results
-        .map((result: any) => result.value)
-        .filter((cell: any) => cell.numFmt);
+        .map((result: { value: MockCell }) => result.value)
+        .filter((cell: MockCell) => cell.numFmt);
 
-      expect(cellsWithNumFmt.some((cell: any) => cell.numFmt === '"$"#,##0.00')).toBe(true);
+      expect(cellsWithNumFmt.some((cell: MockCell) => cell.numFmt === '"$"#,##0.00')).toBe(true);
     });
 
     it('should handle MXN currency format', async () => {
@@ -270,10 +294,10 @@ describe('ExcelReportGeneratorService', () => {
       await service.generateReport('invoice', mxnInvoiceData, mockOptions);
 
       const cellsWithNumFmt = mockGetCell.mock.results
-        .map((result: any) => result.value)
-        .filter((cell: any) => cell.numFmt);
+        .map((result: { value: MockCell }) => result.value)
+        .filter((cell: MockCell) => cell.numFmt);
 
-      expect(cellsWithNumFmt.some((cell: any) => cell.numFmt === '"MXN"#,##0.00')).toBe(true);
+      expect(cellsWithNumFmt.some((cell: MockCell) => cell.numFmt === '"MXN"#,##0.00')).toBe(true);
     });
 
     it('should handle missing data gracefully', async () => {
@@ -302,7 +326,7 @@ describe('ExcelReportGeneratorService', () => {
     });
 
     it('should set column widths', async () => {
-      const mockColumns: any[] = [];
+      const mockColumns: Array<{ key?: string; header?: string; width?: number }> = [];
       mockWorksheet.columns = mockColumns;
 
       await service.generateReport('quote', mockQuoteData, mockOptions);

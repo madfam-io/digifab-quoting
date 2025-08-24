@@ -8,6 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
+import { Request, Response } from 'express';
 
 export const API_VERSION_KEY = 'api_version';
 
@@ -29,9 +30,9 @@ export const ApiVersion = (options: ApiVersionOptions | string) => {
 export class ApiVersionInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
     
     // Get version from multiple sources
     const requestedVersion = this.extractVersion(request);
@@ -76,7 +77,7 @@ export class ApiVersionInterceptor implements NestInterceptor {
               version: currentVersion,
               deprecated: handlerVersion?.deprecated || false,
               timestamp: new Date().toISOString(),
-              ...((data as any)._meta || {}),
+              ...((data as Record<string, unknown>)._meta || {}),
             },
           };
         }
@@ -85,7 +86,7 @@ export class ApiVersionInterceptor implements NestInterceptor {
     );
   }
 
-  private extractVersion(request: any): string | null {
+  private extractVersion(request: Request): string | null {
     // Check header first
     const headerVersion = request.headers['x-api-version'] || request.headers['api-version'];
     if (headerVersion) {

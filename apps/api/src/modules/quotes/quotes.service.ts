@@ -85,7 +85,7 @@ export class QuotesService {
   }
 
   @Cacheable({ prefix: 'quote:detail', ttl: 300 }) // Cache for 5 minutes
-  async findOne(tenantId: string, id: string): Promise<any> {
+  async findOne(tenantId: string, id: string): Promise<PrismaQuote & { items: Array<PrismaQuoteItem & { files: unknown[]; dfmReport: unknown }> }> {
     const quote = await this.prisma.quote.findFirst({
       where: {
         id,
@@ -158,9 +158,9 @@ export class QuotesService {
         name: dto.name || file.originalName,
         process: dto.process,
         processCode: dto.process,
-        material: (dto.options as any)?.material || 'PLA', // Extract material from options
+        material: (dto.options as Record<string, unknown>)?.material as string || 'PLA', // Extract material from options
         quantity: dto.quantity,
-        selections: dto.options as any,
+        selections: dto.options,
       },
     });
 
@@ -179,14 +179,14 @@ export class QuotesService {
     }) as Promise<PrismaQuoteItem>;
   }
 
-  async calculate(tenantId: string, quoteId: string, dto: CalculateQuoteDto): Promise<any> {
+  async calculate(tenantId: string, quoteId: string, dto: CalculateQuoteDto): Promise<{ id: string; status: string; [key: string]: unknown }> {
     const quote = await this.findOne(tenantId, quoteId);
 
     // Update objective if provided
     if (dto.objective) {
       await this.prisma.quote.update({
         where: { id: quoteId },
-        data: { objective: dto.objective as any },
+        data: { objective: dto.objective },
       });
     }
 
@@ -215,11 +215,11 @@ export class QuotesService {
 
         // Try to get cached pricing result first
         const cacheKey = {
-          fileHash: (quoteItem as any).files?.[0]?.hash || '',
+          fileHash: (quoteItem as { files?: Array<{ hash?: string }> }).files?.[0]?.hash || '',
           service: quoteItem.processCode,
-          material: (quoteItem.selections as any)?.material || 'default',
+          material: (quoteItem.selections as Record<string, unknown>)?.material as string || 'default',
           quantity: quoteItem.quantity,
-          options: quoteItem.selections as Record<string, any> | undefined,
+          options: quoteItem.selections as Record<string, unknown> | undefined,
         };
 
         const pricingResult = await this.quoteCacheService.getOrCalculateQuote(
@@ -262,8 +262,8 @@ export class QuotesService {
             costBreakdown: {
               machine: pricingResult.manufacturing.machineCost,
               material: pricingResult.manufacturing.materialCost,
-            } as any,
-            sustainability: {} as any,
+            } as Record<string, unknown>,
+            sustainability: {} as Record<string, unknown>,
             flags: [],
           },
         });
@@ -287,7 +287,7 @@ export class QuotesService {
       data: {
         status: errors.length > 0 ? QuoteStatus.NEEDS_REVIEW : QuoteStatus.AUTO_QUOTED,
         totals,
-        sustainability: this.calculateSustainabilitySummary(calculatedItems) as any,
+        sustainability: this.calculateSustainabilitySummary(calculatedItems),
       },
       include: {
         items: {
@@ -354,7 +354,13 @@ export class QuotesService {
     });
   }
 
-  private calculateTotals(items: any[], currency: Currency): any {
+  private calculateTotals(items: Array<{ totalPrice?: number | null }>, currency: Currency): {
+    subtotal: number;
+    tax: number;
+    shipping: number;
+    grandTotal: number;
+    currency: Currency;
+  } {
     const subtotal = items.reduce(
       (sum, item) => sum.plus(new Decimal(item.totalPrice || 0)),
       new Decimal(0),
@@ -378,7 +384,11 @@ export class QuotesService {
     };
   }
 
-  private calculateSustainabilitySummary(items: any[]): any {
+  private calculateSustainabilitySummary(items: Array<{ sustainability?: { co2eKg?: number; score?: number; energyKwh?: number } | null }>): {
+    score: number;
+    co2eKg: number;
+    energyKwh: number;
+  } | null {
     if (items.length === 0) return null;
 
     const totalCo2e = items.reduce(

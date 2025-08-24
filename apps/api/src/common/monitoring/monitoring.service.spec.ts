@@ -15,13 +15,13 @@ describe('MonitoringService', () => {
   let performanceService: PerformanceService;
 
   const mockConfigService = {
-    get: jest.fn((key: string, defaultValue?: any) => {
-      const config = {
+    get: jest.fn(<T = string>(key: string, defaultValue?: T) => {
+      const config: Record<string, unknown> = {
         SENTRY_DSN: 'test-dsn',
         NODE_ENV: 'test',
         APP_VERSION: '1.0.0',
       };
-      return config[key as keyof typeof config] || defaultValue;
+      return (config[key] as T) || defaultValue;
     }),
   };
 

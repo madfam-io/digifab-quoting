@@ -7,13 +7,14 @@ import {
 } from '@nestjs/common';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
+import { Request } from 'express';
 
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
   private readonly defaultTimeout = 30000; // 30 seconds
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<Request>();
     const timeoutDuration = this.getTimeout(request);
 
     return next.handle().pipe(
@@ -27,7 +28,7 @@ export class TimeoutInterceptor implements NestInterceptor {
     );
   }
 
-  private getTimeout(request: any): number {
+  private getTimeout(request: Request): number {
     // File upload endpoints get longer timeout
     if (request.url?.includes('/upload')) {
       return 300000; // 5 minutes

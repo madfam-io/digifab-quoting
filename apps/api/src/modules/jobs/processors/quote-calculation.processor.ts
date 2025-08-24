@@ -13,6 +13,20 @@ import { PricingService } from '@/modules/pricing/pricing.service';
 import { Decimal } from 'decimal.js';
 import { getErrorMessage, toError } from '@/common/utils/error-handling';
 
+interface CancellableJobData extends QuoteCalculationJobData {
+  cancelled?: boolean;
+}
+
+interface PricingConfig {
+  defaultMargin?: number;
+  minimumMargin?: number;
+  rushOrderRate?: number;
+  taxRate?: number;
+  quoteValidityDays?: number;
+  volumeDiscountThresholds?: Record<string, number>;
+  overheadRate?: number;
+}
+
 interface QuoteCalculationResult {
   quoteId: string;
   items: Array<{
@@ -70,7 +84,7 @@ export class QuoteCalculationProcessor {
       });
 
       // Check if job was cancelled
-      if ((job.data as any)['cancelled']) {
+      if ((job.data as CancellableJobData).cancelled) {
         throw new Error('Job was cancelled');
       }
 
@@ -98,7 +112,7 @@ export class QuoteCalculationProcessor {
       const progressPerItem = 50 / items.length;
 
       for (const item of items) {
-        if ((job.data as any)['cancelled']) {
+        if ((job.data as CancellableJobData).cancelled) {
           throw new Error('Job was cancelled');
         }
 
@@ -266,7 +280,7 @@ export class QuoteCalculationProcessor {
 
   private async calculateItemPrice(
     item: QuoteCalculationJobData['items'][0],
-    pricingConfig: any,
+    pricingConfig: PricingConfig,
     tenantId: string,
   ): Promise<QuoteCalculationResult['items'][0]> {
     // Get file analysis data
@@ -367,7 +381,7 @@ export class QuoteCalculationProcessor {
     return volume * baseRate * multiplier;
   }
 
-  private getMarginRate(quantity: number, complexity: string, pricingConfig: any): number {
+  private getMarginRate(quantity: number, complexity: string, pricingConfig: PricingConfig): number {
     let baseMargin = pricingConfig.defaultMargin || 0.3;
 
     // Volume discount
@@ -406,7 +420,7 @@ export class QuoteCalculationProcessor {
     items: QuoteCalculationResult['items'],
     rushOrder: boolean,
     currency: string,
-    pricingConfig: any,
+    pricingConfig: PricingConfig,
   ): Promise<QuoteCalculationResult['summary']> {
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 

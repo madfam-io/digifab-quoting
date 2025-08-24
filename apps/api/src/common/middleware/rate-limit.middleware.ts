@@ -20,6 +20,12 @@ interface RateLimitInfo {
   remaining: number;
 }
 
+interface RateLimitStats {
+  config?: RateLimitConfig;
+  status?: string;
+  error?: string;
+}
+
 @Injectable()
 export class RateLimitMiddleware implements NestMiddleware {
   private readonly configs = new Map<string, RateLimitConfig>();
@@ -78,7 +84,10 @@ export class RateLimitMiddleware implements NestMiddleware {
       }
 
       try {
-        const key = config.keyGenerator!(req);
+        if (!config.keyGenerator) {
+          throw new Error(`Key generator not found for config '${configName}'`);
+        }
+        const key = config.keyGenerator(req);
         const rateLimitInfo = await this.checkRateLimit(key, config);
 
         // Set rate limit headers
@@ -117,7 +126,7 @@ export class RateLimitMiddleware implements NestMiddleware {
           throw error;
         }
         
-        this.logger.error('Rate limiting error', error as any);
+        this.logger.error('Rate limiting error', error as Error);
         next(); // Continue on Redis errors
       }
     };
@@ -153,7 +162,7 @@ export class RateLimitMiddleware implements NestMiddleware {
       };
     } catch (error) {
       // Fallback in case Redis is not available
-      this.logger.error('Rate limiting error, allowing request', error as any);
+      this.logger.error('Rate limiting error, allowing request', error as Error);
       return {
         count: 0,
         resetTime,
@@ -164,7 +173,10 @@ export class RateLimitMiddleware implements NestMiddleware {
 
   private getClientIdentifier(req: Request): string {
     // Try to get user ID first (for authenticated requests)
-    const userId = (req as any).user?.id;
+    interface RequestWithUser extends Request {
+      user?: { id: string };
+    }
+    const userId = (req as RequestWithUser).user?.id;
     if (userId) {
       return `user:${userId}`;
     }
@@ -188,25 +200,25 @@ export class RateLimitMiddleware implements NestMiddleware {
 
   // Static methods for easy use in controllers
   static global() {
-    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
+    return function (_target: object, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
 
   static api() {
-    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
+    return function (_target: object, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
 
   static auth() {
-    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
+    return function (_target: object, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
 
-  async getStats(): Promise<Record<string, any>> {
-    const stats: Record<string, any> = {};
+  async getStats(): Promise<Record<string, RateLimitStats>> {
+    const stats: Record<string, RateLimitStats> = {};
     
     for (const [configName] of this.configs) {
       try {
@@ -216,7 +228,7 @@ export class RateLimitMiddleware implements NestMiddleware {
           status: 'active',
         };
       } catch (error) {
-        this.logger.error(`Error getting stats for ${configName}`, error as any);
+        this.logger.error(`Error getting stats for ${configName}`, error as Error);
         stats[configName] = { error: 'Failed to get stats' };
       }
     }

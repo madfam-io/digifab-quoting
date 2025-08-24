@@ -8,7 +8,7 @@ export interface LogMetadata {
   userId?: string;
   requestId?: string;
   timestamp?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined | Record<string, unknown> | Array<unknown>;
 }
 
 export interface HttpLogMetadata extends LogMetadata {
@@ -25,9 +25,9 @@ export interface AuditLogMetadata extends LogMetadata {
   action: string;
   entity: string;
   entityId: string;
-  changes?: Record<string, any>;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  changes?: Record<string, unknown>;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
 }
 
 export interface SecurityLogMetadata extends LogMetadata {
@@ -52,7 +52,7 @@ export interface ErrorLogMetadata extends LogMetadata {
   errorCode?: string;
   errorType?: string;
   stack?: string;
-  originalError?: any;
+  originalError?: Error | unknown;
 }
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'http' | 'verbose' | 'debug' | 'silly';

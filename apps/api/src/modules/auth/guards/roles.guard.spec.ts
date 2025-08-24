@@ -10,14 +10,14 @@ describe('RolesGuard', () => {
   let reflector: Reflector;
   let tenantContext: TenantContextService;
 
-  const mockExecutionContext = (user?: any): ExecutionContext =>
+  const mockExecutionContext = (user?: { id: string; email: string; roles?: string[] }): ExecutionContext =>
     ({
       switchToHttp: jest.fn().mockReturnValue({
         getRequest: jest.fn().mockReturnValue({ user }),
       }),
       getHandler: jest.fn(),
       getClass: jest.fn(),
-    }) as any;
+    }) as unknown as ExecutionContext;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

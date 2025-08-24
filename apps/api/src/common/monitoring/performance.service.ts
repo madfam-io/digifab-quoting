@@ -248,7 +248,23 @@ export class PerformanceService {
   }
 
   // Performance report generation
-  async generatePerformanceReport(): Promise<any> {
+  async generatePerformanceReport(): Promise<{
+    timestamp: string;
+    summary: {
+      activeTransactions: number;
+      averageResponseTime: number;
+      p95ResponseTime: number;
+      averageDbQueryTime: number;
+      cacheHitRate: number;
+    };
+    thresholds: PerformanceThreshold[];
+    systemMetrics: {
+      memory: NodeJS.MemoryUsage;
+      cpu: NodeJS.CpuUsage;
+      uptime: number;
+    };
+    detailedMetrics: unknown;
+  }> {
     const metrics = this.metricsService.getAllMetrics();
     const activeTransactionCount = this.activeTransactions.size;
     

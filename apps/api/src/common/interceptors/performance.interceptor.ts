@@ -9,7 +9,7 @@ export class PerformanceInterceptor implements NestInterceptor {
     this.logger.setContext('Performance');
   }
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept<T>(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
     const now = Date.now();
     const request = context.switchToHttp().getRequest();
     const { method, url } = request;

@@ -29,7 +29,7 @@ export class AuditInterceptor implements NestInterceptor {
     private readonly auditService: AuditService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const auditMetadata = this.reflector.get<AuditMetadata>(AUDIT_KEY, context.getHandler());
 
     if (!auditMetadata) {
@@ -45,7 +45,7 @@ export class AuditInterceptor implements NestInterceptor {
       : params.id || body?.id || 'unknown';
 
     // Prepare audit data
-    const auditData: any = {
+    const auditData: Record<string, unknown> = {
       method,
       url,
       userId: user?.id,
@@ -67,7 +67,7 @@ export class AuditInterceptor implements NestInterceptor {
         next: async (response) => {
           const duration = Date.now() - startTime;
 
-          const metadata: any = {
+          const metadata: Record<string, unknown> = {
             ...auditData,
             duration,
             success: true,
@@ -105,7 +105,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Sanitize sensitive data
    */
-  private sanitizeData(data: any, sensitive?: boolean): any {
+  private sanitizeData(data: unknown, sensitive?: boolean): unknown {
     if (!data) return data;
 
     if (sensitive) {
@@ -129,7 +129,7 @@ export class AuditInterceptor implements NestInterceptor {
       'ssn',
     ];
 
-    const removeSensitiveFields = (obj: any) => {
+    const removeSensitiveFields = (obj: Record<string, unknown>) => {
       if (typeof obj !== 'object' || obj === null) return;
 
       for (const key of Object.keys(obj)) {

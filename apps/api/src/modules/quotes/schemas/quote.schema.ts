@@ -62,7 +62,7 @@ export const CreateQuoteItemSchema = z.object({
   process: z.nativeEnum(ProcessType),
   material: z.string(),
   quantity: z.number().int().min(1).max(10000),
-  selections: z.record(z.any()), // Will be validated based on process
+  selections: z.record(z.unknown()), // Will be validated based on process
   notes: z.string().max(500).optional(),
 });
 
@@ -71,7 +71,7 @@ export const UpdateQuoteItemSchema = z.object({
   itemId: z.string().uuid(),
   material: z.string().optional(),
   quantity: z.number().int().min(1).max(10000).optional(),
-  selections: z.record(z.any()).optional(),
+  selections: z.record(z.unknown()).optional(),
 });
 
 // Shipping address validation

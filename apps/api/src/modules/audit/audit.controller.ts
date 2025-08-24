@@ -358,7 +358,20 @@ export class AuditController {
     return logs;
   }
 
-  private convertToCSV(logs: any[]): string {
+  private convertToCSV(logs: Array<{
+    at: Date;
+    tenantId: string;
+    actorId?: string;
+    actor?: { email?: string };
+    entity: string;
+    entityId: string;
+    action: string;
+    metadata?: {
+      success?: boolean;
+      duration?: number;
+      requestId?: string;
+    };
+  }>): string {
     if (logs.length === 0) return '';
 
     // Define CSV headers

@@ -76,7 +76,7 @@ export class CreateQuoteDto {
   })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class QuoteResponseDto {

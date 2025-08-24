@@ -8,7 +8,7 @@ interface TenantConfig {
   id: string;
   name: string;
   subdomain: string;
-  settings: any;
+  settings: Record<string, unknown>;
   features: string[];
   currencies: string[];
   locales: string[];
@@ -63,8 +63,8 @@ export class TenantCacheService {
       subdomain: tenant.domain || '', // Use correct field name
       settings: tenant.settings || {},
       features: [], // tenant.tenantFeatures.map((tf: any) => tf.feature.code), // Remove if not in schema
-      currencies: (tenant.settings as any)?.currencies || ['MXN'],
-      locales: (tenant.settings as any)?.locales || ['es', 'en'],
+      currencies: (tenant.settings as Record<string, unknown>)?.currencies as string[] || ['MXN'],
+      locales: (tenant.settings as Record<string, unknown>)?.locales as string[] || ['es', 'en'],
     };
 
     // Cache the config
@@ -190,7 +190,7 @@ export class TenantCacheService {
     return machineCache;
   }
 
-  async getPricingSettings(tenantId: string): Promise<any> {
+  async getPricingSettings(tenantId: string): Promise<Record<string, unknown>> {
     const config = await this.getTenantConfig(tenantId);
     const settings = config.settings;
 
@@ -224,7 +224,7 @@ export class TenantCacheService {
       // await this.cacheService.deletePattern(pattern); // Method may not exist
       // await this.cacheService.delete(pattern); // Method may not exist either
       try {
-        await (this.cacheService as any).del(pattern); // Try Redis del method
+        await (this.cacheService as { del: (pattern: string) => Promise<void> }).del(pattern); // Try Redis del method
       } catch {
         this.logger.warn(`Could not clear cache pattern: ${pattern}`);
       }

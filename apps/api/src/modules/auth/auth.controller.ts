@@ -33,6 +33,13 @@ import {
 import { User } from '@madfam/shared';
 import { Public } from './decorators/public.decorator';
 
+interface AuthenticatedRequest extends Express.Request {
+  user?: User;
+  headers: {
+    authorization?: string;
+  } & Express.Request['headers'];
+}
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -139,7 +146,7 @@ export class AuthController {
     description: 'Invalid or missing authentication token',
     type: UnauthorizedResponseDto,
   })
-  async logout(@Request() req: any) {
+  async logout(@Request() req: AuthenticatedRequest) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     await this.authService.logout(token);
   }
@@ -159,7 +166,7 @@ export class AuthController {
     description: 'Invalid or missing authentication token',
     type: UnauthorizedResponseDto,
   })
-  async getSession(@Request() req: any) {
+  async getSession(@Request() req: AuthenticatedRequest) {
     const user = req.user as User;
     return {
       user: {
@@ -184,7 +191,7 @@ export class AuthController {
     status: 204,
     description: 'Event logged successfully',
   })
-  async logEvent(@Body() _eventData: any) {
+  async logEvent(@Body() _eventData: Record<string, unknown>) {
     // This is a placeholder for frontend analytics
     // In production, you might want to send this to your analytics service
     return;

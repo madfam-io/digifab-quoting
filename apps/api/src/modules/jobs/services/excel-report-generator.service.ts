@@ -4,6 +4,15 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { ReportGenerationJobData } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
+import {
+  ReportItem,
+  QuoteOrderData,
+  QuoteStatistic,
+  OrderStatistic,
+  RevenueByPeriod,
+  AnalyticsData,
+  InvoiceData,
+} from '../interfaces/report.interface';
 
 @Injectable()
 export class ExcelReportGeneratorService {
@@ -11,7 +20,7 @@ export class ExcelReportGeneratorService {
 
   async generateReport(
     reportType: ReportGenerationJobData['reportType'],
-    data: any,
+    data: QuoteOrderData | InvoiceData | AnalyticsData,
     options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.xlsx`;
@@ -44,9 +53,9 @@ export class ExcelReportGeneratorService {
 
   private addQuoteOrderSheet(
     workbook: ExcelJS.Workbook,
-    data: any,
+    data: Record<string, unknown>,
     reportType: 'quote' | 'order',
-    options: any,
+    options: ReportGenerationJobData['options'],
   ): void {
     const sheet = workbook.addWorksheet(reportType === 'quote' ? 'Quote Details' : 'Order Details');
 
@@ -123,7 +132,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: any, _options: any): void {
+  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: Record<string, unknown>, _options: ReportGenerationJobData['options']): void {
     const sheet = workbook.addWorksheet('Invoice');
 
     // Invoice header
@@ -196,7 +205,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: any, _options: any): void {
+  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: AnalyticsData, _options: ReportGenerationJobData['options']): void {
     // Summary sheet
     const summarySheet = workbook.addWorksheet('Summary');
     this.addAnalyticsSummary(summarySheet, data);
@@ -220,7 +229,7 @@ export class ExcelReportGeneratorService {
     }
   }
 
-  private addItemsTable(sheet: ExcelJS.Worksheet, items: any[], startRow: number): void {
+  private addItemsTable(sheet: ExcelJS.Worksheet, items: ReportItem[], startRow: number): void {
     const headers = ['#', 'Item', 'Material', 'Process', 'Quantity', 'Unit Price', 'Total'];
     const headerRow = sheet.getRow(startRow);
 
@@ -257,7 +266,7 @@ export class ExcelReportGeneratorService {
 
   private addInvoiceItemsTable(
     sheet: ExcelJS.Worksheet,
-    items: any[],
+    items: ReportItem[],
     startRow: number,
     currency: string,
   ): void {
@@ -288,7 +297,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addAnalyticsSummary(sheet: ExcelJS.Worksheet, data: any): void {
+  private addAnalyticsSummary(sheet: ExcelJS.Worksheet, data: AnalyticsData): void {
     sheet.getCell('A1').value = 'Analytics Summary';
     sheet.getCell('A1').font = { bold: true, size: 16 };
 
@@ -302,10 +311,10 @@ export class ExcelReportGeneratorService {
     row += 2;
 
     // Add summary metrics
-    const totalQuotes = data.quotes?.reduce((sum: number, q: any) => sum + q._count, 0) || 0;
-    const totalOrders = data.orders?.reduce((sum: number, o: any) => sum + o._count, 0) || 0;
+    const totalQuotes = data.quotes?.reduce((sum: number, q: QuoteStatistic) => sum + q._count, 0) || 0;
+    const totalOrders = data.orders?.reduce((sum: number, o: OrderStatistic) => sum + o._count, 0) || 0;
     const totalRevenue =
-      data.revenue?.reduce((sum: number, r: any) => sum + (r.revenue || 0), 0) || 0;
+      data.revenue?.reduce((sum: number, r: RevenueByPeriod) => sum + (r.revenue || 0), 0) || 0;
 
     sheet.getCell(`A${row}`).value = 'Total Quotes:';
     sheet.getCell(`B${row}`).value = totalQuotes;
@@ -318,7 +327,7 @@ export class ExcelReportGeneratorService {
     sheet.getCell(`B${row}`).numFmt = '"$"#,##0.00';
   }
 
-  private addQuoteStatistics(sheet: ExcelJS.Worksheet, quotes: any[]): void {
+  private addQuoteStatistics(sheet: ExcelJS.Worksheet, quotes: QuoteStatistic[]): void {
     sheet.getCell('A1').value = 'Quote Statistics by Status';
     sheet.getCell('A1').font = { bold: true, size: 14 };
 
@@ -338,7 +347,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addOrderStatistics(sheet: ExcelJS.Worksheet, orders: any[]): void {
+  private addOrderStatistics(sheet: ExcelJS.Worksheet, orders: OrderStatistic[]): void {
     sheet.getCell('A1').value = 'Order Statistics by Status';
     sheet.getCell('A1').font = { bold: true, size: 14 };
 
@@ -358,7 +367,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addRevenueAnalysis(sheet: ExcelJS.Worksheet, revenue: any[]): void {
+  private addRevenueAnalysis(sheet: ExcelJS.Worksheet, revenue: RevenueByPeriod[]): void {
     sheet.getCell('A1').value = 'Revenue by Period';
     sheet.getCell('A1').font = { bold: true, size: 14 };
 

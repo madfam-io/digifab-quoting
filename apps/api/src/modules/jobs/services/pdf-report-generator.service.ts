@@ -5,6 +5,15 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { ReportGenerationJobData } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
+import {
+  ReportItem,
+  QuoteOrderData,
+  QuoteStatistic,
+  OrderStatistic,
+  RevenueByPeriod,
+  AnalyticsData,
+  InvoiceData,
+} from '../interfaces/report.interface';
 
 @Injectable()
 export class PdfReportGeneratorService {
@@ -12,7 +21,7 @@ export class PdfReportGeneratorService {
 
   async generateReport(
     reportType: ReportGenerationJobData['reportType'],
-    data: any,
+    data: QuoteOrderData | InvoiceData | AnalyticsData,
     options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.pdf`;
@@ -90,7 +99,7 @@ export class PdfReportGeneratorService {
     return titles[language || 'en'][reportType];
   }
 
-  private addQuoteContent(doc: InstanceType<typeof PDFDocument>, quote: any, options: any): void {
+  private addQuoteContent(doc: InstanceType<typeof PDFDocument>, quote: Record<string, unknown>, options: ReportGenerationJobData['options']): void {
     // Customer information
     doc.fontSize(14).text('Customer Information', { underline: true });
     doc
@@ -114,7 +123,7 @@ export class PdfReportGeneratorService {
     // Items
     if (options?.includeItemDetails && quote.items?.length > 0) {
       doc.fontSize(14).text('Items', { underline: true });
-      quote.items.forEach((item: any, index: number) => {
+      (quote.items as Record<string, unknown>[]).forEach((item: Record<string, unknown>, index: number) => {
         this.addQuoteItemDetails(doc, item, index + 1);
       });
     }
@@ -125,7 +134,7 @@ export class PdfReportGeneratorService {
 
   private addQuoteItemDetails(
     doc: InstanceType<typeof PDFDocument>,
-    item: any,
+    item: Record<string, unknown>,
     index: number,
   ): void {
     const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
@@ -143,7 +152,7 @@ export class PdfReportGeneratorService {
       .moveDown(0.5);
   }
 
-  private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: any, options: any): void {
+  private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: Record<string, unknown>, options: ReportGenerationJobData['options']): void {
     // Order header
     doc.fontSize(14).text('Order Information', { underline: true });
     doc
@@ -181,8 +190,8 @@ export class PdfReportGeneratorService {
 
   private addInvoiceContent(
     doc: InstanceType<typeof PDFDocument>,
-    invoice: any,
-    _options: any,
+    invoice: InvoiceData,
+    _options: ReportGenerationJobData['options'],
   ): void {
     // Invoice header
     doc.fontSize(16).text(`INVOICE #${invoice.number}`, { align: 'right' });
@@ -232,8 +241,8 @@ export class PdfReportGeneratorService {
 
   private addAnalyticsContent(
     doc: InstanceType<typeof PDFDocument>,
-    data: any,
-    _options: any,
+    data: AnalyticsData,
+    _options: ReportGenerationJobData['options'],
   ): void {
     doc.fontSize(14).text('Analytics Period', { underline: true });
     doc
@@ -245,7 +254,7 @@ export class PdfReportGeneratorService {
     // Quote statistics
     if (data.quotes) {
       doc.fontSize(14).text('Quote Statistics', { underline: true });
-      data.quotes.forEach((stat: any) => {
+      data.quotes.forEach((stat: QuoteStatistic) => {
         doc
           .fontSize(12)
           .text(
@@ -258,7 +267,7 @@ export class PdfReportGeneratorService {
     // Order statistics
     if (data.orders) {
       doc.fontSize(14).text('Order Statistics', { underline: true });
-      data.orders.forEach((stat: any) => {
+      data.orders.forEach((stat: OrderStatistic) => {
         doc
           .fontSize(12)
           .text(
@@ -271,7 +280,7 @@ export class PdfReportGeneratorService {
     // Revenue chart (simplified text representation)
     if (data.revenue && data.revenue.length > 0) {
       doc.fontSize(14).text('Revenue by Period', { underline: true });
-      data.revenue.forEach((period: any) => {
+      data.revenue.forEach((period: RevenueByPeriod) => {
         doc
           .fontSize(12)
           .text(
@@ -281,7 +290,7 @@ export class PdfReportGeneratorService {
     }
   }
 
-  private addPricingSummary(doc: InstanceType<typeof PDFDocument>, quote: any): void {
+  private addPricingSummary(doc: InstanceType<typeof PDFDocument>, quote: QuoteOrderData): void {
     doc.fontSize(14).text('Pricing Summary', { underline: true });
     doc
       .fontSize(12)
@@ -293,7 +302,7 @@ export class PdfReportGeneratorService {
       });
   }
 
-  private addPaymentInformation(doc: InstanceType<typeof PDFDocument>, order: any): void {
+  private addPaymentInformation(doc: InstanceType<typeof PDFDocument>, order: QuoteOrderData): void {
     doc.fontSize(14).text('Payment Information', { underline: true });
     doc
       .fontSize(12)
@@ -304,14 +313,14 @@ export class PdfReportGeneratorService {
 
   private addInvoiceLineItems(
     doc: InstanceType<typeof PDFDocument>,
-    items: any[],
+    items: ReportItem[],
     currency: string,
   ): void {
     doc.fontSize(14).text('Line Items', { underline: true });
     doc.moveDown(0.5);
 
     let subtotal = 0;
-    items.forEach((item: any, index: number) => {
+    items.forEach((item: ReportItem, index: number) => {
       const total = item.unitPrice * item.quantity;
       subtotal += total;
 
@@ -330,7 +339,7 @@ export class PdfReportGeneratorService {
       .text(`Subtotal: ${this.formatCurrency(subtotal, currency)}`, { align: 'right' });
   }
 
-  private addInvoiceTotals(doc: InstanceType<typeof PDFDocument>, invoice: any): void {
+  private addInvoiceTotals(doc: InstanceType<typeof PDFDocument>, invoice: InvoiceData): void {
     doc.moveDown();
     doc
       .fontSize(12)

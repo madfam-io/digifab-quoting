@@ -50,8 +50,10 @@ export function createCorsConfig(configService: ConfigService): CorsOptions {
   };
 }
 
+import { Request, Response, NextFunction } from 'express';
+
 // Pre-flight request handler
-export function handlePreflightRequest(req: any, res: any, next: any) {
+export function handlePreflightRequest(req: Request, res: Response, next: NextFunction) {
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');

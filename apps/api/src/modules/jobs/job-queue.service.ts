@@ -26,7 +26,7 @@ export interface FileAnalysisJob {
 export interface EmailNotificationJob {
   to: string;
   template: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   tenantId: string;
 }
 

@@ -34,7 +34,7 @@ export class ExampleService {
    * Cache invalidation - clears cache after update
    */
   @CacheInvalidate('example:data:*')
-  async updateData(id: string, data: any) {
+  async updateData(id: string, data: Record<string, unknown>) {
     // Update operation
     // Cache will be invalidated after this method completes
     return await this.saveData(id, data);
@@ -57,7 +57,7 @@ export class ExampleService {
    */
   @Cacheable({
     prefix: 'custom',
-    keyGenerator: (prefix: string, options: any) => {
+    keyGenerator: (prefix: string, options: Record<string, unknown>) => {
       return `${prefix}:${options.service}:${options.material}:${options.quantity}`;
     },
   })
@@ -69,13 +69,13 @@ export class ExampleService {
   private async performExpensiveCalculation(id: string) {
     return { id, data: 'expensive' };
   }
-  private async saveData(id: string, data: any) {
+  private async saveData(id: string, data: Record<string, unknown>) {
     return { id, data };
   }
   private async complexPriceCalculation(quantity: number) {
     return { price: quantity * 10 };
   }
-  private async calculateCustomQuote(options: any) {
+  private async calculateCustomQuote(options: Record<string, unknown>) {
     return { quote: options };
   }
 }
@@ -100,7 +100,7 @@ export class TenantConfigService {
     });
   }
 
-  async updateTenantConfig(tenantId: string, config: any) {
+  async updateTenantConfig(tenantId: string, config: Record<string, unknown>) {
     // Update database
     const updated = await this.saveTenantConfigToDb(tenantId, config);
 
@@ -114,7 +114,7 @@ export class TenantConfigService {
   private async fetchTenantConfigFromDb(tenantId: string) {
     return { tenantId, config: {} };
   }
-  private async saveTenantConfigToDb(tenantId: string, config: any) {
+  private async saveTenantConfigToDb(tenantId: string, config: Record<string, unknown>) {
     return { tenantId, config };
   }
 }
@@ -126,7 +126,7 @@ export class TenantConfigService {
 export class QuoteCalculationService {
   constructor(private quoteCacheService: QuoteCacheService) {}
 
-  async calculateQuote(fileHash: string, options: any) {
+  async calculateQuote(fileHash: string, options: Record<string, unknown>) {
     const cacheKey = {
       fileHash,
       service: options.service,
@@ -165,7 +165,7 @@ export class QuoteCalculationService {
   }
 
   // Placeholder method
-  private async performQuoteCalculation(_fileHash: string, _options: any) {
+  private async performQuoteCalculation(_fileHash: string, _options: Record<string, unknown>) {
     return {
       unitCost: 100,
       totalCost: 1000,
@@ -236,7 +236,7 @@ export class SessionService {
 export class BatchQuoteService {
   constructor(private quoteCacheService: QuoteCacheService) {}
 
-  async getMultipleQuotes(quoteRequests: any[]) {
+  async getMultipleQuotes(quoteRequests: Record<string, unknown>[]) {
     // Prepare cache keys
     const cacheKeys = quoteRequests.map((req) => ({
       fileHash: req.fileHash,
@@ -269,11 +269,11 @@ export class BatchQuoteService {
     return results;
   }
 
-  private generateCacheKey(key: any): string {
+  private generateCacheKey(key: unknown): string {
     return `quote:file:${key.fileHash}:${key.service}:${key.material}:${key.quantity}:default`;
   }
 
-  private async calculateSingleQuote(_request: any) {
+  private async calculateSingleQuote(_request: Record<string, unknown>) {
     return {
       pricing: { unitCost: 100, totalCost: 1000, margin: 0.3, finalPrice: 1300 },
       manufacturing: { estimatedTime: 5, machineCost: 500, materialCost: 500 },
@@ -326,7 +326,7 @@ export class CacheMonitoringService {
     };
   }
 
-  private generateRecommendations(health: any, quoteStats: any) {
+  private generateRecommendations(health: Record<string, unknown>, quoteStats: Record<string, unknown>) {
     const recommendations = [];
 
     if (health.statistics.hitRate < 50) {

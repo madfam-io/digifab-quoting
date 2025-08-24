@@ -71,7 +71,7 @@ export class CreateJobDto {
 
   @ApiProperty({ description: 'Job data payload' })
   @IsObject()
-  data!: Record<string, any>;
+  data!: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Job processing options' })
   @IsOptional()
@@ -94,7 +94,7 @@ export class RecurringJobDto {
 
   @ApiProperty({ description: 'Job data payload' })
   @IsObject()
-  data!: Record<string, any>;
+  data!: Record<string, unknown>;
 
   @ApiProperty({
     description: 'Cron expression for scheduling',
@@ -171,7 +171,7 @@ export class JobStatusDto {
   error?: string;
 
   @ApiPropertyOptional({ description: 'Job result data' })
-  result?: any;
+  result?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Job duration in milliseconds' })
   duration?: number;
@@ -269,7 +269,7 @@ export class QuoteCalculationJobDto {
     quantity: number;
     material: string;
     process: string;
-    finishOptions?: Record<string, any>;
+    finishOptions?: Record<string, unknown>;
   }>;
 
   @ApiPropertyOptional({ description: 'Rush order flag' })
@@ -302,7 +302,7 @@ export class EmailNotificationJobDto {
 
   @ApiProperty({ description: 'Template data for email rendering' })
   @IsObject()
-  templateData!: Record<string, any>;
+  templateData!: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Email attachments', type: [Object] })
   @IsOptional()

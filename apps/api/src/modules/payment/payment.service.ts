@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { PaymentStatus, OrderStatus, QuoteStatus } from '@madfam/shared';
 // import { OrdersService } from '../orders/orders.service'; // Removed to avoid circular dependency
 import Stripe from 'stripe';
+import { QuoteItem } from '@prisma/client';
 
 @Injectable()
 export class PaymentService {
@@ -41,7 +42,7 @@ export class PaymentService {
     }
 
     // Calculate line items for Stripe
-    const lineItems = quote.items.map((item: any) => ({
+    const lineItems = quote.items.map((item: QuoteItem) => ({
       name: item.filename || 'Quote Item',
       description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
       amount: Math.round(item.unitPrice * 100), // Convert to cents

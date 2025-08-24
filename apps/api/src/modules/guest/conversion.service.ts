@@ -5,6 +5,7 @@ import { GuestQuoteService } from './guest-quote.service';
 import { RedisService } from '../redis/redis.service';
 import { RegisterWithQuote, ConvertGuestQuote } from '@madfam/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { GuestSession } from '@prisma/client';
 
 @Injectable()
 export class ConversionService {
@@ -39,7 +40,7 @@ export class ConversionService {
       password: dto.password,
       firstName: dto.name.split(' ')[0] || dto.name,
       lastName: dto.name.split(' ').slice(1).join(' ') || '',
-      company: dto.company!,
+      company: dto.company || '',
     });
     
     const { user } = result;
@@ -49,7 +50,7 @@ export class ConversionService {
       dto.sessionId,
       dto.sessionQuoteId,
       user.id,
-      user.tenantId!
+      user.tenantId || 'default'
     );
 
     // Track conversion
@@ -106,7 +107,7 @@ export class ConversionService {
       dto.sessionId,
       dto.sessionQuoteId,
       userId,
-      user.tenantId!
+      user.tenantId || 'default'
     );
 
     // Track conversion
@@ -222,7 +223,7 @@ export class ConversionService {
     };
   }
 
-  private calculateAverageTimeToConvert(sessions: any[]): number {
+  private calculateAverageTimeToConvert(sessions: GuestSession[]): number {
     const convertedSessions = sessions.filter(s => s.convertedAt);
     
     if (convertedSessions.length === 0) return 0;

@@ -144,7 +144,7 @@ export class FilesService {
           size: headResult.ContentLength || file.size,
           ndaAcceptanceId,
           metadata: {
-            ...((file.metadata as any) || {}),
+            ...((file.metadata as Record<string, unknown>) || {}),
             status: 'confirmed',
             confirmedAt: new Date().toISOString(),
           },
@@ -155,7 +155,7 @@ export class FilesService {
         where: { id: fileId },
         data: {
           metadata: {
-            ...((file.metadata as any) || {}),
+            ...((file.metadata as Record<string, unknown>) || {}),
             status: 'failed',
             error: getErrorMessage(error),
           },
@@ -246,7 +246,7 @@ export class FilesService {
     });
   }
 
-  async getFilesByQuoteItem(tenantId: string, quoteItemId: string): Promise<any[]> {
+  async getFilesByQuoteItem(tenantId: string, quoteItemId: string) {
     return this.prisma.file.findMany({
       where: {
         tenantId,

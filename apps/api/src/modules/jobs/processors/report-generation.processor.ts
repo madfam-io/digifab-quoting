@@ -143,7 +143,7 @@ export class ReportGenerationProcessor {
 
   private async generateReport(
     reportType: ReportGenerationJobData['reportType'],
-    data: any,
+    data: Record<string, unknown>,
     format: ReportGenerationJobData['format'],
     options: ReportGenerationJobData['options'],
     _job: Job<ReportGenerationJobData>,
@@ -165,8 +165,8 @@ export class ReportGenerationProcessor {
     entityId: string,
     tenantId: string,
     uploadResult: UploadResult,
-    options: any,
-  ): Promise<any> {
+    options: ReportGenerationJobData['options'],
+  ): Promise<{ id: string; type: string; [key: string]: unknown }> {
     return this.prisma.report.create({
       data: {
         tenantId,

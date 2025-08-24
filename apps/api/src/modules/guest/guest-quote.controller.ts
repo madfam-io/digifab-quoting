@@ -34,7 +34,7 @@ export class GuestQuoteController {
   @ApiOperation({ summary: 'Upload files for guest quote' })
   @ApiResponse({ status: 200, description: 'Files uploaded successfully' })
   async uploadFiles(
-    @UploadedFiles() files: any[],
+    @UploadedFiles() files: Express.Multer.File[],
     @Req() req: GuestSessionRequest,
   ) {
     if (!files || files.length === 0) {

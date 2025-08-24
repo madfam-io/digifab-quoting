@@ -80,7 +80,7 @@ export class PaymentController {
       const event = this.stripeService.constructWebhookEvent(req.rawBody || rawBody, signature);
 
       // Extract tenant ID from metadata
-      const metadata = (event.data.object as any).metadata;
+      const metadata = (event.data.object as { metadata?: { tenantId?: string } }).metadata;
       const tenantId = metadata?.tenantId;
 
       if (!tenantId) {

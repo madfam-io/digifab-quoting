@@ -6,7 +6,7 @@ export const CACHE_OPTIONS_METADATA = 'cache_options_metadata';
 export const CACHE_INVALIDATE_METADATA = 'cache_invalidate_metadata';
 
 // Type for async methods that can be cached
-export type AsyncMethod<TArgs extends any[] = any[], TReturn = any> = (...args: TArgs) => Promise<TReturn>;
+export type AsyncMethod<TArgs extends unknown[] = unknown[], TReturn = unknown> = (...args: TArgs) => Promise<TReturn>;
 
 // Type for the decorator target
 export interface DecoratorTarget {

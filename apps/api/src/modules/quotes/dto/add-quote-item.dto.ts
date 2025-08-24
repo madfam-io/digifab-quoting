@@ -61,7 +61,7 @@ export class AddQuoteItemDto {
     },
   })
   @IsObject()
-  options!: Record<string, any>;
+  options!: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Required delivery date (ISO 8601 format)',
@@ -126,5 +126,5 @@ export class QuoteItemResponseDto {
     description: 'Process options applied',
     example: { material: 'PLA', color: 'black' },
   })
-  options!: Record<string, any>;
+  options!: Record<string, unknown>;
 }

@@ -25,6 +25,7 @@ import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import { Tenant } from '@/modules/tenant/decorators/tenant.decorator';
 import { JobType, JobStatus, JobData, QueueMetrics } from './interfaces/job.interface';
+import { User } from '@prisma/client';
 import {
   CreateJobDto,
   ScheduleJobDto,
@@ -76,7 +77,7 @@ export class JobsController {
   async createJob(
     @Body() createJobDto: CreateJobDto,
     @Tenant() tenantId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
     const job = await this.jobsService.addJob(
       createJobDto.type,
@@ -106,7 +107,7 @@ export class JobsController {
   async scheduleJob(
     @Body() scheduleJobDto: ScheduleJobDto,
     @Tenant() tenantId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
     const job = await this.jobsService.scheduleJob(
       scheduleJobDto.type,
@@ -137,7 +138,7 @@ export class JobsController {
   async createRecurringJob(
     @Body() recurringJobDto: RecurringJobDto,
     @Tenant() tenantId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
     await this.jobsService.addRecurringJob(
       recurringJobDto.type,

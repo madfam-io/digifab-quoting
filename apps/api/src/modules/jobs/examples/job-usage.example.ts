@@ -103,7 +103,7 @@ export class NotificationServiceExample {
     quoteId: string,
     customerEmail: string,
     customerName: string,
-    quoteData: any,
+    quoteData: Record<string, unknown>,
   ) {
     // Queue email notification job
     const job = await this.jobsService.addJob(

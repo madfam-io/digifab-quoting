@@ -314,7 +314,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Execute Redis command directly (for advanced use)
    */
-  async execute<T = any>(command: string, ...args: any[]): Promise<T> {
+  async execute<T = unknown>(command: string, ...args: Array<string | number | Buffer>): Promise<T> {
     if (!this.client) {
       throw new Error('Redis client not initialized');
     }
@@ -454,7 +454,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Legacy setex method - use set(key, value, ttl) instead
    * @deprecated
    */
-  async setex(key: string, ttl: number, value: any): Promise<boolean> {
+  async setex<T>(key: string, ttl: number, value: T): Promise<boolean> {
     return this.set(key, value, ttl);
   }
 

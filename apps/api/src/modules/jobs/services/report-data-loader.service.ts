@@ -7,7 +7,7 @@ export interface AnalyticsCriteria {
   startDate: string;
   endDate: string;
   groupBy?: 'day' | 'week' | 'month';
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 @Injectable()
@@ -21,7 +21,7 @@ export class ReportDataLoaderService {
     reportType: ReportGenerationJobData['reportType'],
     entityId: string,
     tenantId: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     this.logger.log(`Loading data for ${reportType} report`, { entityId, tenantId });
 
     switch (reportType) {
@@ -38,7 +38,7 @@ export class ReportDataLoaderService {
     }
   }
 
-  private async loadQuoteData(quoteId: string, tenantId: string): Promise<any> {
+  private async loadQuoteData(quoteId: string, tenantId: string): Promise<Record<string, unknown>> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId, tenantId },
       include: {
@@ -77,7 +77,7 @@ export class ReportDataLoaderService {
     return quote;
   }
 
-  private async loadOrderData(orderId: string, tenantId: string): Promise<any> {
+  private async loadOrderData(orderId: string, tenantId: string): Promise<Record<string, unknown>> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId, tenantId },
       include: {
@@ -122,7 +122,7 @@ export class ReportDataLoaderService {
     return order;
   }
 
-  private async loadInvoiceData(invoiceId: string, tenantId: string): Promise<any> {
+  private async loadInvoiceData(invoiceId: string, tenantId: string): Promise<Record<string, unknown>> {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId, tenantId },
       include: {
@@ -165,7 +165,7 @@ export class ReportDataLoaderService {
     return invoice;
   }
 
-  private async loadAnalyticsData(criteriaJson: string, tenantId: string): Promise<any> {
+  private async loadAnalyticsData(criteriaJson: string, tenantId: string): Promise<Record<string, unknown>> {
     const criteria: AnalyticsCriteria = JSON.parse(criteriaJson);
     const { startDate, endDate, groupBy = 'day' } = criteria;
 
@@ -312,7 +312,7 @@ export class ReportDataLoaderService {
     tenantId: string,
     startDate: string,
     endDate: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const [quoteMetrics, conversionMetrics, customerMetrics] = await Promise.all([
       // Quote metrics
       this.prisma.quote.aggregate({
@@ -354,7 +354,7 @@ export class ReportDataLoaderService {
     startDate: string,
     endDate: string,
   ): Promise<{ rate: number; avgTime: number }> {
-    const result = await this.prisma.$queryRaw<any[]>`
+    const result = await this.prisma.$queryRaw<Array<{ material: string; count: bigint; revenue: number }>>`
       SELECT 
         COUNT(DISTINCT q.id)::int as total_quotes,
         COUNT(DISTINCT o.quote_id)::int as converted_quotes,

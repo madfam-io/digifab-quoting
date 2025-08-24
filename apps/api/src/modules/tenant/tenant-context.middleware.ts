@@ -3,6 +3,17 @@ import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantContextService } from './tenant-context.service';
+import { User } from '@prisma/client';
+
+interface RequestWithUser extends Request {
+  user?: User;
+  tenantContext?: {
+    tenantId?: string;
+    userId?: string;
+    userRoles?: string[];
+    requestId?: string;
+  };
+}
 
 @Injectable()
 export class TenantContextMiddleware implements NestMiddleware {
@@ -11,7 +22,7 @@ export class TenantContextMiddleware implements NestMiddleware {
     private readonly prisma: PrismaService,
   ) {}
 
-  async use(req: Request, res: Response, next: NextFunction) {
+  async use(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
       // Generate request ID
       const requestId = (req.headers['x-request-id'] as string) || randomUUID();
@@ -39,7 +50,7 @@ export class TenantContextMiddleware implements NestMiddleware {
       }
 
       // 4. For authenticated requests, get from JWT
-      const user = (req as any).user;
+      const user = req.user;
       if (user?.tenantId) {
         tenantId = user.tenantId;
       }
@@ -51,7 +62,7 @@ export class TenantContextMiddleware implements NestMiddleware {
             OR: [
               tenantCode ? { code: tenantCode } : null,
               domain ? { domain: domain } : null,
-            ].filter(Boolean) as any[],
+            ].filter(Boolean) as Array<{ code: string } | { domain: string }>,
             active: true,
           },
         });
@@ -91,7 +102,7 @@ export class TenantContextMiddleware implements NestMiddleware {
       };
 
       // Attach context to request for decorators
-      (req as any).tenantContext = context;
+      req.tenantContext = context;
 
       // Add request ID to response headers
       res.setHeader('X-Request-Id', requestId);

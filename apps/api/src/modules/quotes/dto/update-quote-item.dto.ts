@@ -21,5 +21,5 @@ export class UpdateQuoteItemDto {
   @ApiPropertyOptional({ description: 'Process-specific selections' })
   @IsOptional()
   @IsObject()
-  selections?: Record<string, any>;
+  selections?: Record<string, unknown>;
 }

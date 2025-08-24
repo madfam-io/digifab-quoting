@@ -19,9 +19,21 @@ interface CalculationResult {
   warnings: string[];
 }
 
+interface FileData {
+  id: string;
+  name: string;
+  url: string;
+  analyzedAt?: Date | null;
+}
+
+interface DfmReport {
+  id: string;
+  metrics: Record<string, unknown>;
+}
+
 interface ItemWithRelations extends QuoteItem {
-  files: any[];
-  dfmReport?: any;
+  files: FileData[];
+  dfmReport?: DfmReport | null;
 }
 
 @Injectable()
@@ -101,11 +113,14 @@ export class QuoteCalculationService {
     return existingItems
       .filter((item) => updateMap.has(item.id))
       .map((item) => {
-        const update = updateMap.get(item.id)!;
+        const update = updateMap.get(item.id);
+        if (!update) {
+          throw new Error(`Update not found for item ${item.id}`);
+        }
         return {
           ...item,
           material: update.material || item.material,
-          selections: { ...(item.selections as any), ...(update.selections || {}) },
+          selections: { ...(item.selections as Record<string, unknown>), ...(update.selections || {}) },
           quantity: update.quantity ?? item.quantity,
         };
       });
@@ -144,7 +159,7 @@ export class QuoteCalculationService {
       },
     });
 
-    return new Map(materials.map((m) => [`${m.process}-${m.code}`, m as any])) as Map<string, Material>;
+    return new Map(materials.map((m) => [`${m.process}-${m.code}`, m as Material]));
   }
 
   private async batchLoadMachines(
@@ -162,7 +177,7 @@ export class QuoteCalculationService {
       distinct: ['process'],
     });
 
-    return new Map(machines.map((m) => [m.process as ProcessType, m as any])) as Map<ProcessType, Machine>;
+    return new Map(machines.map((m) => [m.process as ProcessType, m as Machine]));
   }
 
   private async calculateItemPricing(
@@ -233,7 +248,7 @@ export class QuoteCalculationService {
   //   };
   // }
 
-  private prepareCalculationResult(calculations: any[], _currency: string): CalculationResult {
+  private prepareCalculationResult(calculations: Array<{ error?: string; item?: ItemWithRelations; pricing?: { unitPrice: number; subtotal: number; [key: string]: unknown } }>, _currency: string): CalculationResult {
     const itemsToUpdate: Array<{ id: string; data: Prisma.QuoteItemUpdateInput }> = [];
     const warnings: string[] = [];
     let subtotal = new Decimal(0);
@@ -253,8 +268,8 @@ export class QuoteCalculationService {
           unitPrice: pricing.unitPrice.toNumber(),
           totalPrice: pricing.totalPrice.toNumber(),
           leadDays: pricing.leadDays,
-          costBreakdown: this.formatCostBreakdown(pricing.costBreakdown) as any,
-          sustainability: this.formatSustainability(pricing.sustainability) as any,
+          costBreakdown: this.formatCostBreakdown(pricing.costBreakdown),
+          sustainability: this.formatSustainability(pricing.sustainability),
         },
       });
 
@@ -278,7 +293,16 @@ export class QuoteCalculationService {
     };
   }
 
-  private formatCostBreakdown(breakdown: any): Prisma.JsonValue {
+  private formatCostBreakdown(breakdown: {
+    material: Decimal;
+    machine: Decimal;
+    energy: Decimal;
+    labor: Decimal;
+    overhead: Decimal;
+    margin: Decimal;
+    tooling?: Decimal;
+    discount?: Decimal;
+  }): Prisma.JsonValue {
     return {
       material: breakdown.material.toNumber(),
       machine: breakdown.machine.toNumber(),
@@ -291,7 +315,13 @@ export class QuoteCalculationService {
     };
   }
 
-  private formatSustainability(sustainability: any): Prisma.JsonValue {
+  private formatSustainability(sustainability: {
+    score: number;
+    co2eKg: Decimal;
+    energyKwh: Decimal;
+    recycledPercent: number;
+    wastePercent: number;
+  }): Prisma.JsonValue {
     return {
       score: sustainability.score,
       co2eKg: sustainability.co2eKg.toNumber(),

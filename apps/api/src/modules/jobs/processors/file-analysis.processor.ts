@@ -28,7 +28,7 @@ interface FileAnalysisResult {
       type: string;
       severity: 'critical' | 'warning' | 'info';
       description: string;
-      location?: any;
+      location?: { x?: number; y?: number; z?: number };
     }>;
     score: number;
     manufacturable: boolean;
@@ -297,7 +297,7 @@ export class FileAnalysisProcessor {
         },
         data: {
           status: 'ANALYZED',
-          analysisResult: analysis as any,
+          analysisResult: analysis,
           analyzedAt: new Date(),
           metadata: {
             ...(((
@@ -305,7 +305,7 @@ export class FileAnalysisProcessor {
                 where: { id: fileId },
                 select: { metadata: true },
               })
-            )?.metadata as any) || {}),
+            )?.metadata as Record<string, unknown>) || {}),
             geometry: analysis.geometry,
             dfmScore: analysis.dfmAnalysis?.score,
             complexity: analysis.features?.complexity,

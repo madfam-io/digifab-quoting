@@ -80,7 +80,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
         userRoles: ['manager'],
       };
 
-      const createSpy = jest.spyOn(prismaService.quote, 'create').mockResolvedValue({} as any);
+      const createSpy = jest.spyOn(prismaService.quote, 'create').mockResolvedValue({} as never);
 
       await tenantContext.run(context, async () => {
         await prismaService.quote.create({
@@ -109,7 +109,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
         userRoles: ['admin'],
       };
 
-      const updateSpy = jest.spyOn(prismaService.quote, 'update').mockResolvedValue({} as any);
+      const updateSpy = jest.spyOn(prismaService.quote, 'update').mockResolvedValue({} as never);
 
       await tenantContext.run(context, async () => {
         await prismaService.quote.update({
@@ -131,7 +131,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
         userRoles: ['admin'],
       };
 
-      const deleteSpy = jest.spyOn(prismaService.quote, 'delete').mockResolvedValue({} as any);
+      const deleteSpy = jest.spyOn(prismaService.quote, 'delete').mockResolvedValue({} as never);
 
       await tenantContext.run(context, async () => {
         await prismaService.quote.delete({

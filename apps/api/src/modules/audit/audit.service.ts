@@ -10,9 +10,9 @@ export interface AuditLogEntry {
   entity: string;
   entityId: string;
   action: string;
-  before?: any;
-  after?: any;
-  metadata?: Record<string, any>;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 @Injectable()
@@ -62,8 +62,8 @@ export class AuditService {
   async logCreate(
     entity: string,
     entityId: string,
-    data: any,
-    metadata?: Record<string, any>,
+    data: Record<string, unknown>,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.log({
       entity,
@@ -80,9 +80,9 @@ export class AuditService {
   async logUpdate(
     entity: string,
     entityId: string,
-    before: any,
-    after: any,
-    metadata?: Record<string, any>,
+    before: Record<string, unknown>,
+    after: Record<string, unknown>,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     // Only log if there are actual changes
     if (JSON.stringify(before) === JSON.stringify(after)) {
@@ -105,8 +105,8 @@ export class AuditService {
   async logDelete(
     entity: string,
     entityId: string,
-    data: any,
-    metadata?: Record<string, any>,
+    data: Record<string, unknown>,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.log({
       entity,
@@ -124,7 +124,7 @@ export class AuditService {
     entity: string,
     entityId: string,
     action: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.log({
       entity,
@@ -153,7 +153,14 @@ export class AuditService {
       return { logs: [], total: 0 };
     }
 
-    const where: any = {
+    const where: {
+      tenantId: string;
+      entity?: string;
+      entityId?: string;
+      actorId?: string;
+      action?: string;
+      at?: { gte?: Date; lte?: Date };
+    } = {
       tenantId: context.tenantId,
     };
 

@@ -37,7 +37,7 @@ describe('CsvReportGeneratorService', () => {
   });
 
   describe('generateReport', () => {
-    let mockStream: any;
+    let mockStream: ReturnType<typeof createWriteStream>;
 
     beforeEach(() => {
       mockStream = {
@@ -201,6 +201,7 @@ describe('CsvReportGeneratorService', () => {
     });
 
     it('should throw error for unsupported report types', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(service.generateReport('unsupported' as any, {}, {})).rejects.toThrow(
         'CSV generation not supported for report type: unsupported',
       );
@@ -362,6 +363,7 @@ describe('CsvReportGeneratorService', () => {
 
   describe('escapeCsvValue', () => {
     it('should return empty string for falsy values', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const escapeMethod = (service as any).escapeCsvValue.bind(service);
       expect(escapeMethod(null)).toBe('');
       expect(escapeMethod(undefined)).toBe('');
@@ -369,12 +371,14 @@ describe('CsvReportGeneratorService', () => {
     });
 
     it('should not quote simple values', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const escapeMethod = (service as any).escapeCsvValue.bind(service);
       expect(escapeMethod('simple')).toBe('simple');
       expect(escapeMethod('123')).toBe('123');
     });
 
     it('should quote and escape complex values', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const escapeMethod = (service as any).escapeCsvValue.bind(service);
       expect(escapeMethod('value,with,commas')).toBe('"value,with,commas"');
       expect(escapeMethod('value"with"quotes')).toBe('"value""with""quotes"');

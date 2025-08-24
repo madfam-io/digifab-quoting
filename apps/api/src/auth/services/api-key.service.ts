@@ -22,7 +22,7 @@ export class ApiKeyService {
     name: string,
     scopes: string[],
     expiresIn?: number,
-  ): Promise<{ key: string; keyData: any }> {
+  ): Promise<{ key: string; keyData: ApiKeyData }> {
     // Generate a secure API key
     const rawKey = crypto.randomBytes(32).toString('hex');
     const keyPrefix = 'mfm_'; // MADFAM prefix
@@ -52,10 +52,12 @@ export class ApiKeyService {
       key: apiKey,
       keyData: {
         id: keyData.id,
+        tenantId: keyData.tenantId,
         name: keyData.name,
-        scopes: keyData.scopes,
-        expiresAt: keyData.expiresAt,
-        createdAt: keyData.createdAt,
+        scopes: keyData.scopes as string[],
+        rateLimit: keyData.rateLimit || undefined,
+        isActive: keyData.isActive,
+        expiresAt: keyData.expiresAt || undefined,
       },
     };
   }
@@ -113,7 +115,17 @@ export class ApiKeyService {
     });
   }
 
-  async listApiKeys(tenantId: string): Promise<any[]> {
+  async listApiKeys(tenantId: string): Promise<Array<{
+    id: string;
+    name: string;
+    scopes: unknown;
+    keyPrefix: string;
+    isActive: boolean;
+    expiresAt: Date | null;
+    lastUsedAt: Date | null;
+    createdAt: Date;
+    revokedAt: Date | null;
+  }>> {
     return this.prisma.apiKey.findMany({
       where: { tenantId },
       select: {
@@ -142,7 +154,12 @@ export class ApiKeyService {
     });
   }
 
-  async getUsageStats(keyId: string, days: number = 7): Promise<any> {
+  async getUsageStats(keyId: string, days: number = 7): Promise<Array<{
+    endpoint: string;
+    _count: {
+      id: number;
+    };
+  }>> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 

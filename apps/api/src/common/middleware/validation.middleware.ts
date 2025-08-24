@@ -20,8 +20,8 @@ export class ValidationMiddleware implements NestMiddleware {
     this.sanitizeObject(req.params);
 
     // Validate file uploads if present
-    if ((req as any).files) {
-      this.validateFiles((req as any).files);
+    if ('files' in req && req.files) {
+      this.validateFiles(req.files as Express.Multer.File[] | Express.Multer.File);
     }
 
     // Add security headers
@@ -33,17 +33,18 @@ export class ValidationMiddleware implements NestMiddleware {
     next();
   }
 
-  private sanitizeObject(obj: any): void {
+  private sanitizeObject(obj: Record<string, unknown> | null | undefined): void {
     if (!obj || typeof obj !== 'object') return;
 
     for (const key in obj) {
       if (typeof obj[key] === 'string') {
+        const strValue = obj[key] as string;
         // Basic sanitization
-        obj[key] = obj[key].trim();
+        obj[key] = strValue.trim();
         
         // HTML sanitization for fields that might contain HTML
         if (this.isHtmlField(key)) {
-          obj[key] = DOMPurify.sanitize(obj[key], {
+          obj[key] = DOMPurify.sanitize(strValue, {
             ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
             ALLOWED_ATTR: ['href', 'target'],
           });
@@ -55,7 +56,7 @@ export class ValidationMiddleware implements NestMiddleware {
         // Remove any potential NoSQL injection attempts
         obj[key] = this.sanitizeNoSql(obj[key]);
       } else if (typeof obj[key] === 'object') {
-        this.sanitizeObject(obj[key]);
+        this.sanitizeObject(obj[key] as Record<string, unknown>);
       }
     }
   }
@@ -65,7 +66,9 @@ export class ValidationMiddleware implements NestMiddleware {
     return htmlFields.some(field => fieldName.toLowerCase().includes(field));
   }
 
-  private sanitizeSql(input: string): string {
+  private sanitizeSql(input: unknown): string {
+    if (typeof input !== 'string') return String(input);
+    
     // Remove common SQL injection patterns
     const sqlPatterns = [
       /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE)?|INSERT|SELECT|UNION|UPDATE)\b)/gi,
@@ -83,7 +86,9 @@ export class ValidationMiddleware implements NestMiddleware {
     return sanitized;
   }
 
-  private sanitizeNoSql(input: string): string {
+  private sanitizeNoSql(input: unknown): string {
+    if (typeof input !== 'string') return String(input);
+    
     // Remove MongoDB injection patterns
     const noSqlPatterns = [
       /(\$[a-zA-Z]+)/g, // $ne, $gt, etc.
@@ -99,13 +104,13 @@ export class ValidationMiddleware implements NestMiddleware {
     return sanitized;
   }
 
-  private validateFiles(files: any): void {
+  private validateFiles(files: Express.Multer.File[] | Express.Multer.File): void {
     const maxFileSize = 50 * 1024 * 1024; // 50MB
     const allowedExtensions = ['.stl', '.step', '.stp', '.iges', '.igs', '.dxf'];
 
     const fileArray = Array.isArray(files) ? files : [files];
 
-    fileArray.forEach((file: any) => {
+    fileArray.forEach((file: Express.Multer.File) => {
       // Check file size
       if (file.size > maxFileSize) {
         throw new BadRequestException(`File ${file.originalname} exceeds maximum size of 50MB`);
@@ -140,8 +145,8 @@ export const idParamSchema = z.object({
   id: z.string().uuid('Invalid ID format'),
 });
 
-export const createValidationPipe = (schema: z.ZodSchema) => {
-  return (value: any) => {
+export const createValidationPipe = <T>(schema: z.ZodSchema<T>) => {
+  return (value: unknown): T => {
     try {
       return schema.parse(value);
     } catch (error) {

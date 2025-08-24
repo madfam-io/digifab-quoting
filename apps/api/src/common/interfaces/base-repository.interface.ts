@@ -4,19 +4,19 @@ import { Prisma, PrismaClient } from '@prisma/client';
 // type ExtractDelegate<T> = T extends { [K in keyof T]: infer D } ? D : never;
 
 // Generic constraints for Prisma operations
-type WhereInput<T> = T extends { findMany: (args: infer Args) => any }
+type WhereInput<T> = T extends { findMany: (args: infer Args) => Promise<unknown> }
   ? Args extends { where?: infer W }
     ? W
     : never
   : never;
 
-type OrderByInput<T> = T extends { findMany: (args: infer Args) => any }
+type OrderByInput<T> = T extends { findMany: (args: infer Args) => Promise<unknown> }
   ? Args extends { orderBy?: infer O }
     ? O
     : never
   : never;
 
-type IncludeInput<T> = T extends { findMany: (args: infer Args) => any }
+type IncludeInput<T> = T extends { findMany: (args: infer Args) => Promise<unknown> }
   ? Args extends { include?: infer I }
     ? I
     : never

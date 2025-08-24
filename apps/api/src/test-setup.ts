@@ -1,7 +1,7 @@
 // Test setup for API package
 // This file is run before all tests
 
-import './types/jest';
+import './types/jest.d.ts';
 
 // Mock external dependencies that aren't available in test environment
 jest.mock('@sentry/node', () => ({

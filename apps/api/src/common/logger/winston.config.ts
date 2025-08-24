@@ -95,8 +95,10 @@ export const createWinstonLogger = () => {
 };
 
 // Logger middleware for Express/NestJS
+import { Request, Response, NextFunction } from 'express';
+
 export const createLoggerMiddleware = (logger: winston.Logger) => {
-  return (req: any, res: any, next: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
 
     // Log request
@@ -109,7 +111,7 @@ export const createLoggerMiddleware = (logger: winston.Logger) => {
 
     // Log response
     const originalSend = res.send;
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       const responseTime = Date.now() - start;
 
       logger.http('Outgoing response', {
