@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,12 +25,12 @@ export function FileUploadZone({
   const [errors, setErrors] = useState<string[]>([]);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: any[]) => {
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       setErrors([]);
       
       // Check for rejected files
       if (fileRejections.length > 0) {
-        const errorMessages = fileRejections.map((rejection: any) => {
+        const errorMessages = fileRejections.map((rejection) => {
           const error = rejection.errors[0];
           if (error.code === 'file-too-large') {
             return `${rejection.file.name} is too large (max ${maxSizeMB}MB)`;

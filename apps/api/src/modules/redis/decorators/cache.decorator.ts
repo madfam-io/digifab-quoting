@@ -21,7 +21,7 @@ export interface DecoratorTarget {
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
   return (
-    target: any,
+    target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
@@ -31,7 +31,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: any[]) {
+    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
 
       if (!cacheService) {
@@ -46,7 +46,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
       const cacheKey = keyGenerator(keyPrefix, ...args);
 
       // Check condition
-      if (options?.condition && !(options.condition as any)(...args)) {
+      if (options?.condition && !(options.condition as (...args: unknown[]) => boolean)(...args)) {
         return originalMethod.apply(this, args);
       }
 
@@ -57,7 +57,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
         fetchFn: () => originalMethod.apply(this, args),
         tenantSpecific: true,
       });
-    } as any;
+    } as AsyncMethod;
 
     return descriptor;
   };
@@ -69,7 +69,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
   return (
-    target: any,
+    target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
@@ -79,7 +79,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: any[]) {
+    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
@@ -89,7 +89,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
       }
 
       return result;
-    } as any;
+    } as AsyncMethod;
 
     return descriptor;
   };
@@ -101,7 +101,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
   return (
-    target: any,
+    target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
@@ -109,7 +109,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: any[]) {
+    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
@@ -127,7 +127,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
       }
 
       return result;
-    } as any;
+    } as AsyncMethod;
 
     return descriptor;
   };
@@ -139,7 +139,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
   return (
-    _target: any,
+    _target: object,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): PropertyDescriptor | void => {
@@ -147,7 +147,7 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: any[]) {
+    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
         // Evict cache before execution
@@ -155,7 +155,7 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
       }
 
       return originalMethod.apply(this, args);
-    } as any;
+    } as AsyncMethod;
 
     return descriptor;
   };

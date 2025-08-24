@@ -23,7 +23,7 @@ export class ExcelReportGeneratorService {
     data: QuoteOrderData | InvoiceData | AnalyticsData,
     options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
-    const dataId = 'id' in data ? (data as any).id : 'report';
+    const dataId = 'id' in data ? (data as QuoteOrderData | InvoiceData).id : 'report';
     const fileName = `${reportType}-${dataId}-${Date.now()}.xlsx`;
     const filePath = join(tmpdir(), fileName);
 
@@ -36,10 +36,10 @@ export class ExcelReportGeneratorService {
     switch (reportType) {
       case 'quote':
       case 'order':
-        this.addQuoteOrderSheet(workbook, data as any, reportType, options);
+        this.addQuoteOrderSheet(workbook, data as QuoteOrderData, reportType, options);
         break;
       case 'invoice':
-        this.addInvoiceSheet(workbook, data as any, options);
+        this.addInvoiceSheet(workbook, data as InvoiceData, options);
         break;
       case 'analytics':
         this.addAnalyticsSheets(workbook, data as AnalyticsData, options);
@@ -54,7 +54,7 @@ export class ExcelReportGeneratorService {
 
   private addQuoteOrderSheet(
     workbook: ExcelJS.Workbook,
-    data: Record<string, unknown>,
+    data: QuoteOrderData,
     reportType: 'quote' | 'order',
     options: ReportGenerationJobData['options'],
   ): void {
@@ -113,7 +113,7 @@ export class ExcelReportGeneratorService {
 
     if (reportType === 'quote') {
       sheet.getCell(`A${row}`).value = 'Valid Until:';
-      sheet.getCell(`B${row}`).value = new Date(data.validUntil).toLocaleDateString();
+      sheet.getCell(`B${row}`).value = new Date((data as QuoteOrderData & { validUntil?: Date }).validUntil || data.createdAt).toLocaleDateString();
       row++;
     }
 
@@ -121,7 +121,7 @@ export class ExcelReportGeneratorService {
 
     // Items table
     if (options?.includeItemDetails) {
-      const items = reportType === 'order' ? data.quote?.items : data.items;
+      const items = reportType === 'order' ? (data as QuoteOrderData & { quote?: { items?: ReportItem[] } }).quote?.items : data.items;
       if (items && items.length > 0) {
         this.addItemsTable(sheet, items, row);
       }
@@ -133,7 +133,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: Record<string, unknown>, _options: ReportGenerationJobData['options']): void {
+  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: InvoiceData, _options: ReportGenerationJobData['options']): void {
     const sheet = workbook.addWorksheet('Invoice');
 
     // Invoice header
@@ -173,10 +173,10 @@ export class ExcelReportGeneratorService {
 
     // Invoice details
     sheet.getCell(`A${row}`).value = 'Invoice Date:';
-    sheet.getCell(`B${row}`).value = new Date(invoice.issuedAt).toLocaleDateString();
+    sheet.getCell(`B${row}`).value = new Date((invoice as InvoiceData & { issuedAt?: Date }).issuedAt || invoice.dueDate).toLocaleDateString();
     row++;
     sheet.getCell(`A${row}`).value = 'Due Date:';
-    sheet.getCell(`B${row}`).value = new Date(invoice.dueAt).toLocaleDateString();
+    sheet.getCell(`B${row}`).value = new Date((invoice as InvoiceData & { dueAt?: Date }).dueAt || invoice.dueDate).toLocaleDateString();
     row++;
     sheet.getCell(`A${row}`).value = 'Status:';
     sheet.getCell(`B${row}`).value = String(invoice.status);
@@ -184,20 +184,20 @@ export class ExcelReportGeneratorService {
 
     // Line items
     if (invoice.order?.quote?.items) {
-      this.addInvoiceItemsTable(sheet, invoice.order.quote.items, row, invoice.currency);
+      this.addInvoiceItemsTable(sheet, invoice.order.quote.items, row, (invoice as InvoiceData & { currency?: string }).currency || 'MXN');
       row += invoice.order.quote.items.length + 4;
     }
 
     // Totals
     sheet.getCell(`E${row}`).value = 'Subtotal:';
-    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.subtotal, invoice.currency);
+    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.subtotal, (invoice as InvoiceData & { currency?: string }).currency || 'MXN');
     row++;
     sheet.getCell(`E${row}`).value = 'Tax:';
-    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.tax, invoice.currency);
+    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.tax, (invoice as InvoiceData & { currency?: string }).currency || 'MXN');
     row++;
     sheet.getCell(`E${row}`).value = 'Total:';
     sheet.getCell(`E${row}`).font = { bold: true };
-    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.total, invoice.currency);
+    sheet.getCell(`F${row}`).value = this.formatCurrency(invoice.total, (invoice as InvoiceData & { currency?: string }).currency || 'MXN');
     sheet.getCell(`F${row}`).font = { bold: true };
 
     // Auto-fit columns
@@ -252,9 +252,9 @@ export class ExcelReportGeneratorService {
     items.forEach((item, index) => {
       const row = sheet.getRow(startRow + index + 1);
       row.getCell(1).value = index + 1;
-      row.getCell(2).value = item.files?.[0]?.originalName || item.name || 'Unknown';
-      row.getCell(3).value = item.material?.name || 'N/A';
-      row.getCell(4).value = item.manufacturingProcess?.name || item.processCode || 'N/A';
+      row.getCell(2).value = (item as ReportItem & { files?: Array<{ originalName?: string }> }).files?.[0]?.originalName || item.name || 'Unknown';
+      row.getCell(3).value = (item as ReportItem & { material?: { name?: string } }).material?.name || 'N/A';
+      row.getCell(4).value = (item as ReportItem & { manufacturingProcess?: { name?: string }; processCode?: string }).manufacturingProcess?.name || (item as ReportItem & { processCode?: string }).processCode || 'N/A';
       row.getCell(5).value = item.quantity;
       row.getCell(6).value = item.unitPrice;
       row.getCell(7).value = item.unitPrice * item.quantity;
@@ -392,7 +392,7 @@ export class ExcelReportGeneratorService {
     sheet.getCell('E3').font = { bold: true };
   }
 
-  private formatCurrency(amount: number, currency?: string): string {
+  private formatCurrency(amount: number | undefined, currency?: string): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',

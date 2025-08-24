@@ -224,7 +224,7 @@ export class TenantCacheService {
       // await this.cacheService.deletePattern(pattern); // Method may not exist
       // await this.cacheService.delete(pattern); // Method may not exist either
       try {
-        await (this.cacheService as any).clearPattern(pattern);
+        await (this.cacheService as CacheService & { clearPattern?: (pattern: string) => Promise<void> }).clearPattern?.(pattern);
       } catch {
         this.logger.warn(`Could not clear cache pattern: ${pattern}`);
       }
