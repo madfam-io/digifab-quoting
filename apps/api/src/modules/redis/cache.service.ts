@@ -4,6 +4,7 @@ import { RedisService } from './redis.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 import { LoggerService } from '@/common/logger/logger.service';
 import type { PricingRule, Tenant, Quote, QuoteItem } from '@madfam/shared';
+import type { CacheStatistics } from './interfaces/cache-options.interface';
 
 export interface CacheAsideOptions<T> {
   key: string;
@@ -244,7 +245,7 @@ export class CacheService {
   async getHealthStatus(): Promise<{
     status: 'healthy' | 'unhealthy';
     connected: boolean;
-    statistics: ReturnType<typeof this.redisService.getStatistics>;
+    statistics: CacheStatistics;
     uptime: number;
   }> {
     const isConnected = this.redisService.isConnected();

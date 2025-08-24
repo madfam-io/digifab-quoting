@@ -59,6 +59,7 @@ export class AuthService {
       roles: user.roles,
       tenantId: user.tenantId,
       lastLogin: new Date(),
+      lastActivity: new Date(),
     };
     await this.cacheService.cacheUserSession(user.id, sessionData);
 

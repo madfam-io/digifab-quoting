@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Quote } from '@prisma/client';
+import { Prisma, Quote, PrismaClient } from '@prisma/client';
 import { QuoteStatus } from '@madfam/shared';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
@@ -18,7 +18,8 @@ export type QuoteWithRelations = Quote & {
 export class QuoteRepository extends BaseRepositoryImpl<
   QuoteWithRelations,
   Prisma.QuoteCreateInput,
-  Prisma.QuoteUpdateInput
+  Prisma.QuoteUpdateInput,
+  PrismaClient['quote']
 > {
   constructor(protected readonly prisma: PrismaService) {
     super(prisma);
@@ -206,33 +207,38 @@ export class QuoteRepository extends BaseRepositoryImpl<
     });
   }
 
-  protected buildWhereClause(tenantId: string, filters?: Record<string, any>): any {
-    const where = super.buildWhereClause(tenantId, filters);
+  protected buildWhereClause<TFilter extends Record<string, unknown>>(
+    tenantId: string,
+    filters?: TFilter,
+  ): Prisma.QuoteWhereInput {
+    const baseWhere = super.buildWhereClause(tenantId, filters) as any;
+    const where: Prisma.QuoteWhereInput = { ...baseWhere };
 
     // Handle special filters
     if (filters?.dateFrom || filters?.dateTo) {
       where.createdAt = {};
       if (filters.dateFrom) {
-        where.createdAt.gte = new Date(filters.dateFrom);
+        where.createdAt.gte = new Date(filters.dateFrom as string);
       }
       if (filters.dateTo) {
-        where.createdAt.lte = new Date(filters.dateTo);
+        where.createdAt.lte = new Date(filters.dateTo as string);
       }
     }
 
     if (filters?.search) {
       where.OR = [
-        { reference: { contains: filters.search, mode: 'insensitive' } },
-        { customer: { name: { contains: filters.search, mode: 'insensitive' } } },
-        { customer: { email: { contains: filters.search, mode: 'insensitive' } } },
+        { number: { contains: filters.search as string, mode: 'insensitive' } },
+        { customer: { name: { contains: filters.search as string, mode: 'insensitive' } } },
+        { customer: { email: { contains: filters.search as string, mode: 'insensitive' } } },
       ];
     }
 
-    // Remove processed filters
-    delete where.dateFrom;
-    delete where.dateTo;
-    delete where.search;
+    // Remove processed filters from base where
+    const cleanedWhere = { ...where };
+    delete (cleanedWhere as any).dateFrom;
+    delete (cleanedWhere as any).dateTo;
+    delete (cleanedWhere as any).search;
 
-    return where;
+    return cleanedWhere;
   }
 }

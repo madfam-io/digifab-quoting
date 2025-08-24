@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
 // Generic type to extract the delegate type from PrismaClient
-type ExtractDelegate<T> = T extends { [K in keyof T]: infer D } ? D : never;
+// type ExtractDelegate<T> = T extends { [K in keyof T]: infer D } ? D : never;
 
 // Generic constraints for Prisma operations
 type WhereInput<T> = T extends { findMany: (args: infer Args) => any }
