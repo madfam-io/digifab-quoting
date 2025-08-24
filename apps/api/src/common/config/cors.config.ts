@@ -53,13 +53,14 @@ export function createCorsConfig(configService: ConfigService): CorsOptions {
 import { Request, Response, NextFunction } from 'express';
 
 // Pre-flight request handler
-export function handlePreflightRequest(req: Request, res: Response, next: NextFunction) {
+export function handlePreflightRequest(req: Request, res: Response, next: NextFunction): void {
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Tenant-ID, X-API-Key');
     res.header('Access-Control-Max-Age', '86400');
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return;
   }
   next();
 }

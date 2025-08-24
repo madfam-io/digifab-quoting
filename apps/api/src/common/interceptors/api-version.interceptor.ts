@@ -90,13 +90,14 @@ export class ApiVersionInterceptor implements NestInterceptor {
     // Check header first
     const headerVersion = request.headers['x-api-version'] || request.headers['api-version'];
     if (headerVersion) {
-      return this.normalizeVersion(headerVersion);
+      return this.normalizeVersion(Array.isArray(headerVersion) ? headerVersion[0] : headerVersion);
     }
 
     // Check Accept header
     const acceptHeader = request.headers['accept'];
     if (acceptHeader) {
-      const versionMatch = acceptHeader.match(/application\/vnd\.madfam\.v(\d+)\+json/);
+      const acceptStr = Array.isArray(acceptHeader) ? acceptHeader[0] : acceptHeader;
+      const versionMatch = acceptStr.match(/application\/vnd\.madfam\.v(\d+)\+json/);
       if (versionMatch) {
         return `v${versionMatch[1]}`;
       }
@@ -104,7 +105,18 @@ export class ApiVersionInterceptor implements NestInterceptor {
 
     // Check query parameter
     if (request.query?.version) {
-      return this.normalizeVersion(request.query.version);
+      const queryVersion = request.query.version;
+      let versionStr: string;
+      
+      if (Array.isArray(queryVersion)) {
+        versionStr = String(queryVersion[0]);
+      } else if (typeof queryVersion === 'string') {
+        versionStr = queryVersion;
+      } else {
+        versionStr = JSON.stringify(queryVersion);
+      }
+      
+      return this.normalizeVersion(versionStr);
     }
 
     return null;

@@ -61,7 +61,11 @@ export class SentryService {
         
         // Sanitize sensitive data
         if (event.request) {
-          this.sanitizeRequestData(event.request);
+          this.sanitizeRequestData(event.request as {
+            headers?: Record<string, string>;
+            query_string?: string;
+            data?: unknown;
+          });
         }
         
         return event;
@@ -91,17 +95,17 @@ export class SentryService {
     if (request.headers) {
       const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
       sensitiveHeaders.forEach(header => {
-        if (request.headers[header]) {
+        if (request.headers && request.headers[header]) {
           request.headers[header] = '[Sanitized]';
         }
       });
     }
 
     // Remove sensitive query parameters
-    if (request.query_string) {
+    if (request.query_string && typeof request.query_string === 'string') {
       const sensitiveParams = ['token', 'api_key', 'password', 'secret'];
       sensitiveParams.forEach(param => {
-        if (request.query_string.includes(param)) {
+        if (request.query_string && typeof request.query_string === 'string' && request.query_string.includes(param)) {
           request.query_string = request.query_string.replace(
             new RegExp(`${param}=[^&]*`, 'gi'),
             `${param}=[Sanitized]`
@@ -138,7 +142,7 @@ export class SentryService {
     Sentry.withScope((scope) => {
       if (context) {
         Object.entries(context).forEach(([key, value]) => {
-          scope.setTag(key, value);
+          scope.setTag(key, String(value));
         });
       }
       Sentry.captureException(error);
@@ -152,7 +156,7 @@ export class SentryService {
       scope.setLevel(level);
       if (context) {
         Object.entries(context).forEach(([key, value]) => {
-          scope.setTag(key, value);
+          scope.setTag(key, String(value));
         });
       }
       Sentry.captureMessage(message);

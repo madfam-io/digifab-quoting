@@ -160,7 +160,7 @@ export class SecurityValidator {
 
     // Deep sanitization of JSON object
     if (typeof value === 'object' && value !== null) {
-      return this.deepSanitizeObject(value);
+      return this.deepSanitizeObject(value) as T | Record<string, unknown> | Array<unknown>;
     }
 
     return value;

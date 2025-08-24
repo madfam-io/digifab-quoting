@@ -21,7 +21,7 @@ export class ValidationMiddleware implements NestMiddleware {
 
     // Validate file uploads if present
     if ('files' in req && req.files) {
-      this.validateFiles(req.files as Express.Multer.File[] | Express.Multer.File);
+      this.validateFiles(req.files as Express.Multer.File[] | Express.Multer.File | { [fieldname: string]: Express.Multer.File[] });
     }
 
     // Add security headers
@@ -104,7 +104,7 @@ export class ValidationMiddleware implements NestMiddleware {
     return sanitized;
   }
 
-  private validateFiles(files: Express.Multer.File[] | Express.Multer.File): void {
+  private validateFiles(files: Express.Multer.File[] | Express.Multer.File | { [fieldname: string]: Express.Multer.File[] }): void {
     const maxFileSize = 50 * 1024 * 1024; // 50MB
     const allowedExtensions = ['.stl', '.step', '.stp', '.iges', '.igs', '.dxf'];
 

@@ -58,12 +58,18 @@ export function createVersionExtractor() {
     const headerVersion = request.headers['x-api-version'] || 
                          request.headers['api-version'];
     if (headerVersion) {
-      return normalizeVersion(headerVersion);
+      return normalizeVersion(Array.isArray(headerVersion) ? headerVersion[0] : headerVersion);
     }
 
     // 2. Check query parameter
     if (request.query?.version) {
-      return normalizeVersion(request.query.version);
+      const queryVersion = request.query.version;
+      const versionStr = Array.isArray(queryVersion) 
+        ? String(queryVersion[0])
+        : typeof queryVersion === 'string'
+          ? queryVersion
+          : String(queryVersion);
+      return normalizeVersion(versionStr);
     }
 
     // 3. Check Accept header for media type versioning

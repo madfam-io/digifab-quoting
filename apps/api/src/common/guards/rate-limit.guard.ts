@@ -40,9 +40,9 @@ export class RateLimitGuard implements CanActivate {
     return new Promise((resolve, reject) => {
       const rateLimiter = this.rateLimitMiddleware.createRateLimiter(options.type);
       
-      rateLimiter(request, response, (error?: Error) => {
+      rateLimiter(request, response, (error?: unknown) => {
         if (error) {
-          reject(error);
+          reject(error as Error);
         } else {
           resolve(true);
         }

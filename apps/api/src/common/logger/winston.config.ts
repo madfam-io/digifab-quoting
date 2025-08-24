@@ -111,7 +111,7 @@ export const createLoggerMiddleware = (logger: winston.Logger) => {
 
     // Log response
     const originalSend = res.send;
-    res.send = function (data: unknown) {
+    res.send = function (data: unknown): Response {
       const responseTime = Date.now() - start;
 
       logger.http('Outgoing response', {
@@ -121,7 +121,7 @@ export const createLoggerMiddleware = (logger: winston.Logger) => {
         responseTime: `${responseTime}ms`,
       });
 
-      originalSend.call(this, data);
+      return originalSend.call(this, data);
     };
 
     next();

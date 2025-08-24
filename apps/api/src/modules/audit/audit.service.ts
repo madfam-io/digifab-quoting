@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
 import { AuditAction, AuditEntity } from '@madfam/shared';
+import { Prisma } from '@prisma/client';
 
 // Re-export for backward compatibility
 export { AuditAction, AuditEntity };
@@ -41,8 +42,8 @@ export class AuditService {
           entity: entry.entity,
           entityId: entry.entityId,
           action: entry.action,
-          before: entry.before || undefined,
-          after: entry.after || undefined,
+          before: entry.before || Prisma.JsonNull,
+          after: entry.after || Prisma.JsonNull,
           metadata: {
             ...entry.metadata,
             requestId: context.requestId,

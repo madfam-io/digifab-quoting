@@ -154,12 +154,7 @@ export class ApiKeyService {
     });
   }
 
-  async getUsageStats(keyId: string, days: number = 7): Promise<Array<{
-    endpoint: string;
-    _count: {
-      id: number;
-    };
-  }>> {
+  async getUsageStats(keyId: string, days: number = 7) {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
