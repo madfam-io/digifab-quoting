@@ -18,6 +18,7 @@ const envSchema = z.object({
 
   // CORS
   ALLOWED_ORIGINS: z.string().default('http://localhost:3002'),
+  CORS_MAX_AGE_SECONDS: z.string().transform(Number).default('86400'),
 
   // AWS S3
   AWS_REGION: z.string().default('us-east-1'),
@@ -75,6 +76,51 @@ const envSchema = z.object({
   QUOTE_VALIDITY_DAYS: z.string().transform(Number).default('14'),
   MIN_ORDER_VALUE_MXN: z.string().transform(Number).default('500'),
   MAX_FILE_SIZE_MB: z.string().transform(Number).default('100'),
+
+  // Timeouts
+  DEFAULT_TIMEOUT_MS: z.string().transform(Number).default('30000'),
+  FILE_UPLOAD_TIMEOUT_MS: z.string().transform(Number).default('300000'),
+  GEOMETRY_ANALYSIS_TIMEOUT_MS: z.string().transform(Number).default('120000'),
+  ADMIN_OPERATION_TIMEOUT_MS: z.string().transform(Number).default('60000'),
+  PAYMENT_TIMEOUT_MS: z.string().transform(Number).default('30000'),
+  WORKER_SERVICE_TIMEOUT_MS: z.string().transform(Number).default('300000'),
+
+  // Job Queue Settings
+  JOB_QUEUE_COMPLETED_RETENTION: z.string().transform(Number).default('100'),
+  JOB_QUEUE_FAILED_RETENTION: z.string().transform(Number).default('1000'),
+  JOB_QUEUE_ATTEMPTS: z.string().transform(Number).default('3'),
+  JOB_QUEUE_BACKOFF_DELAY_MS: z.string().transform(Number).default('2000'),
+  QUOTE_CALCULATION_TIMEOUT_MS: z.string().transform(Number).default('60000'),
+  FILE_ANALYSIS_TIMEOUT_MS: z.string().transform(Number).default('120000'),
+  EMAIL_NOTIFICATION_TIMEOUT_MS: z.string().transform(Number).default('30000'),
+
+  // Redis Settings
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.string().transform(Number).default('6379'),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_MAX_RETRIES_PER_REQUEST: z.string().transform(Number).default('3'),
+  REDIS_RETRY_STRATEGY_MAX_MS: z.string().transform(Number).default('2000'),
+
+  // Cache TTLs (in seconds)
+  CACHE_PRICING_RULES_TTL: z.string().transform(Number).default('3600'),
+  CACHE_TENANT_CONFIG_TTL: z.string().transform(Number).default('1800'),
+  CACHE_USER_SESSION_TTL: z.string().transform(Number).default('900'),
+  CACHE_QUOTE_CALCULATION_TTL: z.string().transform(Number).default('3600'),
+
+  // Audit Settings
+  AUDIT_LOG_DEFAULT_LIMIT: z.string().transform(Number).default('50'),
+  AUDIT_LOG_EXPORT_MAX_LIMIT: z.string().transform(Number).default('10000'),
+
+  // File Analysis Settings
+  FILE_ANALYSIS_PROGRESS_INTERVAL_MS: z.string().transform(Number).default('5000'),
+
+  // Frontend URL
+  FRONTEND_URL: z.string().url().default('http://localhost:3002'),
+
+  // Default Ports (fallback values)
+  FALLBACK_API_PORT: z.string().transform(Number).default('4000'),
+  FALLBACK_WEB_PORT: z.string().transform(Number).default('3002'),
+  FALLBACK_WORKER_PORT: z.string().transform(Number).default('8000'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

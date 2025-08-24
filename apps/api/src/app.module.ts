@@ -1,5 +1,5 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -30,12 +30,16 @@ import { GuestModule } from './modules/guest/guest.module';
       isGlobal: true,
       load: [configuration],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ([
+        {
+          ttl: configService.get('RATE_LIMIT_TTL', 60) * 1000, // Convert seconds to milliseconds
+          limit: configService.get('RATE_LIMIT_MAX', 100),
+        },
+      ]),
+      inject: [ConfigService],
+    }),
     TenantModule,
     PrismaModule,
     LoggerModule,

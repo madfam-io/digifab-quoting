@@ -50,6 +50,8 @@ interface FileAnalysisResult {
 @Injectable()
 export class FileAnalysisProcessor {
   private readonly workerServiceUrl: string;
+  private readonly workerServiceTimeout: number;
+  private readonly progressIntervalMs: number;
 
   constructor(
     private readonly logger: LoggerService,
@@ -58,7 +60,9 @@ export class FileAnalysisProcessor {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.workerServiceUrl = this.configService.get<string>('worker.url', 'http://localhost:8000');
+    this.workerServiceUrl = this.configService.get<string>('WORKER_SERVICE_URL', 'http://localhost:8000');
+    this.workerServiceTimeout = this.configService.get<number>('WORKER_SERVICE_TIMEOUT_MS', 300000);
+    this.progressIntervalMs = this.configService.get<number>('FILE_ANALYSIS_PROGRESS_INTERVAL_MS', 5000);
   }
 
   @Process()
@@ -215,14 +219,14 @@ export class FileAnalysisProcessor {
         if (currentProgress.percentage < 80) {
           await this.updateProgress(job, currentProgress.percentage + 5, 'Analyzing geometry...');
         }
-      }, 5000);
+      }, this.progressIntervalMs);
 
       const response = await firstValueFrom(
         this.httpService.post(`${this.workerServiceUrl}/api/v1/analyze`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-          timeout: 5 * 60 * 1000, // 5 minutes
+          timeout: this.workerServiceTimeout,
         }),
       );
 

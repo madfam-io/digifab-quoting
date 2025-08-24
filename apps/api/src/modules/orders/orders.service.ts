@@ -1,18 +1,9 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
-import { OrderStatus, PaymentStatus, QuoteStatus } from '@madfam/shared';
+import { OrderStatus, PaymentStatus, QuoteStatus, InvoiceStatus } from '@madfam/shared';
 import { JobType } from '../jobs/interfaces/job.interface';
 import { QuoteItem } from '@prisma/client';
-
-// TODO: Add InvoiceStatus to shared enums
-// enum InvoiceStatus {
-//   DRAFT = 'DRAFT',
-//   SENT = 'SENT',
-//   PAID = 'PAID',
-//   OVERDUE = 'OVERDUE',
-//   CANCELLED = 'CANCELLED',
-// }
 import { customAlphabet } from 'nanoid';
 
 const generateOrderNumber = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10);
@@ -269,26 +260,26 @@ export class OrdersService {
 
     const invoice = await this.prisma.invoice.create({
       data: {
-        number: invoiceNumber, // Use correct field name
+        number: invoiceNumber,
         orderId,
         customerId: order.customerId,
-        // status: InvoiceStatus.DRAFT, // Remove if not in schema
-        // subtotal: order.subtotal, // Remove if not in schema
-        // tax: order.tax, // Remove if not in schema
-        // shipping: order.shipping, // Remove if not in schema
         total: order.totalAmount,
         currency: order.currency,
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         tenantId,
-        // lineItems: { // Remove if not in schema
-        //   create: order.orderItems.map((item) => ({
-        //     description: `${item.part?.filename || 'Item'} - ${item.process} - ${item.material}`,
-        //     quantity: item.quantity,
-        //     unitPrice: item.unitPrice,
-        //     amount: item.subtotal,
-        //     tenantId,
-        //   })),
-        // },
+        metadata: {
+          // Store status in metadata until schema is updated
+          status: InvoiceStatus.DRAFT,
+          subtotal: order.subtotal,
+          tax: order.tax,
+          shipping: order.shipping,
+          lineItems: order.orderItems.map((item) => ({
+            description: `${item.part?.filename || 'Item'} - ${item.process} - ${item.material}`,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            amount: item.subtotal,
+          })),
+        },
       },
     });
 

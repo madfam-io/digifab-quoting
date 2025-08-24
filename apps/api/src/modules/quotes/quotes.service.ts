@@ -13,6 +13,9 @@ import { Decimal } from 'decimal.js';
 import { createPaginatedResponse, getPrismaSkipTake } from '../../common/utils/pagination.util';
 import { PaginatedDto } from '../../common/dto/paginated.dto';
 import { TenantCacheService } from '../tenants/services/tenant-cache.service';
+import { JobsService } from '../jobs/jobs.service';
+import { JobType } from '../jobs/interfaces/job.interface';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class QuotesService {
@@ -21,6 +24,8 @@ export class QuotesService {
     private pricingService: PricingService,
     private quoteCacheService: QuoteCacheService,
     private tenantCacheService: TenantCacheService,
+    private jobsService: JobsService,
+    private filesService: FilesService,
   ) {}
 
   async create(tenantId: string, customerId: string, dto: CreateQuoteDto): Promise<PrismaQuote> {
@@ -449,5 +454,109 @@ export class QuotesService {
     // Generate quote number in format: Q-YYYY-MM-XXXX
     const sequence = String(count + 1).padStart(4, '0');
     return `Q-${year}-${month}-${sequence}`;
+  }
+
+  async generatePdf(tenantId: string, quoteId: string): Promise<{ url: string; expiresAt: string }> {
+    // Get quote with all related data
+    const quote = await this.prisma.quote.findFirst({
+      where: { id: quoteId, tenantId },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            part: true,
+            material: true,
+            process: true,
+            sustainability: true,
+          },
+        },
+        tenant: {
+          select: {
+            name: true,
+            taxId: true,
+            settings: true,
+          },
+        },
+      },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    // Check if PDF already exists and is recent (less than 24 hours old)
+    const existingPdf = await this.prisma.file.findFirst({
+      where: {
+        tenantId,
+        metadata: {
+          path: ['$.quoteId'],
+          equals: quoteId,
+        },
+        type: 'pdf',
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (existingPdf) {
+      // Return existing PDF URL
+      const url = await this.filesService.getFileUrl(tenantId, existingPdf.id);
+      return {
+        url,
+        expiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+      };
+    }
+
+    // Queue PDF generation job
+    const job = await this.jobsService.addJob(JobType.REPORT_GENERATION, {
+      tenantId,
+      reportType: 'quote',
+      entityId: quoteId,
+      format: 'pdf',
+      data: {
+        id: quote.id,
+        number: quote.number,
+        createdAt: quote.createdAt,
+        validUntil: quote.validityUntil,
+        status: quote.status,
+        currency: quote.currency,
+        customer: quote.customer,
+        items: quote.items.map(item => ({
+          name: item.part?.filename || 'Part',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          currency: quote.currency,
+          material: {
+            name: item.material?.name || item.material,
+          },
+          manufacturingProcess: {
+            name: item.process?.name || item.process,
+          },
+          files: [{
+            originalName: item.part?.filename || 'file',
+          }],
+        })),
+        subtotal: quote.subtotal,
+        tax: quote.tax,
+        shipping: quote.shipping,
+        total: quote.totalPrice,
+        tenant: quote.tenant,
+      },
+      options: {
+        includeItemDetails: true,
+        language: 'en', // Could be determined from user preferences
+      },
+    });
+
+    // For now, return a placeholder URL while the PDF is being generated
+    // In production, you might want to implement a webhook or polling mechanism
+    return {
+      url: `${process.env.API_URL}/api/v1/quotes/${quoteId}/pdf/status?jobId=${job.id}`,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    };
   }
 }

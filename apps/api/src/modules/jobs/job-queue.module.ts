@@ -16,45 +16,58 @@ import { JobMonitoringService } from './job-monitoring.service';
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD'),
-          maxRetriesPerRequest: 3,
+          maxRetriesPerRequest: configService.get('REDIS_MAX_RETRIES_PER_REQUEST', 3),
           enableReadyCheck: true,
           retryStrategy: (times: number) => {
-            return Math.min(times * 50, 2000);
+            const maxDelay = configService.get('REDIS_RETRY_STRATEGY_MAX_MS', 2000);
+            return Math.min(times * 50, maxDelay);
           },
         },
         defaultJobOptions: {
-          removeOnComplete: 100, // Keep last 100 completed jobs
-          removeOnFail: 1000, // Keep last 1000 failed jobs
-          attempts: 3,
+          removeOnComplete: configService.get('JOB_QUEUE_COMPLETED_RETENTION', 100),
+          removeOnFail: configService.get('JOB_QUEUE_FAILED_RETENTION', 1000),
+          attempts: configService.get('JOB_QUEUE_ATTEMPTS', 3),
           backoff: {
             type: 'exponential',
-            delay: 2000,
+            delay: configService.get('JOB_QUEUE_BACKOFF_DELAY_MS', 2000),
           },
         },
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue(
+    BullModule.registerQueueAsync(
       {
         name: 'quote-calculation',
-        defaultJobOptions: {
-          priority: 1,
-          timeout: 60000, // 1 minute timeout
-        },
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          defaultJobOptions: {
+            priority: 1,
+            timeout: configService.get('QUOTE_CALCULATION_TIMEOUT_MS', 60000),
+          },
+        }),
+        inject: [ConfigService],
       },
       {
         name: 'file-analysis',
-        defaultJobOptions: {
-          priority: 2,
-          timeout: 120000, // 2 minute timeout
-        },
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          defaultJobOptions: {
+            priority: 2,
+            timeout: configService.get('FILE_ANALYSIS_TIMEOUT_MS', 120000),
+          },
+        }),
+        inject: [ConfigService],
       },
       {
         name: 'email-notification',
-        defaultJobOptions: {
-          priority: 3,
-          timeout: 30000, // 30 second timeout
-        },
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          defaultJobOptions: {
+            priority: 3,
+            timeout: configService.get('EMAIL_NOTIFICATION_TIMEOUT_MS', 30000),
+          },
+        }),
+        inject: [ConfigService],
       },
     ),
   ],

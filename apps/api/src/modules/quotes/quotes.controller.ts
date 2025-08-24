@@ -291,11 +291,7 @@ export class QuotesController {
     description: 'Quote not found',
     type: NotFoundResponseDto,
   })
-  async generatePdf(@Request() _req: AuthenticatedRequest, @Param('id') _id: string) {
-    // TODO: Implement PDF generation
-    return {
-      url: 'https://example.com/quote.pdf',
-      expiresAt: new Date(Date.now() + 3600000).toISOString(),
-    };
+  async generatePdf(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.quotesService.generatePdf(req.user.tenantId, id);
   }
 }

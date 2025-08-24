@@ -22,7 +22,6 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
     if (user && user.passwordHash && (await bcrypt.compare(password, user.passwordHash))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash: _, ...result } = user;
       return {
         id: result.id,
@@ -193,8 +192,7 @@ export class AuthService {
     });
 
     // Generate tokens and login
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _pwd, ...userWithoutPassword } = user;
+    const { passwordHash: _, ...userWithoutPassword } = user;
     const userForLogin: User = {
       id: userWithoutPassword.id,
       tenantId: userWithoutPassword.tenantId,

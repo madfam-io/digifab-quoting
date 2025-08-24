@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { RedisService } from './redis.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 import { LoggerService } from '@/common/logger/logger.service';
+import { ConfigService } from '@nestjs/config';
 import type { PricingRule, Tenant, Quote, QuoteItem } from '@madfam/shared';
 import type { CacheStatistics } from './interfaces/cache-options.interface';
 
@@ -45,11 +46,22 @@ export interface CacheMetadata {
 
 @Injectable()
 export class CacheService {
+  private readonly pricingRulesTtl: number;
+  private readonly tenantConfigTtl: number;
+  private readonly userSessionTtl: number;
+  private readonly quoteCalculationTtl: number;
+
   constructor(
     private readonly redisService: RedisService,
     private readonly tenantContext: TenantContextService,
     private readonly logger: LoggerService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.pricingRulesTtl = this.configService.get<number>('CACHE_PRICING_RULES_TTL', 3600);
+    this.tenantConfigTtl = this.configService.get<number>('CACHE_TENANT_CONFIG_TTL', 1800);
+    this.userSessionTtl = this.configService.get<number>('CACHE_USER_SESSION_TTL', 900);
+    this.quoteCalculationTtl = this.configService.get<number>('CACHE_QUOTE_CALCULATION_TTL', 3600);
+  }
 
   /**
    * Cache-aside pattern implementation
@@ -120,10 +132,10 @@ export class CacheService {
     service: string,
     material: string,
     rules: PricingRule[],
-    ttl = 3600, // 1 hour default
+    ttl?: number,
   ): Promise<void> {
     const key = this.buildKey(`pricing:rules:${service}:${material}`, true);
-    await this.redisService.set(key, rules, ttl);
+    await this.redisService.set(key, rules, ttl ?? this.pricingRulesTtl);
   }
 
   /**
@@ -137,10 +149,10 @@ export class CacheService {
   /**
    * Cache tenant configuration
    */
-  async cacheTenantConfig(config: Tenant, ttl = 1800): Promise<void> {
+  async cacheTenantConfig(config: Tenant, ttl?: number): Promise<void> {
     const tenantId = this.tenantContext.getTenantId();
     const key = `tenant:config:${tenantId}`;
-    await this.redisService.set(key, config, ttl);
+    await this.redisService.set(key, config, ttl ?? this.tenantConfigTtl);
   }
 
   /**
@@ -166,10 +178,10 @@ export class CacheService {
   async cacheUserSession(
     userId: string,
     sessionData: UserSessionData,
-    ttl = 900, // 15 minutes
+    ttl?: number,
   ): Promise<void> {
     const key = this.buildKey(`session:${userId}`, true);
-    await this.redisService.set(key, sessionData, ttl);
+    await this.redisService.set(key, sessionData, ttl ?? this.userSessionTtl);
   }
 
   /**
@@ -183,9 +195,9 @@ export class CacheService {
   /**
    * Extend user session TTL
    */
-  async extendUserSession(userId: string, ttl = 900): Promise<boolean> {
+  async extendUserSession(userId: string, ttl?: number): Promise<boolean> {
     const key = this.buildKey(`session:${userId}`, true);
-    return await this.redisService.expire(key, ttl);
+    return await this.redisService.expire(key, ttl ?? this.userSessionTtl);
   }
 
   /**
@@ -209,10 +221,10 @@ export class CacheService {
     fileHash: string,
     configuration: QuoteConfiguration,
     result: QuoteCalculationResult,
-    ttl = 3600, // 1 hour
+    ttl?: number,
   ): Promise<void> {
     const key = this.generateQuoteKey(fileHash, configuration);
-    await this.redisService.set(key, result, ttl);
+    await this.redisService.set(key, result, ttl ?? this.quoteCalculationTtl);
   }
 
   /**

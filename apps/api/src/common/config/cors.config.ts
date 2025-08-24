@@ -6,13 +6,14 @@ export function createCorsConfig(configService: ConfigService): CorsOptions {
   const allowedOrigins = configService.get('ALLOWED_ORIGINS', '').split(',').filter(Boolean);
   
   // Development defaults
+  const webPort = configService.get<number>('FALLBACK_WEB_PORT', 3002);
   const devOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://localhost:3002',
+    `http://localhost:${webPort}`,
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
-    'http://127.0.0.1:3002',
+    `http://127.0.0.1:${webPort}`,
   ];
 
   const origin = nodeEnv === 'production' 
@@ -44,7 +45,7 @@ export function createCorsConfig(configService: ConfigService): CorsOptions {
       'X-Rate-Limit-Reset',
     ],
     credentials: true,
-    maxAge: 86400, // 24 hours
+    maxAge: configService.get<number>('CORS_MAX_AGE_SECONDS', 86400),
     preflightContinue: false,
     optionsSuccessStatus: 204,
   };
@@ -58,7 +59,7 @@ export function handlePreflightRequest(req: Request, res: Response, next: NextFu
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Tenant-ID, X-API-Key');
-    res.header('Access-Control-Max-Age', '86400');
+    res.header('Access-Control-Max-Age', '86400'); // TODO: Make this configurable
     res.sendStatus(204);
     return;
   }

@@ -8,7 +8,7 @@ import { TenantContext } from '../tenant-context.service';
  * ```typescript
  * @Get()
  * findAll(@Tenant() tenant: TenantContext) {
- *   console.log('Current tenant:', tenant.tenantId);
+ *   this.logger.log(`Current tenant: ${tenant.tenantId}`);
  * }
  * ```
  */
@@ -28,7 +28,7 @@ export const Tenant = createParamDecorator(
  * ```typescript
  * @Get()
  * findAll(@TenantId() tenantId: string) {
- *   console.log('Current tenant ID:', tenantId);
+ *   this.logger.log(`Current tenant ID: ${tenantId}`);
  * }
  * ```
  */

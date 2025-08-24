@@ -128,8 +128,67 @@ export class ValidationMiddleware implements NestMiddleware {
         throw new BadRequestException(`MIME type ${file.mimetype} is not allowed`);
       }
 
-      // TODO: Add magic number validation for file content
+      // Validate magic numbers for file content
+      this.validateFileMagicNumbers(file);
     });
+  }
+
+  private validateFileMagicNumbers(file: Express.Multer.File): void {
+    if (!file.buffer || file.buffer.length < 20) {
+      // Skip validation for files without buffer or too small
+      return;
+    }
+
+    const buffer = file.buffer;
+    const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+
+    // Magic number validation based on file type
+    switch (extension) {
+      case '.stl': {
+        // ASCII STL files start with "solid"
+        const asciiSTL = buffer.subarray(0, 5).toString('ascii');
+        // Binary STL files have 80-byte header (can be anything) + uint32 for triangle count
+        const isBinarySTL = buffer.length > 84;
+        
+        if (!asciiSTL.startsWith('solid') && !isBinarySTL) {
+          throw new BadRequestException(`Invalid STL file format`);
+        }
+        break;
+      }
+
+      case '.step':
+      case '.stp': {
+        // STEP files start with "ISO-10303-21"
+        const stepHeader = buffer.subarray(0, 13).toString('ascii');
+        if (!stepHeader.includes('ISO-10303-21')) {
+          throw new BadRequestException(`Invalid STEP file format`);
+        }
+        break;
+      }
+
+      case '.iges':
+      case '.igs': {
+        // IGES files have specific markers at byte positions
+        // Check for 'S' at position 72 (Start Section)
+        if (buffer.length > 72 && buffer[72] !== 0x53) {
+          throw new BadRequestException(`Invalid IGES file format`);
+        }
+        break;
+      }
+
+      case '.dxf': {
+        // DXF files typically start with group code "0" followed by "SECTION" or similar
+        const dxfHeader = buffer.subarray(0, 20).toString('ascii');
+        if (!dxfHeader.includes('0\r\n') && !dxfHeader.includes('0\n')) {
+          throw new BadRequestException(`Invalid DXF file format`);
+        }
+        break;
+      }
+
+      default:
+        // Unknown file type, skip magic number validation
+        break;
+    }
   }
 }
 

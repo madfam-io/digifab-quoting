@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
+import { LoggerService } from '../../common/logger/logger.service';
+import { ConfigService } from '@nestjs/config';
 import { AuditAction, AuditEntity } from '@madfam/shared';
 import { Prisma } from '@prisma/client';
 
@@ -18,10 +20,18 @@ export interface AuditLogEntry {
 
 @Injectable()
 export class AuditService {
+  private readonly defaultLimit: number;
+  private readonly exportMaxLimit: number;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantContext: TenantContextService,
-  ) {}
+    private readonly logger: LoggerService,
+    private readonly configService: ConfigService,
+  ) {
+    this.defaultLimit = this.configService.get<number>('AUDIT_LOG_DEFAULT_LIMIT', 50);
+    this.exportMaxLimit = this.configService.get<number>('AUDIT_LOG_EXPORT_MAX_LIMIT', 10000);
+  }
 
   /**
    * Log an audit entry
@@ -53,8 +63,7 @@ export class AuditService {
       });
     } catch (error) {
       // Log error but don't throw - audit logging should not break the application
-      // eslint-disable-next-line no-console
-      console.error('Failed to create audit log:', error);
+      this.logger.error('Failed to create audit log', error as Error, 'AuditService');
     }
   }
 
@@ -181,7 +190,7 @@ export class AuditService {
       this.prisma.auditLog.findMany({
         where,
         orderBy: { at: 'desc' },
-        take: params.limit || 50,
+        take: params.limit || this.defaultLimit,
         skip: params.offset || 0,
         include: {
           actor: {
@@ -232,7 +241,7 @@ export class AuditService {
       from: params.from,
       to: params.to,
       entity: params.entity,
-      limit: 10000, // Max export size
+      limit: this.exportMaxLimit,
     });
 
     // Log the export action itself

@@ -111,6 +111,14 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
+export enum InvoiceStatus {
+  DRAFT = 'DRAFT',
+  SENT = 'SENT',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  CANCELLED = 'CANCELLED',
+}
+
 // Material enums
 export enum MaterialCategory {
   PLASTIC = 'PLASTIC',
