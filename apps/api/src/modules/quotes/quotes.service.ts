@@ -12,6 +12,7 @@ import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { Decimal } from 'decimal.js';
 import { createPaginatedResponse, getPrismaSkipTake } from '../../common/utils/pagination.util';
 import { PaginatedDto } from '../../common/dto/paginated.dto';
+import { TenantCacheService } from '../tenants/services/tenant-cache.service';
 
 @Injectable()
 export class QuotesService {
@@ -19,10 +20,13 @@ export class QuotesService {
     private prisma: PrismaService,
     private pricingService: PricingService,
     private quoteCacheService: QuoteCacheService,
+    private tenantCacheService: TenantCacheService,
   ) {}
 
   async create(tenantId: string, customerId: string, dto: CreateQuoteDto): Promise<PrismaQuote> {
-    const validityDays = 14; // TODO: Get from tenant config
+    // Get quote validity days from tenant configuration
+    const tenantConfig = await this.tenantCacheService.getTenantConfig(tenantId);
+    const validityDays = (tenantConfig.settings.quoteValidityDays as number) || 14;
     const validityUntil = new Date();
     validityUntil.setDate(validityUntil.getDate() + validityDays);
 
@@ -179,7 +183,7 @@ export class QuotesService {
     }) as Promise<PrismaQuoteItem>;
   }
 
-  async calculate(tenantId: string, quoteId: string, dto: CalculateQuoteDto): Promise<{ id: string; status: string; [key: string]: unknown }> {
+  async calculate(tenantId: string, quoteId: string, dto: CalculateQuoteDto): Promise<{ quote: PrismaQuote & { items: Array<PrismaQuoteItem & { files: unknown[]; dfmReport: unknown }> }; errors?: Array<{ itemId?: string; error: string }> }> {
     const quote = await this.findOne(tenantId, quoteId);
 
     // Update objective if provided
@@ -279,7 +283,7 @@ export class QuotesService {
     }
 
     // Calculate totals
-    const totals = this.calculateTotals(calculatedItems, quote.currency as Currency);
+    const totals = await this.calculateTotals(tenantId, calculatedItems, quote.currency as Currency);
 
     // Update quote status and totals
     const updatedQuote = await this.prisma.quote.update({
@@ -354,24 +358,35 @@ export class QuotesService {
     });
   }
 
-  private calculateTotals(items: Array<{ totalPrice?: number | null }>, currency: Currency): {
+  private async calculateTotals(
+    tenantId: string,
+    items: Array<PrismaQuoteItem>,
+    currency: Currency,
+  ): Promise<{
     subtotal: number;
     tax: number;
     shipping: number;
     grandTotal: number;
     currency: Currency;
-  } {
+  }> {
     const subtotal = items.reduce(
       (sum, item) => sum.plus(new Decimal(item.totalPrice || 0)),
       new Decimal(0),
     );
 
-    // TODO: Calculate tax based on tenant configuration
-    const taxRate = new Decimal(0.16); // 16% IVA
+    // Get tenant pricing settings for tax and shipping calculation
+    const pricingSettings = await this.tenantCacheService.getPricingSettings(tenantId);
+    
+    // Calculate tax based on tenant configuration
+    const taxRate = new Decimal((pricingSettings.taxRate as number) || 0.16); // Default 16% IVA
     const tax = subtotal.mul(taxRate);
 
-    // TODO: Calculate shipping
-    const shipping = new Decimal(0);
+    // Calculate shipping based on tenant configuration
+    const freeShippingThreshold = new Decimal((pricingSettings.freeShippingThreshold as number) || 1000);
+    const standardShippingRate = new Decimal((pricingSettings.standardShippingRate as number) || 150);
+    
+    // Apply free shipping if order meets threshold, otherwise apply standard rate
+    const shipping = subtotal.gte(freeShippingThreshold) ? new Decimal(0) : standardShippingRate;
 
     const grandTotal = subtotal.plus(tax).plus(shipping);
 
