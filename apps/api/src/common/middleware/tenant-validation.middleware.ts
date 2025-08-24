@@ -8,7 +8,7 @@ export interface RequestWithTenant extends Request {
 
 @Injectable()
 export class TenantValidationMiddleware implements NestMiddleware {
-  use(req: RequestWithTenant, res: Response, next: NextFunction) {
+  use(req: RequestWithTenant, _res: Response, next: NextFunction) {
     try {
       // Extract tenant from various sources
       const tenantFromHeader = req.headers['x-tenant-id'] as string;

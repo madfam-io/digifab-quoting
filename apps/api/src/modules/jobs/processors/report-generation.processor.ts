@@ -9,7 +9,6 @@ import {
 } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
 
 // Import the new services
 import { ReportDataLoaderService } from '../services/report-data-loader.service';
@@ -34,7 +33,6 @@ export class ReportGenerationProcessor {
   constructor(
     private readonly logger: LoggerService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly dataLoader: ReportDataLoaderService,
     private readonly pdfGenerator: PdfReportGeneratorService,
     private readonly excelGenerator: ExcelReportGeneratorService,
@@ -63,7 +61,7 @@ export class ReportGenerationProcessor {
 
       // Step 2: Generate report based on format
       await this.updateProgress(job, 30, 'Generating report');
-      const { filePath, fileName } = await this.generateReport(
+      const { filePath } = await this.generateReport(
         reportType,
         reportData,
         format,
@@ -117,19 +115,14 @@ export class ReportGenerationProcessor {
           fileSize: uploadResult.fileSize,
           generatedAt: new Date(),
         },
-        processingTime,
       };
     } catch (error) {
-      this.logger.error(`Report generation failed: ${error.message}`, {
-        jobId: job.id,
-        error: error.stack,
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      
+      this.logger.error(`Report generation failed: ${errorMessage}`, errorStack);
 
-      return {
-        success: false,
-        error: error.message,
-        processingTime: Date.now() - startTime,
-      };
+      throw new Error(errorMessage);
     }
   }
 
@@ -145,7 +138,7 @@ export class ReportGenerationProcessor {
 
   @OnQueueFailed()
   onError(job: Job, error: Error) {
-    this.logger.error(`Job ${job.id} failed`, { error: error.message });
+    this.logger.error(`Job ${job.id} failed: ${error.message}`);
   }
 
   private async generateReport(
@@ -153,7 +146,7 @@ export class ReportGenerationProcessor {
     data: any,
     format: ReportGenerationJobData['format'],
     options: ReportGenerationJobData['options'],
-    job: Job<ReportGenerationJobData>,
+    _job: Job<ReportGenerationJobData>,
   ): Promise<{ filePath: string; fileName: string }> {
     switch (format) {
       case 'pdf':
@@ -179,11 +172,11 @@ export class ReportGenerationProcessor {
         tenantId,
         type: reportType,
         entityId,
-        entityType: this.getEntityType(reportType),
+        // entityType: this.getEntityType(reportType), // Remove if not in schema
         fileName: uploadResult.fileName,
         fileUrl: uploadResult.fileUrl,
         fileSize: uploadResult.fileSize,
-        format: this.getFormatFromContentType(uploadResult.contentType),
+        // format: this.getFormatFromContentType(uploadResult.contentType), // Remove if not in schema
         status: 'completed',
         metadata: {
           options,
@@ -195,22 +188,7 @@ export class ReportGenerationProcessor {
     });
   }
 
-  private getEntityType(reportType: string): string {
-    const entityTypeMap: Record<string, string> = {
-      quote: 'Quote',
-      order: 'Order',
-      invoice: 'Invoice',
-      analytics: 'Analytics',
-    };
-    return entityTypeMap[reportType] || 'Unknown';
-  }
-
-  private getFormatFromContentType(contentType: string): string {
-    if (contentType.includes('pdf')) return 'pdf';
-    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'excel';
-    if (contentType.includes('csv')) return 'csv';
-    return 'unknown';
-  }
+  // Removed unused helper methods
 
   private extractS3Key(s3Url: string): string {
     // Extract key from s3://bucket/key format

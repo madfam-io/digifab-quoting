@@ -28,7 +28,7 @@ export class HealthService {
   ) {}
 
   async getHealthStatus(): Promise<HealthStatus> {
-    const startTime = Date.now();
+    // const startTime = Date.now(); // Future use for response time metrics
     const checks: HealthCheck[] = [];
 
     // Database health check
@@ -91,7 +91,9 @@ export class HealthService {
     const startTime = Date.now();
     
     try {
-      await this.redis.ping();
+      // Check if Redis is connected instead of ping (which doesn't exist in our RedisService)
+      const isConnected = await this.redis.isConnected();
+      if (!isConnected) throw new Error('Redis not connected');
       const duration = Date.now() - startTime;
       
       return {
@@ -139,7 +141,10 @@ export class HealthService {
   private async checkDisk(): Promise<HealthCheck> {
     try {
       const fs = require('fs');
-      const stats = fs.statSync('.');
+      // const stats = fs.statSync('.'); // Future use for disk space metrics
+      
+      // For now, just check if we can access the filesystem
+      fs.accessSync('.', fs.constants.R_OK | fs.constants.W_OK);
       
       return {
         name: 'disk',

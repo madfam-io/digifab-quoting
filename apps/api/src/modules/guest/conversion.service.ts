@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, ConflictException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { GuestQuoteService } from './guest-quote.service';
-import { FilesService } from '../files/files.service';
 import { RedisService } from '../redis/redis.service';
 import { RegisterWithQuote, ConvertGuestQuote } from '@madfam/shared';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +12,6 @@ export class ConversionService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
     private readonly guestQuoteService: GuestQuoteService,
-    private readonly filesService: FilesService,
     private readonly redis: RedisService,
   ) {}
 
@@ -36,19 +34,22 @@ export class ConversionService {
     }
 
     // Create user account
-    const { user, tokens } = await this.authService.register({
+    const result = await this.authService.register({
       email: dto.email,
       password: dto.password,
-      name: dto.name,
-      company: dto.company,
+      firstName: dto.name.split(' ')[0] || dto.name,
+      lastName: dto.name.split(' ').slice(1).join(' ') || '',
+      company: dto.company!,
     });
+    
+    const { user } = result;
 
     // Convert guest quote to authenticated quote
     const convertedQuoteId = await this.guestQuoteService.convertToAuthenticatedQuote(
       dto.sessionId,
       dto.sessionQuoteId,
       user.id,
-      user.tenantId
+      user.tenantId!
     );
 
     // Track conversion
@@ -64,8 +65,7 @@ export class ConversionService {
     await this.markSessionConverted(dto.sessionId, user.id);
 
     return {
-      user,
-      tokens,
+      ...result,
       quote: await this.prisma.quote.findUnique({
         where: { id: convertedQuoteId },
         include: { items: true },
@@ -97,7 +97,7 @@ export class ConversionService {
     const conversionKey = `guest:conversion:${dto.sessionId}:${dto.sessionQuoteId}`;
     const existingConversion = await this.redis.get(conversionKey);
     if (existingConversion) {
-      const data = JSON.parse(existingConversion);
+      const data = JSON.parse(existingConversion as string);
       return { quoteId: data.convertedQuoteId, success: true };
     }
 
@@ -106,7 +106,7 @@ export class ConversionService {
       dto.sessionId,
       dto.sessionQuoteId,
       userId,
-      user.tenantId
+      user.tenantId!
     );
 
     // Track conversion
@@ -135,9 +135,9 @@ export class ConversionService {
             sessionId,
             sessionQuoteId: quote.id,
           });
-          return { quoteId: quote.id, ...result };
+          return { originalQuoteId: quote.id, ...result };
         } catch (error) {
-          return { quoteId: quote.id, success: false, error: error.message };
+          return { originalQuoteId: quote.id, success: false, error: (error as Error).message };
         }
       })
     );

@@ -2,6 +2,20 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 
+// Extended interface for middleware params with tenant context
+interface PrismaMiddlewareParams extends Prisma.MiddlewareParams {
+  __tenantId?: string;
+}
+
+// Interface for connection statistics query result
+interface ConnectionStats {
+  total_connections: bigint;
+  active_connections: bigint;
+  idle_connections: bigint;
+  waiting_connections: bigint;
+  longest_query_seconds: number | null;
+}
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
@@ -104,19 +118,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   // Middleware for automatic retries
   private retryMiddleware: Prisma.Middleware = async (params, next) => {
-    let lastError: any;
+    let lastError: Error | undefined;
     
     for (let i = 0; i < this.maxRetries; i++) {
       try {
         return await next(params);
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error as Error;
         
         // Only retry on connection errors
         if (
-          error.code === 'P1001' || // Can't reach database
-          error.code === 'P1002' || // Database timeout
-          error.message?.includes('connection')
+          error instanceof Error &&
+          'code' in error &&
+          (error.code === 'P1001' || // Can't reach database
+           error.code === 'P1002' || // Database timeout
+           error.message?.includes('connection'))
         ) {
           this.logger.warn(`Database operation failed, retry ${i + 1}/${this.maxRetries}`);
           await new Promise(resolve => setTimeout(resolve, this.retryDelay * (i + 1)));
@@ -172,7 +188,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     // Get tenant ID from context (set by TenantContextMiddleware)
-    const tenantId = (params as any).__tenantId;
+    const tenantId = (params as PrismaMiddlewareParams).__tenantId;
     
     if (!tenantId) {
       // Skip tenant filtering for auth-related models
@@ -197,7 +213,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     } else if (params.action === 'create') {
       params.args.data = { ...params.args.data, tenantId };
     } else if (params.action === 'createMany') {
-      params.args.data = params.args.data.map((item: any) => ({
+      params.args.data = params.args.data.map((item: Record<string, unknown>) => ({
         ...item,
         tenantId,
       }));
@@ -224,9 +240,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             apply(fn, thisArg, args) {
               // Add tenant ID to params
               if (args[0] && typeof args[0] === 'object') {
-                (args[0] as any).__tenantId = tenantId;
+                (args[0] as PrismaMiddlewareParams).__tenantId = tenantId;
               }
-              return fn.apply(thisArg, args);
+              return (fn as (...args: unknown[]) => unknown).apply(thisArg, args);
             },
           });
         }
@@ -246,7 +262,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async getConnectionStats() {
-    const stats = await this.$queryRaw<any[]>`
+    const stats = await this.$queryRaw<ConnectionStats[]>`
       SELECT 
         count(*) as total_connections,
         count(*) FILTER (WHERE state = 'active') as active_connections,

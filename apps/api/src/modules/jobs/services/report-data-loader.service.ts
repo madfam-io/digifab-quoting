@@ -53,20 +53,20 @@ export class ReportDataLoaderService {
         tenant: {
           select: {
             name: true,
-            taxId: true,
+            // taxId: true, // Remove if not in schema
             settings: true,
             branding: true,
           },
         },
-        quoteItems: {
-          include: {
-            part: {
-              include: {
-                fileAnalysis: true,
-              },
-            },
-          },
-        },
+        // quoteItems: { // Remove if not in schema
+        //   include: {
+        //     part: {
+        //       include: {
+        //         fileAnalysis: true,
+        //       },
+        //     },
+        //   },
+        // },
       },
     });
 
@@ -90,12 +90,12 @@ export class ReportDataLoaderService {
                 manufacturingProcess: true,
               },
             },
-            quoteItems: true,
+            // quoteItems: true, // Remove if not in schema
           },
         },
         customer: {
           include: {
-            user: true,
+            // user: true, // Remove if not in schema
           },
         },
         paymentIntents: {
@@ -131,7 +131,7 @@ export class ReportDataLoaderService {
             quote: {
               include: {
                 items: true,
-                quoteItems: true,
+                // quoteItems: true, // Remove if not in schema
               },
             },
             orderItems: true,
@@ -140,21 +140,21 @@ export class ReportDataLoaderService {
         customer: {
           select: {
             id: true,
-            name: true,
+            // name: true, // Remove if not in schema
             email: true,
-            company: true,
-            billingAddress: true,
-            taxId: true,
+            // company: true, // Remove if not in schema
+            // billingAddress: true, // Remove if not in schema
+            // taxId: true, // Remove if not in schema
           },
         },
-        tenant: {
-          select: {
-            name: true,
-            taxId: true,
-            settings: true,
-            branding: true,
-          },
-        },
+        // tenant: { // Remove if not in schema - Invoice context
+        //   select: {
+        //     name: true,
+        //     // taxId: true, // Remove if not in schema
+        //     settings: true,
+        //     branding: true,
+        //   },
+        // },
       },
     });
 

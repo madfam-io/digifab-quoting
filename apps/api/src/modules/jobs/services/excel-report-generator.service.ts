@@ -123,7 +123,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: any, options: any): void {
+  private addInvoiceSheet(workbook: ExcelJS.Workbook, invoice: any, _options: any): void {
     const sheet = workbook.addWorksheet('Invoice');
 
     // Invoice header
@@ -196,7 +196,7 @@ export class ExcelReportGeneratorService {
     });
   }
 
-  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: any, options: any): void {
+  private addAnalyticsSheets(workbook: ExcelJS.Workbook, data: any, _options: any): void {
     // Summary sheet
     const summarySheet = workbook.addWorksheet('Summary');
     this.addAnalyticsSummary(summarySheet, data);

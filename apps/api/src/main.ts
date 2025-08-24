@@ -2,14 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { validateEnv } from './config/validate-env';
+import { validateEnvironment } from './config/validate-env';
 import { AppLogger } from './common/logger/logger.config';
 
 async function bootstrap() {
   // Validate environment variables
-  validateEnv();
+  validateEnvironment();
 
   // Create app with custom logger
   const logger = AppLogger.create();

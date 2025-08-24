@@ -66,7 +66,7 @@ export class GuestSessionMiddleware implements NestMiddleware {
     if (!data) return null;
 
     try {
-      const session = JSON.parse(data);
+      const session = JSON.parse(data as string);
       
       // Check if expired
       if (new Date(session.expiresAt) < new Date()) {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { QuoteStatus, ProcessType } from '@prisma/client';
+import { QuoteStatus, ProcessType } from '@madfam/shared';
 
 // Quote objective validation
 export const QuoteObjectiveSchema = z
@@ -110,7 +110,7 @@ export function validateCreateQuoteItem(item: unknown) {
 
   // Validate selections based on process
   const validatedSelections = validateQuoteItemSelections(parsed.process, {
-    ...parsed.selections,
+    ...(parsed.selections || {}),
     material: parsed.material,
     quantity: parsed.quantity,
   });

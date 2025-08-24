@@ -5,12 +5,13 @@ import { z } from 'zod';
 
 @Injectable()
 export class ValidationMiddleware implements NestMiddleware {
-  private readonly fileTypeMap: Record<string, string[]> = {
-    'model/stl': ['STL', 'ASCII', 'solid'],
-    'model/step': ['ISO-10303-21', 'STEP'],
-    'model/iges': ['IGES', '5.3'],
-    'application/dxf': ['AutoCAD', 'DXF'],
-  };
+  // File type validation mapping - currently unused but kept for future validation
+  // private readonly fileTypeMap: Record<string, string[]> = {
+  //   'model/stl': ['STL', 'ASCII', 'solid'],
+  //   'model/step': ['ISO-10303-21', 'STEP'],
+  //   'model/iges': ['IGES', '5.3'],
+  //   'application/dxf': ['AutoCAD', 'DXF'],
+  // };
 
   use(req: Request, res: Response, next: NextFunction) {
     // Sanitize all string inputs
@@ -19,8 +20,8 @@ export class ValidationMiddleware implements NestMiddleware {
     this.sanitizeObject(req.params);
 
     // Validate file uploads if present
-    if (req.files) {
-      this.validateFiles(req.files);
+    if ((req as any).files) {
+      this.validateFiles((req as any).files);
     }
 
     // Add security headers

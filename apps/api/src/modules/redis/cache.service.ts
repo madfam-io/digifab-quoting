@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { RedisService } from './redis.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 import { LoggerService } from '@/common/logger/logger.service';
+import type { PricingRule, Tenant, Quote, QuoteItem } from '@madfam/shared';
 
 export interface CacheAsideOptions<T> {
   key: string;
@@ -10,6 +11,35 @@ export interface CacheAsideOptions<T> {
   fetchFn: () => Promise<T>;
   tenantSpecific?: boolean;
   version?: string;
+}
+
+export interface QuoteConfiguration {
+  process: string;
+  material: string;
+  quantity: number;
+  options?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface QuoteCalculationResult {
+  quote: Quote;
+  items: QuoteItem[];
+  processingTime: number;
+  cached?: boolean;
+}
+
+export interface UserSessionData {
+  userId: string;
+  tenantId: string;
+  roles: string[];
+  lastActivity: Date;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CacheMetadata {
+  tenantId?: string;
+  version?: string;
+  [key: string]: unknown;
 }
 
 @Injectable()
@@ -77,7 +107,7 @@ export class CacheService {
   /**
    * Generate cache key for quote calculations
    */
-  generateQuoteKey(fileHash: string, configuration: any): string {
+  generateQuoteKey(fileHash: string, configuration: QuoteConfiguration): string {
     const configHash = this.hashObject(configuration);
     return this.buildKey(`quote:${fileHash}:${configHash}`, true);
   }
@@ -88,7 +118,7 @@ export class CacheService {
   async cachePricingRules(
     service: string,
     material: string,
-    rules: any,
+    rules: PricingRule[],
     ttl = 3600, // 1 hour default
   ): Promise<void> {
     const key = this.buildKey(`pricing:rules:${service}:${material}`, true);
@@ -98,15 +128,15 @@ export class CacheService {
   /**
    * Get cached pricing rules
    */
-  async getCachedPricingRules(service: string, material: string): Promise<any | null> {
+  async getCachedPricingRules(service: string, material: string): Promise<PricingRule[] | null> {
     const key = this.buildKey(`pricing:rules:${service}:${material}`, true);
-    return await this.redisService.get(key);
+    return await this.redisService.get<PricingRule[]>(key);
   }
 
   /**
    * Cache tenant configuration
    */
-  async cacheTenantConfig(config: any, ttl = 1800): Promise<void> {
+  async cacheTenantConfig(config: Tenant, ttl = 1800): Promise<void> {
     const tenantId = this.tenantContext.getTenantId();
     const key = `tenant:config:${tenantId}`;
     await this.redisService.set(key, config, ttl);
@@ -115,10 +145,10 @@ export class CacheService {
   /**
    * Get cached tenant configuration
    */
-  async getCachedTenantConfig(): Promise<any | null> {
+  async getCachedTenantConfig(): Promise<Tenant | null> {
     const tenantId = this.tenantContext.getTenantId();
     const key = `tenant:config:${tenantId}`;
-    return await this.redisService.get(key);
+    return await this.redisService.get<Tenant>(key);
   }
 
   /**
@@ -134,7 +164,7 @@ export class CacheService {
    */
   async cacheUserSession(
     userId: string,
-    sessionData: any,
+    sessionData: UserSessionData,
     ttl = 900, // 15 minutes
   ): Promise<void> {
     const key = this.buildKey(`session:${userId}`, true);
@@ -144,9 +174,9 @@ export class CacheService {
   /**
    * Get cached user session
    */
-  async getCachedUserSession(userId: string): Promise<any | null> {
+  async getCachedUserSession(userId: string): Promise<UserSessionData | null> {
     const key = this.buildKey(`session:${userId}`, true);
-    return await this.redisService.get(key);
+    return await this.redisService.get<UserSessionData>(key);
   }
 
   /**
@@ -167,7 +197,7 @@ export class CacheService {
   /**
    * Set value in cache
    */
-  async set<T>(key: string, value: T, ttl?: number, metadata?: any): Promise<void> {
+  async set<T>(key: string, value: T, ttl?: number, metadata?: CacheMetadata): Promise<void> {
     await this.redisService.set(key, value, ttl, metadata);
   }
 
@@ -176,8 +206,8 @@ export class CacheService {
    */
   async cacheQuoteCalculation(
     fileHash: string,
-    configuration: any,
-    result: any,
+    configuration: QuoteConfiguration,
+    result: QuoteCalculationResult,
     ttl = 3600, // 1 hour
   ): Promise<void> {
     const key = this.generateQuoteKey(fileHash, configuration);
@@ -187,9 +217,9 @@ export class CacheService {
   /**
    * Get cached quote calculation
    */
-  async getCachedQuoteCalculation(fileHash: string, configuration: any): Promise<any | null> {
+  async getCachedQuoteCalculation(fileHash: string, configuration: QuoteConfiguration): Promise<QuoteCalculationResult | null> {
     const key = this.generateQuoteKey(fileHash, configuration);
-    return await this.redisService.get(key);
+    return await this.redisService.get<QuoteCalculationResult>(key);
   }
 
   /**
@@ -204,14 +234,19 @@ export class CacheService {
 
       this.logger.log('Cache warm-up completed');
     } catch (error) {
-      this.logger.error('Error during cache warm-up', error as any);
+      this.logger.error('Error during cache warm-up', error as Error);
     }
   }
 
   /**
    * Get cache health status
    */
-  async getHealthStatus() {
+  async getHealthStatus(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    connected: boolean;
+    statistics: ReturnType<typeof this.redisService.getStatistics>;
+    uptime: number;
+  }> {
     const isConnected = this.redisService.isConnected();
     const statistics = this.redisService.getStatistics();
 
@@ -244,7 +279,7 @@ export class CacheService {
   /**
    * Generate hash for object (for cache key generation)
    */
-  private hashObject(obj: any): string {
+  private hashObject(obj: Record<string, unknown>): string {
     const str = JSON.stringify(obj, Object.keys(obj).sort());
     return createHash('md5').update(str).digest('hex').substring(0, 8);
   }

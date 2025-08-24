@@ -348,4 +348,136 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const total = this.statistics.hits + this.statistics.misses;
     this.statistics.hitRate = total > 0 ? (this.statistics.hits / total) * 100 : 0;
   }
+
+  // ===== SET OPERATIONS =====
+
+  /**
+   * Add member(s) to a set
+   */
+  async sadd(key: string, ...members: (string | number)[]): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.sadd(key, ...members);
+    } catch (error) {
+      this.logger.error(
+        `Error adding to set ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  /**
+   * Get all members of a set
+   */
+  async smembers(key: string): Promise<string[]> {
+    if (!this.client) {
+      return [];
+    }
+    try {
+      return await this.client.smembers(key);
+    } catch (error) {
+      this.logger.error(
+        `Error getting set members ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return [];
+    }
+  }
+
+  /**
+   * Get count of members in a set
+   */
+  async scard(key: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.scard(key);
+    } catch (error) {
+      this.logger.error(
+        `Error getting set count ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  // ===== COUNTER OPERATIONS =====
+
+  /**
+   * Increment counter by 1
+   */
+  async incr(key: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.incr(key);
+    } catch (error) {
+      this.logger.error(
+        `Error incrementing counter ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  /**
+   * Increment counter by specific amount
+   */
+  async incrby(key: string, amount: number): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.incrby(key, amount);
+    } catch (error) {
+      this.logger.error(
+        `Error incrementing counter ${key} by ${amount}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  // ===== LEGACY METHOD ALIASES =====
+
+  /**
+   * Legacy setex method - use set(key, value, ttl) instead
+   * @deprecated
+   */
+  async setex(key: string, ttl: number, value: any): Promise<boolean> {
+    return this.set(key, value, ttl);
+  }
+
+  /**
+   * Legacy del method - use delete(key) instead  
+   * @deprecated
+   */
+  async del(key: string | string[]): Promise<number> {
+    return this.delete(key);
+  }
+
+  /**
+   * Legacy ping method - use isConnected() instead
+   * @deprecated
+   */
+  async ping(): Promise<string> {
+    if (!this.client) {
+      throw new Error('Redis not connected');
+    }
+    try {
+      return await this.client.ping();
+    } catch (error) {
+      throw new Error('Redis ping failed');
+    }
+  }
 }

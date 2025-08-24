@@ -1,12 +1,49 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
+// Type definitions for exception details
+export interface ErrorContext {
+  [key: string]: string | number | boolean | string[] | number[] | ErrorContext | ErrorContext[] | ValidationError[] | Record<string, unknown> | undefined;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
+  value?: unknown;
+  constraints?: Record<string, string>;
+}
+
+export interface FileUploadErrorDetails extends ErrorContext {
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  maxSize?: number;
+  allowedTypes?: string[];
+  error?: string;
+}
+
+export interface PaymentErrorDetails extends ErrorContext {
+  paymentMethod?: string;
+  amount?: number;
+  currency?: string;
+  transactionId?: string;
+  errorCode?: string;
+  declineReason?: string;
+}
+
+export interface CalculationErrorDetails extends ErrorContext {
+  step?: string;
+  input?: Record<string, unknown>;
+  error?: string;
+  stackTrace?: string;
+}
+
 // Base business exception
 export class BusinessException extends HttpException {
   constructor(
     message: string,
     public readonly code: string,
     statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
-    public readonly details?: any,
+    public readonly details?: ErrorContext,
   ) {
     super(
       {
@@ -44,7 +81,7 @@ export class QuoteAlreadyProcessedException extends BusinessException {
 }
 
 export class QuoteCalculationException extends BusinessException {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: CalculationErrorDetails) {
     super(
       message,
       'QUOTE_CALCULATION_ERROR',
@@ -67,7 +104,7 @@ export class InvalidQuoteStateException extends BusinessException {
 
 // File-related exceptions
 export class FileUploadException extends BusinessException {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: FileUploadErrorDetails) {
     super(
       message,
       'FILE_UPLOAD_ERROR',
@@ -112,7 +149,7 @@ export class PaymentRequiredException extends BusinessException {
 }
 
 export class PaymentProcessingException extends BusinessException {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: PaymentErrorDetails) {
     super(
       message,
       'PAYMENT_PROCESSING_ERROR',
@@ -192,7 +229,7 @@ export class TenantSuspendedException extends BusinessException {
 
 // Validation exceptions
 export class ValidationException extends BusinessException {
-  constructor(errors: any[]) {
+  constructor(errors: ValidationError[]) {
     super(
       'Validation failed',
       'VALIDATION_ERROR',
@@ -204,7 +241,7 @@ export class ValidationException extends BusinessException {
 
 // Generic business rule exception
 export class BusinessRuleViolationException extends BusinessException {
-  constructor(rule: string, message: string, details?: any) {
+  constructor(rule: string, message: string, details?: ErrorContext) {
     super(
       message,
       `BUSINESS_RULE_${rule.toUpperCase()}`,

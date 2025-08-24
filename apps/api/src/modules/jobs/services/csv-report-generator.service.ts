@@ -12,7 +12,7 @@ export class CsvReportGeneratorService {
   async generateReport(
     reportType: ReportGenerationJobData['reportType'],
     data: any,
-    options: ReportGenerationJobData['options'],
+    _options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
     const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.csv`;
     const filePath = join(tmpdir(), fileName);

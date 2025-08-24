@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Quote, QuoteStatus } from '@prisma/client';
+import { Prisma, Quote } from '@prisma/client';
+import { QuoteStatus } from '@madfam/shared';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   BaseRepositoryImpl,
@@ -84,7 +85,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
   }
 
   async create(data: Prisma.QuoteCreateInput & { tenantId: string }): Promise<QuoteWithRelations> {
-    return this.prisma.quote.create({ data });
+    return this.prisma.quote.create({ data: data as any });
   }
 
   async update(
@@ -154,21 +155,21 @@ export class QuoteRepository extends BaseRepositoryImpl<
       const lastQuote = await tx.quote.findFirst({
         where: {
           tenantId,
-          reference: {
+          number: {
             startsWith: `Q${year}${month}`,
           },
         },
         orderBy: {
-          reference: 'desc',
+          number: 'desc',
         },
         select: {
-          reference: true,
+          number: true,
         },
       });
 
       let sequence = 1;
-      if (lastQuote?.reference) {
-        const match = lastQuote.reference.match(/Q\d{6}(\d{4})/);
+      if (lastQuote?.number) {
+        const match = lastQuote.number.match(/Q\d{6}(\d{4})/);
         if (match) {
           sequence = parseInt(match[1], 10) + 1;
         }

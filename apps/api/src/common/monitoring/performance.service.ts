@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MetricsService } from './metrics.service';
 
 interface PerformanceMetric {
@@ -25,7 +24,7 @@ export class PerformanceService {
 
   constructor(
     private readonly metricsService: MetricsService,
-    private readonly configService: ConfigService,
+    // private readonly _configService: ConfigService, // Reserved for future configuration needs
   ) {
     this.setupDefaultThresholds();
   }
@@ -328,7 +327,7 @@ export class PerformanceService {
       status = 'unhealthy';
     } else if (heapUsagePercent > 75) {
       issues.push(`Elevated memory usage: ${heapUsagePercent.toFixed(1)}%`);
-      if (status !== 'unhealthy') status = 'degraded';
+      if (status === 'healthy') status = 'degraded';
     }
 
     return { status, issues };

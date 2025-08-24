@@ -15,7 +15,7 @@ import { PaymentService } from './payment.service';
 import { StripeService } from './stripe.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantContext } from '../../common/decorators/tenant.decorator';
-import { CreatePaymentSessionDto } from './dto/create-payment-session.dto';
+// import { CreatePaymentSessionDto } from './dto/create-payment-session.dto'; // Unused import
 import { PaymentSessionResponseDto } from './dto/payment-session-response.dto';
 import { Request as ExpressRequest } from 'express';
 
@@ -92,7 +92,8 @@ export class PaymentController {
 
       return { received: true };
     } catch (error) {
-      throw new BadRequestException(`Webhook error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Webhook error: ${errorMessage}`);
     }
   }
 }

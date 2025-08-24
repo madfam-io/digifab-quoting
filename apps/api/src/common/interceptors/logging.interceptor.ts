@@ -2,7 +2,7 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } fr
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
-import { TenantContextService } from '../../modules/tenant/tenant-context.service';
+import { TenantContextService, TenantContext } from '../../modules/tenant/tenant-context.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -10,18 +10,18 @@ export class LoggingInterceptor implements NestInterceptor {
 
   constructor(private readonly tenantContext: TenantContextService) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
     // Try to get context, but don't fail if it's not available
-    let tenantContext: any;
+    let tenantContext: TenantContext | undefined;
     try {
       tenantContext = this.tenantContext.getContext();
     } catch (error) {
       // No context available
-      tenantContext = null;
+      tenantContext = undefined;
     }
 
     const { method, url, body, query, params } = request;
@@ -73,7 +73,7 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 
-  private sanitizeBody(body: any): any {
+  private sanitizeBody<T extends Record<string, unknown>>(body: T): T {
     if (!body) return body;
 
     const sensitiveFields = [
@@ -88,11 +88,11 @@ export class LoggingInterceptor implements NestInterceptor {
       'cvv',
     ];
 
-    const sanitized = { ...body };
+    const sanitized = { ...body } as T;
 
     for (const field of sensitiveFields) {
-      if (sanitized[field]) {
-        sanitized[field] = '***REDACTED***';
+      if (field in sanitized && sanitized[field as keyof T]) {
+        (sanitized as Record<string, unknown>)[field] = '***REDACTED***';
       }
     }
 

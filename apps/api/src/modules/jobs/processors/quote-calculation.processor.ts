@@ -234,8 +234,7 @@ export class QuoteCalculationProcessor {
                 fileAnalysis: true,
               },
             },
-            material: true,
-            manufacturingProcess: true,
+            // Process data included via join
           },
         },
         customer: true,

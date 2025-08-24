@@ -182,7 +182,7 @@ export class PdfReportGeneratorService {
   private addInvoiceContent(
     doc: InstanceType<typeof PDFDocument>,
     invoice: any,
-    options: any,
+    _options: any,
   ): void {
     // Invoice header
     doc.fontSize(16).text(`INVOICE #${invoice.number}`, { align: 'right' });
@@ -233,7 +233,7 @@ export class PdfReportGeneratorService {
   private addAnalyticsContent(
     doc: InstanceType<typeof PDFDocument>,
     data: any,
-    options: any,
+    _options: any,
   ): void {
     doc.fontSize(14).text('Analytics Period', { underline: true });
     doc

@@ -49,7 +49,7 @@ export class ReportUploaderService {
       const { size: fileSize } = await this.getFileStats(filePath);
 
       // Upload to S3
-      const uploadResult = await this.uploadToS3(filePath, key, contentType);
+      await this.uploadToS3(filePath, key, contentType);
 
       // Clean up temporary file
       await this.cleanupTempFile(filePath);
@@ -66,7 +66,9 @@ export class ReportUploaderService {
         uploadedAt: new Date(),
       };
     } catch (error) {
-      this.logger.error(`Failed to upload report: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to upload report: ${errorMessage}`, errorStack);
 
       // Try to clean up temp file even if upload failed
       await this.cleanupTempFile(filePath).catch(() => {});
@@ -97,7 +99,9 @@ export class ReportUploaderService {
 
       this.logger.log(`Report deleted from S3: ${key}`);
     } catch (error) {
-      this.logger.error(`Failed to delete report: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to delete report: ${errorMessage}`, errorStack);
       throw error;
     }
   }
@@ -114,7 +118,9 @@ export class ReportUploaderService {
 
       this.logger.log(`Report copied: ${sourceKey} -> ${destinationKey}`);
     } catch (error) {
-      this.logger.error(`Failed to copy report: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to copy report: ${errorMessage}`, errorStack);
       throw error;
     }
   }
@@ -131,7 +137,9 @@ export class ReportUploaderService {
 
       return result.Contents || [];
     } catch (error) {
-      this.logger.error(`Failed to list reports: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to list reports: ${errorMessage}`, errorStack);
       throw error;
     }
   }
@@ -195,7 +203,8 @@ export class ReportUploaderService {
       await unlink(filePath);
       this.logger.debug(`Temporary file deleted: ${filePath}`);
     } catch (error) {
-      this.logger.warn(`Failed to delete temporary file: ${filePath}`, error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`Failed to delete temporary file: ${filePath}`, errorMessage);
     }
   }
 
@@ -208,7 +217,9 @@ export class ReportUploaderService {
         })
         .promise();
     } catch (error) {
-      this.logger.error(`Failed to get report metadata: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to get report metadata: ${errorMessage}`, errorStack);
       throw error;
     }
   }
@@ -239,7 +250,9 @@ export class ReportUploaderService {
 
       this.logger.log(`Set expiration for report ${key} to ${expirationDate.toISOString()}`);
     } catch (error) {
-      this.logger.error(`Failed to set report expiration: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to set report expiration: ${errorMessage}`, errorStack);
       throw error;
     }
   }

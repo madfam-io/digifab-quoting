@@ -26,7 +26,7 @@ type Metric = CounterMetric | GaugeMetric | HistogramMetric;
 @Injectable()
 export class MetricsService {
   private readonly logger = new Logger(MetricsService.name);
-  private metrics = new Map<string, any>();
+  // private metrics = new Map<string, any>(); // Future use for aggregated metrics
   private counters = new Map<string, number>();
   private gauges = new Map<string, number>();
   private histograms = new Map<string, number[]>();
@@ -282,7 +282,7 @@ export class MetricsService {
       counters: Object.fromEntries(this.counters),
       gauges: Object.fromEntries(this.gauges),
       histograms: Object.fromEntries(
-        Array.from(this.histograms.entries()).map(([key, values]) => [
+        Array.from(this.histograms.entries()).map(([key]) => [
           key,
           this.getHistogramStats(key.split('{')[0]),
         ])

@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { TenantContextService } from '../../modules/tenant/tenant-context.service';
+import { TenantContextService, TenantContext } from '../../modules/tenant/tenant-context.service';
 
 interface ErrorResponse {
   statusCode: number;
@@ -17,7 +17,7 @@ interface ErrorResponse {
   message: string | string[];
   error?: string;
   requestId?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 @Catch()
@@ -32,9 +32,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     // Try to get context, but don't fail if it's not available
-    let context: any;
+    let context: TenantContext | null;
     try {
-      context = this.tenantContext.getContext();
+      context = this.tenantContext.getContext() ?? null;
     } catch (error) {
       // No context available, that's ok for some endpoints
       context = null;
@@ -43,17 +43,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let error: string | undefined;
-    let details: any;
+    let details: Record<string, unknown> | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const responseObj = exceptionResponse as any;
-        message = responseObj.message || exception.message;
-        error = responseObj.error;
-        details = responseObj.details;
+        const responseObj = exceptionResponse as Record<string, unknown>;
+        message = (responseObj.message as string | string[]) || exception.message;
+        error = responseObj.error as string | undefined;
+        details = responseObj.details as Record<string, unknown> | undefined;
       } else {
         message = exceptionResponse as string;
       }

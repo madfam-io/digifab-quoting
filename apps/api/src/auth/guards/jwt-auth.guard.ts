@@ -1,8 +1,16 @@
 import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
+import { JWTPayload } from '@madfam/shared';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { TokenBlacklistService } from '../services/token-blacklist.service';
+
+// Extended request interface for JWT authentication
+interface JwtAuthRequest extends Request {
+  user?: JWTPayload;
+  shouldRefreshToken?: boolean;
+}
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -31,7 +39,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     // Additional security checks
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<JwtAuthRequest>();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
@@ -64,14 +72,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return true;
   }
 
-  handleRequest(err: any, user: any, info: any) {
+  handleRequest<TUser = JWTPayload>(
+    err: Error | null,
+    user: TUser | false,
+    info: Error | undefined,
+  ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException(info?.message || 'Authentication failed');
     }
-    return user;
+    return user as TUser;
   }
 
-  private extractTokenFromHeader(request: any): string | undefined {
+  private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

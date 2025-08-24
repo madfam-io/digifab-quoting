@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CloudWatch, MetricDatum } from '@aws-sdk/client-cloudwatch';
+import { CloudWatch, MetricDatum, ComparisonOperator } from '@aws-sdk/client-cloudwatch';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class CloudWatchService {
       const metric: MetricDatum = {
         MetricName: metricName,
         Value: value,
-        Unit: unit,
+        Unit: unit as MetricDatum['Unit'], // Use proper AWS SDK type
         Timestamp: new Date(),
         Dimensions: [
           { Name: 'Environment', Value: this.environment },
@@ -146,7 +146,7 @@ export class CloudWatchService {
     try {
       await this.cloudWatch.putMetricAlarm({
         AlarmName: `${this.environment}-${alarmName}`,
-        ComparisonOperator: comparisonOperator,
+        ComparisonOperator: comparisonOperator as ComparisonOperator,
         EvaluationPeriods: evaluationPeriods,
         MetricName: metricName,
         Namespace: this.namespace,

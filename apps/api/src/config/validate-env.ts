@@ -11,7 +11,8 @@ export function validateEnvironment(): void {
     console.log('[ENV] Environment validation successful');
   } catch (error) {
     console.error('[ENV] Environment validation failed:');
-    console.error(error.message);
+    const errorMessage = error instanceof Error ? error.message : 'Validation failed';
+    console.error(errorMessage);
     process.exit(1);
   }
 }

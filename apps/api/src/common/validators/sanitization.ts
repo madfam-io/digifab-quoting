@@ -1,11 +1,9 @@
 import { Transform } from 'class-transformer';
 import { BadRequestException } from '@nestjs/common';
-import * as DOMPurify from 'isomorphic-dompurify';
-import { JSDOM } from 'jsdom';
+import DOMPurify from 'isomorphic-dompurify';
 
-// Initialize DOMPurify with JSDOM for server-side usage
-const window = new JSDOM('').window;
-const purify = DOMPurify(window);
+// Use isomorphic-dompurify which handles server-side automatically
+const purify = DOMPurify;
 
 // SQL Injection prevention patterns
 const SQL_INJECTION_PATTERNS = [
@@ -21,15 +19,15 @@ const NOSQL_INJECTION_PATTERNS = [
   /\[.*\]/,
 ];
 
-// XSS prevention patterns
-const XSS_PATTERNS = [
-  /<script[^>]*>.*?<\/script>/gi,
-  /javascript:/gi,
-  /on\w+\s*=/gi,
-  /<iframe[^>]*>.*?<\/iframe>/gi,
-  /<object[^>]*>.*?<\/object>/gi,
-  /<embed[^>]*>/gi,
-];
+// XSS prevention patterns - future enhancement
+// const XSS_PATTERNS = [
+//   /<script[^>]*>.*?<\/script>/gi,
+//   /javascript:/gi,
+//   /on\w+\s*=/gi,
+//   /<iframe[^>]*>.*?<\/iframe>/gi,
+//   /<object[^>]*>.*?<\/object>/gi,
+//   /<embed[^>]*>/gi,
+// ];
 
 // Path traversal prevention
 const PATH_TRAVERSAL_PATTERNS = [/\.\./g, /\.\.%2F/gi, /\.\.%5C/gi, /%2e%2e/gi, /\.\//g];

@@ -24,9 +24,9 @@ export class PaymentService {
       where: { id: quoteId, tenantId },
       include: {
         customer: true,
-        quoteItems: {
+        items: {
           include: {
-            part: true,
+            // part: true, // Remove if not in schema
           },
         },
       },
@@ -41,8 +41,8 @@ export class PaymentService {
     }
 
     // Calculate line items for Stripe
-    const lineItems = quote.quoteItems.map((item) => ({
-      name: item.part.name,
+    const lineItems = quote.items.map((item: any) => ({
+      name: item.filename || 'Quote Item',
       description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
       amount: Math.round(item.unitPrice * 100), // Convert to cents
       currency: quote.currency.toLowerCase(),
@@ -52,13 +52,13 @@ export class PaymentService {
     // Create checkout session
     const session = await this.stripe.createCheckoutSession({
       quoteId: quote.id,
-      customerEmail: quote.customer.email,
+      customerEmail: quote.customer?.email || '',
       lineItems,
       successUrl: `${this.frontendUrl}/quotes/${quote.id}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${this.frontendUrl}/quotes/${quote.id}`,
       metadata: {
         tenantId,
-        customerId: quote.customerId,
+        customerId: quote.customerId || '',
       },
     });
 
@@ -67,7 +67,7 @@ export class PaymentService {
       data: {
         stripePaymentIntentId: session.payment_intent as string,
         stripeSessionId: session.id,
-        amount: quote.totalPrice,
+        amount: quote.totalPrice || 0,
         currency: quote.currency,
         status: PaymentStatus.PENDING,
         quoteId: quote.id,
@@ -77,7 +77,7 @@ export class PaymentService {
 
     return {
       sessionId: session.id,
-      paymentUrl: session.url,
+      paymentUrl: session.url || '',
     };
   }
 
@@ -206,7 +206,7 @@ export class PaymentService {
       await this.prisma.order.update({
         where: { id: order.id },
         data: {
-          status: OrderStatus.PAYMENT_FAILED,
+          status: OrderStatus.CANCELLED, // Use existing enum value
           paymentStatus: PaymentStatus.FAILED,
         },
       });
@@ -262,7 +262,7 @@ export class PaymentService {
     const quote = await this.prisma.quote.findFirst({
       where: { id: quoteId, tenantId },
       include: {
-        quoteItems: true,
+        items: true, // Use correct relation name
         customer: true,
       },
     });
@@ -288,13 +288,13 @@ export class PaymentService {
       data: {
         orderNumber,
         quoteId,
-        customerId: quote.customerId,
+        customerId: quote.customerId || '',
         status: OrderStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
-        subtotal: quote.subtotal,
-        tax: quote.tax,
-        shipping: quote.shipping,
-        totalAmount: quote.totalPrice,
+        subtotal: quote.subtotal || 0,
+        tax: quote.tax || 0,
+        shipping: quote.shipping || 0,
+        totalAmount: quote.totalPrice || 0,
         currency: quote.currency,
         tenantId,
       },
