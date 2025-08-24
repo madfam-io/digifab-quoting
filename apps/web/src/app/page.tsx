@@ -19,19 +19,22 @@ export default function HomePage() {
               archivos y recibe tu cotización en menos de 5 minutos.
             </p>
             <div className="flex gap-4 justify-center">
-              <Link href="/quote/new">
+              <Link href="/demo">
                 <Button size="lg" className="gap-2">
                   <Upload className="w-5 h-5" />
-                  Subir Archivos
+                  Probar Demo Gratis
                 </Button>
               </Link>
-              <Link href="/quote/wizard">
+              <Link href="/auth/login">
                 <Button size="lg" variant="outline" className="gap-2">
                   <Calculator className="w-5 h-5" />
-                  Cotizador Guiado
+                  Iniciar Sesión
                 </Button>
               </Link>
             </div>
+            <p className="text-sm text-muted-foreground mt-4">
+              No se requiere registro - prueba el sistema completo antes de crear una cuenta
+            </p>
           </div>
         </div>
       </section>
@@ -129,10 +132,10 @@ export default function HomePage() {
           <p className="text-xl mb-8 opacity-90">
             Únete a cientos de empresas que confían en nosotros para sus proyectos de fabricación.
           </p>
-          <Link href="/quote/new">
+          <Link href="/demo">
             <Button size="lg" variant="secondary" className="gap-2">
               <Upload className="w-5 h-5" />
-              Obtener Cotización Ahora
+              Probar Demo Sin Registro
             </Button>
           </Link>
         </div>

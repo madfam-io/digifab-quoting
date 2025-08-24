@@ -22,6 +22,7 @@ import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { GuestModule } from './modules/guest/guest.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { OrdersModule } from './modules/orders/orders.module';
     JobsModule,
     PaymentModule,
     OrdersModule,
+    GuestModule,
   ],
   controllers: [AppController],
   providers: [

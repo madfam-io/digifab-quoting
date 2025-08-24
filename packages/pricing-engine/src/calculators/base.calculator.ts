@@ -107,6 +107,12 @@ export abstract class BasePricingCalculator {
 
     return {
       score,
+      co2e: {
+        material: materialCo2e.toNumber(),
+        energy: energyCo2e.toNumber(),
+        logistics: 0,
+        total: totalCo2e.toNumber(),
+      },
       co2eKg: totalCo2e,
       energyKwh,
       recycledPercent: material.recycledPercent || 0,

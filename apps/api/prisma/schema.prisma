@@ -62,14 +62,16 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  tenant         Tenant          @relation(fields: [tenantId], references: [id])
-  quotes         Quote[]
-  auditLogs      AuditLog[]
-  ndaAcceptances NDAAcceptance[]
-  sessions       Session[]
-  customer       Customer?
-  orders         Order[]
-  invoices       Invoice[]
+  tenant               Tenant            @relation(fields: [tenantId], references: [id])
+  quotes               Quote[]
+  auditLogs            AuditLog[]
+  ndaAcceptances       NDAAcceptance[]
+  sessions             Session[]
+  customer             Customer?
+  orders               Order[]
+  invoices             Invoice[]
+  convertedSessions    GuestSession[]
+  quoteConversions     QuoteConversion[]
 
   @@index([tenantId])
   @@index([email])
@@ -130,16 +132,20 @@ model Quote {
   totals         Json?
   sustainability Json?
   metadata       Json      @default("{}")
+  origin         String    @default("authenticated")
+  guestSessionId String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   // Relations
-  tenant         Tenant          @relation(fields: [tenantId], references: [id])
-  customer       User?           @relation(fields: [customerId], references: [id])
+  tenant         Tenant            @relation(fields: [tenantId], references: [id])
+  customer       User?             @relation(fields: [customerId], references: [id])
+  guestSession   GuestSession?     @relation(fields: [guestSessionId], references: [id])
   items          QuoteItem[]
   paymentIntents PaymentIntent[]
   auditLogs      AuditLog[]
   orders         Order[]
+  conversions    QuoteConversion[]
 
   @@index([tenantId])
   @@index([customerId])
@@ -544,6 +550,71 @@ model ApiKey {
   @@index([tenantId])
   @@index([keyPrefix])
   @@index([isActive])
+}
+
+// ==================== GUEST QUOTE MODELS ====================
+
+model GuestSession {
+  id              String    @id @default(cuid())
+  sessionToken    String    @unique
+  ipAddress       String?
+  userAgent       String?
+  referrer        String?
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime
+  quoteCount      Int       @default(0)
+  convertedAt     DateTime?
+  convertedUserId String?
+
+  // Relations
+  convertedUser   User?             @relation(fields: [convertedUserId], references: [id])
+  guestQuotes     GuestQuote[]
+  conversions     QuoteConversion[]
+  quotes          Quote[]
+
+  @@index([expiresAt])
+  @@index([convertedUserId])
+}
+
+model GuestQuote {
+  id          String   @id @default(cuid())
+  sessionId   String
+  quoteData   Json
+  fileKeys    String[]
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  accessedAt  DateTime @default(now())
+  accessCount Int      @default(1)
+
+  // Relations
+  session     GuestSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  conversions QuoteConversion[]
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model QuoteConversion {
+  id               String   @id @default(cuid())
+  guestQuoteId     String
+  convertedQuoteId String
+  userId           String
+  sessionId        String
+  conversionType   String
+  createdAt        DateTime @default(now())
+
+  // Relations
+  guestQuote     GuestQuote   @relation(fields: [guestQuoteId], references: [id])
+  convertedQuote Quote        @relation(fields: [convertedQuoteId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  session        GuestSession @relation(fields: [sessionId], references: [id])
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([guestQuoteId])
+  @@index([convertedQuoteId])
 }
 
 model ApiKeyUsage {
