@@ -6,7 +6,7 @@ class ShippingAddressDto {
   @ApiProperty({ description: 'Address line 1' })
   @IsString()
   @MaxLength(100)
-  line1: string;
+  line1!: string;
 
   @ApiPropertyOptional({ description: 'Address line 2' })
   @IsOptional()
@@ -17,22 +17,22 @@ class ShippingAddressDto {
   @ApiProperty({ description: 'City' })
   @IsString()
   @MaxLength(50)
-  city: string;
+  city!: string;
 
   @ApiProperty({ description: 'State/Province' })
   @IsString()
   @MaxLength(50)
-  state: string;
+  state!: string;
 
   @ApiProperty({ description: 'Postal code' })
   @IsString()
   @MaxLength(20)
-  postalCode: string;
+  postalCode!: string;
 
   @ApiProperty({ description: 'Country code (ISO 3166-1 alpha-2)' })
   @IsString()
   @MaxLength(2)
-  country: string;
+  country!: string;
 }
 
 export class AcceptQuoteDto {
@@ -42,12 +42,12 @@ export class AcceptQuoteDto {
   })
   @IsArray()
   @IsUUID('4', { each: true })
-  acceptedItems: string[];
+  acceptedItems!: string[];
 
   @ApiProperty({ description: 'Shipping address' })
   @ValidateNested()
   @Type(() => ShippingAddressDto)
-  shippingAddress: ShippingAddressDto;
+  shippingAddress!: ShippingAddressDto;
 
   @ApiPropertyOptional({ description: 'Additional notes' })
   @IsOptional()

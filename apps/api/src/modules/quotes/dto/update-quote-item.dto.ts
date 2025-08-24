@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class UpdateQuoteItemDto {
   @ApiProperty({ description: 'Quote item ID' })
   @IsUUID()
-  itemId: string;
+  itemId!: string;
 
   @ApiPropertyOptional({ description: 'Material code' })
   @IsOptional()

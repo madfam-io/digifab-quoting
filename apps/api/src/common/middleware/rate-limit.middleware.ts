@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware, HttpStatus } from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitExceededException } from '../exceptions/business.exceptions';
@@ -125,32 +125,41 @@ export class RateLimitMiddleware implements NestMiddleware {
 
   async checkRateLimit(key: string, config: RateLimitConfig): Promise<RateLimitInfo> {
     const now = Date.now();
-    const windowStart = now - config.windowMs;
     const resetTime = now + config.windowMs;
 
-    // Use Redis sorted set to track requests with timestamps
-    const pipe = this.redisService.client.pipeline();
-    
-    // Remove old entries
-    pipe.zremrangebyscore(key, '-inf', windowStart);
-    
-    // Add current request
-    pipe.zadd(key, now, `${now}-${Math.random()}`);
-    
-    // Get current count
-    pipe.zcard(key);
-    
-    // Set expiry
-    pipe.expire(key, Math.ceil(config.windowMs / 1000));
-
-    const results = await pipe.exec();
-    const count = results?.[2]?.[1] as number || 0;
-    
-    return {
-      count,
-      resetTime,
-      remaining: config.maxRequests - count,
-    };
+    try {
+      // Get current count
+      const currentCountStr = await this.redisService.get<string>(key);
+      let count = currentCountStr ? parseInt(currentCountStr, 10) : 0;
+      
+      // Check if we need to reset the window
+      const windowKey = `${key}:window`;
+      const windowStart = await this.redisService.get<string>(windowKey);
+      
+      if (!windowStart || (now - parseInt(windowStart, 10)) >= config.windowMs) {
+        // Reset the window
+        count = 0;
+        await this.redisService.set(windowKey, now.toString(), Math.ceil(config.windowMs / 1000));
+      }
+      
+      // Increment count
+      count += 1;
+      await this.redisService.set(key, count.toString(), Math.ceil(config.windowMs / 1000));
+      
+      return {
+        count,
+        resetTime,
+        remaining: config.maxRequests - count,
+      };
+    } catch (error) {
+      // Fallback in case Redis is not available
+      this.logger.error('Rate limiting error, allowing request', error as any);
+      return {
+        count: 0,
+        resetTime,
+        remaining: config.maxRequests,
+      };
+    }
   }
 
   private getClientIdentifier(req: Request): string {
@@ -179,19 +188,19 @@ export class RateLimitMiddleware implements NestMiddleware {
 
   // Static methods for easy use in controllers
   static global() {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
 
   static api() {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
 
   static auth() {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    return function (_target: any, _propertyKey: string, _descriptor: PropertyDescriptor) {
       // This would be implemented as a decorator
     };
   }
@@ -201,11 +210,10 @@ export class RateLimitMiddleware implements NestMiddleware {
     
     for (const [configName] of this.configs) {
       try {
-        const pattern = `${configName}:*`;
-        const keys = await this.redisService.client.keys(pattern);
+        // For now, return basic config info since we can't easily count active keys
         stats[configName] = {
-          activeKeys: keys.length,
           config: this.configs.get(configName),
+          status: 'active',
         };
       } catch (error) {
         this.logger.error(`Error getting stats for ${configName}`, error as any);

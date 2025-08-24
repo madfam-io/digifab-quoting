@@ -156,7 +156,9 @@ export class QuotesService {
       data: {
         quoteId,
         name: dto.name || file.originalName,
+        process: dto.process,
         processCode: dto.process,
+        material: (dto.options as any)?.material || 'PLA', // Extract material from options
         quantity: dto.quantity,
         selections: dto.options as any,
       },
