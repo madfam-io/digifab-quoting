@@ -23,7 +23,8 @@ export class ExcelReportGeneratorService {
     data: QuoteOrderData | InvoiceData | AnalyticsData,
     options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
-    const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.xlsx`;
+    const dataId = 'id' in data ? (data as any).id : 'report';
+    const fileName = `${reportType}-${dataId}-${Date.now()}.xlsx`;
     const filePath = join(tmpdir(), fileName);
 
     this.logger.log(`Generating Excel report: ${fileName}`);
@@ -35,13 +36,13 @@ export class ExcelReportGeneratorService {
     switch (reportType) {
       case 'quote':
       case 'order':
-        this.addQuoteOrderSheet(workbook, data, reportType, options);
+        this.addQuoteOrderSheet(workbook, data as any, reportType, options);
         break;
       case 'invoice':
-        this.addInvoiceSheet(workbook, data, options);
+        this.addInvoiceSheet(workbook, data as any, options);
         break;
       case 'analytics':
-        this.addAnalyticsSheets(workbook, data, options);
+        this.addAnalyticsSheets(workbook, data as AnalyticsData, options);
         break;
     }
 
@@ -178,7 +179,7 @@ export class ExcelReportGeneratorService {
     sheet.getCell(`B${row}`).value = new Date(invoice.dueAt).toLocaleDateString();
     row++;
     sheet.getCell(`A${row}`).value = 'Status:';
-    sheet.getCell(`B${row}`).value = invoice.status;
+    sheet.getCell(`B${row}`).value = String(invoice.status);
     row += 2;
 
     // Line items

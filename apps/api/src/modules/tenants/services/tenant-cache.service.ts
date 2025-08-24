@@ -61,7 +61,7 @@ export class TenantCacheService {
       id: tenant.id,
       name: tenant.name,
       subdomain: tenant.domain || '', // Use correct field name
-      settings: tenant.settings || {},
+      settings: (tenant.settings as Record<string, unknown>) || {},
       features: [], // tenant.tenantFeatures.map((tf: any) => tf.feature.code), // Remove if not in schema
       currencies: (tenant.settings as Record<string, unknown>)?.currencies as string[] || ['MXN'],
       locales: (tenant.settings as Record<string, unknown>)?.locales as string[] || ['es', 'en'],
@@ -224,7 +224,7 @@ export class TenantCacheService {
       // await this.cacheService.deletePattern(pattern); // Method may not exist
       // await this.cacheService.delete(pattern); // Method may not exist either
       try {
-        await (this.cacheService as { del: (pattern: string) => Promise<void> }).del(pattern); // Try Redis del method
+        await (this.cacheService as any).clearPattern(pattern);
       } catch {
         this.logger.warn(`Could not clear cache pattern: ${pattern}`);
       }

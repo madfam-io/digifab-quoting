@@ -25,7 +25,8 @@ export class CsvReportGeneratorService {
     data: QuoteOrderData | InvoiceData | AnalyticsData,
     _options: ReportGenerationJobData['options'],
   ): Promise<{ filePath: string; fileName: string }> {
-    const fileName = `${reportType}-${data.id || 'report'}-${Date.now()}.csv`;
+    const dataId = 'id' in data ? data.id : 'report';
+    const fileName = `${reportType}-${dataId}-${Date.now()}.csv`;
     const filePath = join(tmpdir(), fileName);
 
     this.logger.log(`Generating CSV report: ${fileName}`);
@@ -35,13 +36,13 @@ export class CsvReportGeneratorService {
     switch (reportType) {
       case 'quote':
       case 'order':
-        csvContent = this.generateQuoteOrderCsv(data, reportType);
+        csvContent = this.generateQuoteOrderCsv(data as QuoteOrderData, reportType);
         break;
       case 'analytics':
-        csvContent = this.generateAnalyticsCsv(data);
+        csvContent = this.generateAnalyticsCsv(data as AnalyticsData);
         break;
       case 'invoice':
-        csvContent = this.generateInvoiceCsv(data);
+        csvContent = this.generateInvoiceCsv(data as InvoiceData);
         break;
       default:
         throw new Error(`CSV generation not supported for report type: ${reportType}`);
@@ -66,7 +67,7 @@ export class CsvReportGeneratorService {
     lines.push(`Status,${data.status}`);
 
     if (reportType === 'quote') {
-      lines.push(`Valid Until,${new Date(data.validUntil).toLocaleDateString()}`);
+      lines.push(`Valid Until,${new Date((data as QuoteOrderData).expiresAt || new Date()).toLocaleDateString()}`);
       lines.push(`Currency,${data.currency}`);
     }
 
@@ -82,7 +83,7 @@ export class CsvReportGeneratorService {
     }
 
     // Items
-    const items = reportType === 'order' ? data.quote?.items : data.items;
+    const items = reportType === 'order' ? (data as any).quote?.items : (data as QuoteOrderData).items;
     if (items && items.length > 0) {
       lines.push('');
       lines.push('ITEMS');
@@ -90,11 +91,11 @@ export class CsvReportGeneratorService {
 
       items.forEach((item: ReportItem, index: number) => {
         const fileName = this.escapeCsvValue(
-          item.files?.[0]?.originalName || item.name || 'Unknown',
+          (item as any).files?.[0]?.originalName || item.name || 'Unknown',
         );
-        const material = this.escapeCsvValue(item.material?.name || 'N/A');
+        const material = this.escapeCsvValue((item as any).material?.name || item.material || 'N/A');
         const process = this.escapeCsvValue(
-          item.manufacturingProcess?.name || item.processCode || 'N/A',
+          (item as any).manufacturingProcess?.name || (item as any).processCode || item.process || 'N/A',
         );
         const total = item.unitPrice * item.quantity;
 
@@ -107,10 +108,10 @@ export class CsvReportGeneratorService {
     // Totals
     lines.push('');
     lines.push('TOTALS');
-    lines.push(`Subtotal,${data.subtotal || 0}`);
-    lines.push(`Tax,${data.tax || 0}`);
-    lines.push(`Shipping,${data.shipping || 0}`);
-    lines.push(`Total,${data.total || 0}`);
+    lines.push(`Subtotal,${(data as any).subtotal || 0}`);
+    lines.push(`Tax,${(data as any).tax || 0}`);
+    lines.push(`Shipping,${(data as any).shipping || 0}`);
+    lines.push(`Total,${(data as any).total || (data as any).totalAmount || 0}`);
 
     return lines.join('\n');
   }
@@ -121,10 +122,10 @@ export class CsvReportGeneratorService {
     // Header
     lines.push('INVOICE');
     lines.push(`Invoice Number,${invoice.number}`);
-    lines.push(`Issue Date,${new Date(invoice.issuedAt).toLocaleDateString()}`);
-    lines.push(`Due Date,${new Date(invoice.dueAt).toLocaleDateString()}`);
+    lines.push(`Issue Date,${new Date((invoice as any).issuedAt || invoice.dueDate).toLocaleDateString()}`);
+    lines.push(`Due Date,${new Date((invoice as any).dueAt || invoice.dueDate).toLocaleDateString()}`);
     lines.push(`Status,${invoice.status}`);
-    lines.push(`Currency,${invoice.currency}`);
+    lines.push(`Currency,${(invoice as any).currency || 'MXN'}`);
 
     // Company information
     if (invoice.tenant) {
@@ -144,8 +145,8 @@ export class CsvReportGeneratorService {
       lines.push(`Company,${this.escapeCsvValue(invoice.customer.company || 'N/A')}`);
       lines.push(`Email,${invoice.customer.email}`);
 
-      if (invoice.customer.billingAddress) {
-        const addr = invoice.customer.billingAddress;
+      if ((invoice.customer as any).billingAddress) {
+        const addr = (invoice.customer as any).billingAddress;
         lines.push(
           `Address,"${this.escapeCsvValue(
             [addr.street, addr.city, addr.state, addr.postalCode, addr.country]

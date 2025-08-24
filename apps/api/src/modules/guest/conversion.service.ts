@@ -229,7 +229,7 @@ export class ConversionService {
     if (convertedSessions.length === 0) return 0;
 
     const totalTime = convertedSessions.reduce((sum, session) => {
-      const timeToConvert = new Date(session.convertedAt).getTime() - 
+      const timeToConvert = new Date(session.convertedAt!).getTime() - 
                            new Date(session.createdAt).getTime();
       return sum + timeToConvert;
     }, 0);

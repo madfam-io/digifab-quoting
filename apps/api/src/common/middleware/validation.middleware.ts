@@ -3,6 +3,18 @@ import { Request, Response, NextFunction } from 'express';
 import * as DOMPurify from 'isomorphic-dompurify';
 import { z } from 'zod';
 
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+  size: number;
+}
+
 @Injectable()
 export class ValidationMiddleware implements NestMiddleware {
   // File type validation mapping - currently unused but kept for future validation
@@ -21,7 +33,7 @@ export class ValidationMiddleware implements NestMiddleware {
 
     // Validate file uploads if present
     if ('files' in req && req.files) {
-      this.validateFiles(req.files as Express.Multer.File[] | Express.Multer.File | { [fieldname: string]: Express.Multer.File[] });
+      this.validateFiles(req.files as MulterFile[] | MulterFile | { [fieldname: string]: MulterFile[] });
     }
 
     // Add security headers
@@ -104,13 +116,13 @@ export class ValidationMiddleware implements NestMiddleware {
     return sanitized;
   }
 
-  private validateFiles(files: Express.Multer.File[] | Express.Multer.File | { [fieldname: string]: Express.Multer.File[] }): void {
+  private validateFiles(files: MulterFile[] | MulterFile | { [fieldname: string]: MulterFile[] }): void {
     const maxFileSize = 50 * 1024 * 1024; // 50MB
     const allowedExtensions = ['.stl', '.step', '.stp', '.iges', '.igs', '.dxf'];
 
     const fileArray = Array.isArray(files) ? files : [files];
 
-    fileArray.forEach((file: Express.Multer.File) => {
+    fileArray.forEach((file: MulterFile) => {
       // Check file size
       if (file.size > maxFileSize) {
         throw new BadRequestException(`File ${file.originalname} exceeds maximum size of 50MB`);
@@ -133,7 +145,7 @@ export class ValidationMiddleware implements NestMiddleware {
     });
   }
 
-  private validateFileMagicNumbers(file: Express.Multer.File): void {
+  private validateFileMagicNumbers(file: MulterFile): void {
     if (!file.buffer || file.buffer.length < 20) {
       // Skip validation for files without buffer or too small
       return;

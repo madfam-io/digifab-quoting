@@ -351,8 +351,18 @@ export class AuditController {
     });
 
     if (format === 'csv') {
-      // Convert to CSV format
-      return this.convertToCSV(logs);
+      // Convert to CSV format - map logs to expected format
+      const mappedLogs = logs.map(log => ({
+        at: log.at,
+        tenantId: log.tenantId,
+        actorId: log.actorId || undefined,
+        actor: log.actor ? { email: log.actor.email } : undefined,
+        entity: log.entity,
+        entityId: log.entityId,
+        action: log.action,
+        metadata: log.metadata as { success?: boolean; duration?: number; requestId?: string } || undefined
+      }));
+      return this.convertToCSV(mappedLogs);
     }
 
     return logs;

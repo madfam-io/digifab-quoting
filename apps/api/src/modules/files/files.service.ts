@@ -157,7 +157,7 @@ export class FilesService {
           metadata: {
             ...((file.metadata as Record<string, unknown>) || {}),
             status: 'failed',
-            error: getErrorMessage(error),
+            error: getErrorMessage(error as Error),
           },
         },
       });
@@ -216,7 +216,7 @@ export class FilesService {
         return result.Body as Buffer;
       }
     } catch (error) {
-      throw new BadRequestException(`Failed to download file: ${getErrorMessage(error)}`);
+      throw new BadRequestException(`Failed to download file: ${getErrorMessage(error as Error)}`);
     }
   }
 

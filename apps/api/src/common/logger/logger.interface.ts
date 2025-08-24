@@ -8,7 +8,7 @@ export interface LogMetadata {
   userId?: string;
   requestId?: string;
   timestamp?: string;
-  [key: string]: string | undefined;
+  [key: string]: any;
 }
 
 export interface HttpLogMetadata extends LogMetadata {

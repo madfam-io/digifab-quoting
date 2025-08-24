@@ -15,6 +15,18 @@ import { ApiTags, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger
 import { GuestQuoteService } from './guest-quote.service';
 import { GuestSessionMiddleware, GuestSessionRequest } from './guest-session.middleware';
 import { v4 as uuidv4 } from 'uuid';
+
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+  size: number;
+}
 import {
   CreateGuestQuote,
   UpdateGuestQuoteItem,
@@ -34,7 +46,7 @@ export class GuestQuoteController {
   @ApiOperation({ summary: 'Upload files for guest quote' })
   @ApiResponse({ status: 200, description: 'Files uploaded successfully' })
   async uploadFiles(
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files: MulterFile[],
     @Req() req: GuestSessionRequest,
   ) {
     if (!files || files.length === 0) {

@@ -37,7 +37,7 @@ describe('CsvReportGeneratorService', () => {
   });
 
   describe('generateReport', () => {
-    let mockStream: ReturnType<typeof createWriteStream>;
+    let mockStream: any;
 
     beforeEach(() => {
       mockStream = {
@@ -47,7 +47,7 @@ describe('CsvReportGeneratorService', () => {
           if (event === 'finish') {
             setTimeout(callback, 10);
           }
-          return mockStream;
+          return mockStream as any;
         }),
       };
       (createWriteStream as jest.Mock).mockReturnValue(mockStream);

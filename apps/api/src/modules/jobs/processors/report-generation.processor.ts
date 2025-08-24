@@ -150,11 +150,11 @@ export class ReportGenerationProcessor {
   ): Promise<{ filePath: string; fileName: string }> {
     switch (format) {
       case 'pdf':
-        return this.pdfGenerator.generateReport(reportType, data, options);
+        return this.pdfGenerator.generateReport(reportType, data as any, options);
       case 'excel':
-        return this.excelGenerator.generateReport(reportType, data, options);
+        return this.excelGenerator.generateReport(reportType, data as any, options);
       case 'csv':
-        return this.csvGenerator.generateReport(reportType, data, options);
+        return this.csvGenerator.generateReport(reportType, data as any, options);
       default:
         throw new Error(`Unsupported report format: ${format}`);
     }

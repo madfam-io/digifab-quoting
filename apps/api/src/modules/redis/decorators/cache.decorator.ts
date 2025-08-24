@@ -20,18 +20,18 @@ export interface DecoratorTarget {
  * @param options Cache options
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
-  return <T extends AsyncMethod>(
-    target: DecoratorTarget,
+  return (
+    target: any,
     propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<T>,
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor,
+  ): PropertyDescriptor | void => {
     SetMetadata(CACHE_OPTIONS_METADATA, options || {})(target, propertyKey, descriptor);
 
     const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
+    descriptor.value = async function (this: CacheContext, ...args: any[]) {
       const cacheService = this.cacheService || this.cache;
 
       if (!cacheService) {
@@ -46,7 +46,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
       const cacheKey = keyGenerator(keyPrefix, ...args);
 
       // Check condition
-      if (options?.condition && !options.condition(...args)) {
+      if (options?.condition && !(options.condition as any)(...args)) {
         return originalMethod.apply(this, args);
       }
 
@@ -57,7 +57,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
         fetchFn: () => originalMethod.apply(this, args),
         tenantSpecific: true,
       });
-    } as T;
+    } as any;
 
     return descriptor;
   };
@@ -68,18 +68,18 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to invalidate
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
-  return <T extends AsyncMethod>(
-    target: DecoratorTarget,
+  return (
+    target: any,
     propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<T>,
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor,
+  ): PropertyDescriptor | void => {
     SetMetadata(CACHE_INVALIDATE_METADATA, patterns)(target, propertyKey, descriptor);
 
     const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
+    descriptor.value = async function (this: CacheContext, ...args: any[]) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
@@ -89,7 +89,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
       }
 
       return result;
-    } as T;
+    } as any;
 
     return descriptor;
   };
@@ -100,16 +100,16 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  * @param options Cache options
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
-  return <T extends AsyncMethod>(
-    target: DecoratorTarget,
+  return (
+    target: any,
     propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<T>,
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor,
+  ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
+    descriptor.value = async function (this: CacheContext, ...args: any[]) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
@@ -127,7 +127,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
       }
 
       return result;
-    } as T;
+    } as any;
 
     return descriptor;
   };
@@ -138,16 +138,16 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to evict
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
-  return <T extends AsyncMethod>(
-    _target: DecoratorTarget,
+  return (
+    _target: any,
     _propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<T>,
-  ): TypedPropertyDescriptor<T> | void => {
+    descriptor: PropertyDescriptor,
+  ): PropertyDescriptor | void => {
     const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
+    descriptor.value = async function (this: CacheContext, ...args: any[]) {
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
         // Evict cache before execution
@@ -155,7 +155,7 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
       }
 
       return originalMethod.apply(this, args);
-    } as T;
+    } as any;
 
     return descriptor;
   };

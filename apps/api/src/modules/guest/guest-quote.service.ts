@@ -7,7 +7,8 @@ import {
   CreateGuestQuote, 
   GuestQuote, 
   UpdateGuestQuoteItem,
-  ProcessType 
+  ProcessType,
+  Currency 
 } from '@madfam/shared';
 
 @Injectable()
@@ -64,7 +65,7 @@ export class GuestQuoteService {
           filename: file.filename,
           quantity: 1,
           material: analysis.recommendedMaterial,
-          process: analysis.recommendedProcess,
+          process: analysis.recommendedProcess as unknown as '3D_PRINTING' | 'CNC_MACHINING' | 'LASER_CUTTING',
           unitPrice: Number(pricing.unitPrice),
           totalPrice: Number(pricing.totalPrice),
           leadTime: Number(pricing.leadTime),
@@ -228,10 +229,10 @@ export class GuestQuoteService {
   private parseQuote(data: Record<string, unknown>): GuestQuote {
     return {
       ...data,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      expiresAt: new Date(data.expiresAt),
-    };
+      createdAt: new Date(data.createdAt as string),
+      updatedAt: new Date(data.updatedAt as string),
+      expiresAt: new Date(data.expiresAt as string),
+    } as GuestQuote;
   }
 
   // Conversion methods
@@ -245,7 +246,7 @@ export class GuestQuoteService {
 
     // Create authenticated quote
     const quote = await this.quotesService.create(tenantId, userId, {
-      currency: guestQuote.currency,
+      currency: guestQuote.currency as Currency,
       objective: { cost: 0.5, lead: 0.3, green: 0.2 },
     });
 

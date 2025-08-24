@@ -66,7 +66,7 @@ describe('ReportDataLoaderService', () => {
         tenant: { name: 'MADFAM Inc.' },
       };
 
-      prismaService.quote.findUnique.mockResolvedValue(mockQuote as any);
+      (prismaService.quote.findUnique as jest.Mock).mockResolvedValue(mockQuote as any);
 
       const result = await service.loadReportData('quote', 'quote-123', tenantId);
 
@@ -97,7 +97,7 @@ describe('ReportDataLoaderService', () => {
         paymentIntents: [],
       };
 
-      prismaService.order.findUnique.mockResolvedValue(mockOrder as any);
+      (prismaService.order.findUnique as jest.Mock).mockResolvedValue(mockOrder as any);
 
       const result = await service.loadReportData('order', 'order-123', tenantId);
 
@@ -124,7 +124,7 @@ describe('ReportDataLoaderService', () => {
         tenant: { name: 'MADFAM Inc.' },
       };
 
-      prismaService.invoice.findUnique.mockResolvedValue(mockInvoice as any);
+      (prismaService.invoice.findUnique as jest.Mock).mockResolvedValue(mockInvoice as any);
 
       const result = await service.loadReportData('invoice', 'inv-123', tenantId);
 
@@ -176,24 +176,24 @@ describe('ReportDataLoaderService', () => {
         },
       ];
 
-      prismaService.quote.groupBy.mockResolvedValue(mockQuoteStats as any);
-      prismaService.order.groupBy.mockResolvedValue(mockOrderStats as any);
-      prismaService.$queryRaw.mockResolvedValueOnce(mockRevenue);
-      prismaService.$queryRaw.mockResolvedValueOnce(mockMaterials);
-      prismaService.$queryRaw.mockResolvedValueOnce(mockProcesses);
-      prismaService.quote.aggregate.mockResolvedValue({
+      (prismaService.quote.groupBy as jest.Mock).mockResolvedValue(mockQuoteStats as any);
+      (prismaService.order.groupBy as jest.Mock).mockResolvedValue(mockOrderStats as any);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce(mockRevenue);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce(mockMaterials);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce(mockProcesses);
+      (prismaService.quote.aggregate as jest.Mock).mockResolvedValue({
         _count: 10,
         _avg: { total: 1000 },
         _sum: { total: 10000 },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([
         {
           total_quotes: 10,
           converted_quotes: 5,
           avg_hours_to_convert: 24,
         },
       ]);
-      prismaService.quote.findMany.mockResolvedValue([
+      (prismaService.quote.findMany as jest.Mock).mockResolvedValue([
         { customerId: 'customer-1' },
         { customerId: 'customer-2' },
       ] as any);
@@ -224,7 +224,7 @@ describe('ReportDataLoaderService', () => {
     });
 
     it('should throw error when quote not found', async () => {
-      prismaService.quote.findUnique.mockResolvedValue(null);
+      (prismaService.quote.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.loadReportData('quote', 'quote-123', tenantId)).rejects.toThrow(
         'Quote quote-123 not found',
@@ -232,7 +232,7 @@ describe('ReportDataLoaderService', () => {
     });
 
     it('should throw error when order not found', async () => {
-      prismaService.order.findUnique.mockResolvedValue(null);
+      (prismaService.order.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.loadReportData('order', 'order-123', tenantId)).rejects.toThrow(
         'Order order-123 not found',
@@ -240,7 +240,7 @@ describe('ReportDataLoaderService', () => {
     });
 
     it('should throw error when invoice not found', async () => {
-      prismaService.invoice.findUnique.mockResolvedValue(null);
+      (prismaService.invoice.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.loadReportData('invoice', 'inv-123', tenantId)).rejects.toThrow(
         'Invoice inv-123 not found',
@@ -258,24 +258,24 @@ describe('ReportDataLoaderService', () => {
       const criteriaJson = JSON.stringify(criteria);
 
       // Mock all required calls
-      prismaService.quote.groupBy.mockResolvedValue([]);
-      prismaService.order.groupBy.mockResolvedValue([]);
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // revenue
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // materials
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // processes
-      prismaService.quote.aggregate.mockResolvedValue({
+      (prismaService.quote.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.order.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // revenue
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // materials
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // processes
+      (prismaService.quote.aggregate as jest.Mock).mockResolvedValue({
         _count: 20,
         _avg: { total: 1000 },
         _sum: { total: 20000 },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([
         {
           total_quotes: 20,
           converted_quotes: 10,
           avg_hours_to_convert: 48.5,
         },
       ]);
-      prismaService.quote.findMany.mockResolvedValue([]);
+      (prismaService.quote.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.loadReportData('analytics', criteriaJson, tenantId);
 
@@ -288,24 +288,24 @@ describe('ReportDataLoaderService', () => {
       const criteriaJson = JSON.stringify(criteria);
 
       // Mock all required calls
-      prismaService.quote.groupBy.mockResolvedValue([]);
-      prismaService.order.groupBy.mockResolvedValue([]);
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // revenue
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // materials
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // processes
-      prismaService.quote.aggregate.mockResolvedValue({
+      (prismaService.quote.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.order.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // revenue
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // materials
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // processes
+      (prismaService.quote.aggregate as jest.Mock).mockResolvedValue({
         _count: 0,
         _avg: { total: null },
         _sum: { total: null },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([
         {
           total_quotes: 0,
           converted_quotes: 0,
           avg_hours_to_convert: null,
         },
       ]);
-      prismaService.quote.findMany.mockResolvedValue([]);
+      (prismaService.quote.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.loadReportData('analytics', criteriaJson, tenantId);
 
@@ -318,24 +318,24 @@ describe('ReportDataLoaderService', () => {
       const criteriaJson = JSON.stringify(criteria);
 
       // Mock all required calls
-      prismaService.quote.groupBy.mockResolvedValue([]);
-      prismaService.order.groupBy.mockResolvedValue([]);
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // revenue
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // materials
-      prismaService.$queryRaw.mockResolvedValueOnce([]); // processes
-      prismaService.quote.aggregate.mockResolvedValue({
+      (prismaService.quote.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.order.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // revenue
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // materials
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // processes
+      (prismaService.quote.aggregate as jest.Mock).mockResolvedValue({
         _count: 0,
         _avg: { total: null },
         _sum: { total: null },
       } as any);
-      prismaService.$queryRaw.mockResolvedValueOnce([
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValueOnce([
         {
           total_quotes: 0,
           converted_quotes: 0,
           avg_hours_to_convert: null,
         },
       ]);
-      prismaService.quote.findMany.mockResolvedValue([
+      (prismaService.quote.findMany as jest.Mock).mockResolvedValue([
         { customerId: 'customer-1' },
         { customerId: 'customer-2' },
         { customerId: 'customer-3' },
@@ -351,15 +351,15 @@ describe('ReportDataLoaderService', () => {
       const criteriaJson = JSON.stringify(criteria);
 
       // Mock all required calls with minimal data
-      prismaService.quote.groupBy.mockResolvedValue([]);
-      prismaService.order.groupBy.mockResolvedValue([]);
-      prismaService.$queryRaw.mockResolvedValue([]);
-      prismaService.quote.aggregate.mockResolvedValue({
+      (prismaService.quote.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.order.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([]);
+      (prismaService.quote.aggregate as jest.Mock).mockResolvedValue({
         _count: 0,
         _avg: { total: null },
         _sum: { total: null },
       } as any);
-      prismaService.quote.findMany.mockResolvedValue([]);
+      (prismaService.quote.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.loadReportData('analytics', criteriaJson, tenantId);
 

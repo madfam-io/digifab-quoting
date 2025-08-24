@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { CacheService } from './cache.service';
 import { RedisService } from './redis.service';
 import { LoggerService } from '@/common/logger/logger.service';
+import type { PricingRule } from '@madfam/shared';
 
 export interface QuoteCacheKey {
   fileHash: string;
@@ -99,14 +100,15 @@ export class QuoteCacheService {
    * Cache pricing configuration
    */
   async cachePricingConfig(service: string, material: string, config: Record<string, unknown>): Promise<void> {
-    await this.cacheService.cachePricingRules(service, material, config, this.PRICING_CACHE_TTL);
+    await this.cacheService.cachePricingRules(service, material, config as unknown as PricingRule[], this.PRICING_CACHE_TTL);
   }
 
   /**
    * Get cached pricing configuration
    */
   async getCachedPricingConfig(service: string, material: string): Promise<Record<string, unknown> | null> {
-    return await this.cacheService.getCachedPricingRules(service, material);
+    const rules = await this.cacheService.getCachedPricingRules(service, material);
+    return rules as unknown as Record<string, unknown> | null;
   }
 
   /**

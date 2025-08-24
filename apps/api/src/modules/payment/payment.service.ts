@@ -43,9 +43,9 @@ export class PaymentService {
 
     // Calculate line items for Stripe
     const lineItems = quote.items.map((item: QuoteItem) => ({
-      name: item.filename || 'Quote Item',
+      name: item.name || 'Quote Item',
       description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
-      amount: Math.round(item.unitPrice * 100), // Convert to cents
+      amount: Math.round((item.unitPrice || 0) * 100), // Convert to cents
       currency: quote.currency.toLowerCase(),
       quantity: item.quantity,
     }));

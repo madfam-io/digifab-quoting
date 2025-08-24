@@ -29,13 +29,13 @@ describe('RedisService', () => {
       call: jest.fn(),
       status: 'ready',
       on: jest.fn(),
-    } as jest.Mocked<Redis>;
+    } as any;
 
-    (Redis as jest.MockedClass<typeof Redis>).mockImplementation(() => mockRedisClient);
+    (Redis as any).mockImplementation(() => mockRedisClient);
 
     mockConfigService = {
       get: jest.fn().mockReturnValue('redis://localhost:6379'),
-    } as jest.Mocked<ConfigService>;
+    } as any;
 
     mockLoggerService = {
       log: jest.fn(),
@@ -248,7 +248,7 @@ describe('RedisService', () => {
         connect: jest.fn().mockRejectedValue(new Error('Connection failed')),
       };
 
-      (Redis as jest.MockedClass<typeof Redis>).mockImplementation(() => errorRedisClient as jest.Mocked<Redis>);
+      (Redis as any).mockImplementation(() => errorRedisClient as any);
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [

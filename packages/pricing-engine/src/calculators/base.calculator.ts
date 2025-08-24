@@ -7,11 +7,14 @@ import {
   MaterialUsage,
   SustainabilityResult,
 } from '../types';
+import { MarginValidator, ConfigValidator, CostValidator } from '../utils/validation';
 
 export abstract class BasePricingCalculator {
   protected input: PricingInput;
 
   constructor(input: PricingInput) {
+    // Validate configuration on initialization
+    ConfigValidator.validateTenantConfig(input.tenantConfig);
     this.input = input;
   }
 
@@ -22,54 +25,97 @@ export abstract class BasePricingCalculator {
   protected calculateMaterialCost(usage: MaterialUsage): Decimal {
     const { material } = this.input;
     const massKg = new Decimal(usage.grossVolumeCm3).mul(material.density).div(1000); // g to kg
-
-    return massKg.mul(material.pricePerUom);
+    const cost = massKg.mul(material.pricePerUom);
+    
+    CostValidator.validateCostComponent(cost, 'Material');
+    return cost;
   }
 
   protected calculateMachineCost(time: ProcessingTime): Decimal {
     const { machine } = this.input;
     const hoursTotal = new Decimal(time.totalMinutes).div(60);
-
-    return hoursTotal.mul(machine.hourlyRate);
+    const cost = hoursTotal.mul(machine.hourlyRate);
+    
+    CostValidator.validateCostComponent(cost, 'Machine');
+    return cost;
   }
 
   protected calculateEnergyCost(time: ProcessingTime): Decimal {
     const { machine, tenantConfig } = this.input;
     const hoursProcessing = new Decimal(time.processingMinutes).div(60);
     const energyKwh = hoursProcessing.mul(machine.powerW).div(1000);
-
-    return energyKwh.mul(tenantConfig.energyTariffPerKwh);
+    const cost = energyKwh.mul(tenantConfig.energyTariffPerKwh);
+    
+    CostValidator.validateCostComponent(cost, 'Energy');
+    return cost;
   }
 
   protected calculateLaborCost(time: ProcessingTime): Decimal {
     const { tenantConfig } = this.input;
     const laborMinutes = time.setupMinutes + time.postProcessingMinutes;
     const laborHours = new Decimal(laborMinutes).div(60);
-
-    return laborHours.mul(tenantConfig.laborRatePerHour);
+    const cost = laborHours.mul(tenantConfig.laborRatePerHour);
+    
+    CostValidator.validateCostComponent(cost, 'Labor');
+    return cost;
   }
 
   protected calculateOverheadCost(subtotal: Decimal): Decimal {
     const { tenantConfig } = this.input;
-    return subtotal.mul(tenantConfig.overheadPercent).div(100);
+    const cost = subtotal.mul(tenantConfig.overheadPercent).div(100);
+    
+    CostValidator.validateCostComponent(cost, 'Overhead');
+    return cost;
   }
 
   protected calculateMargin(costTotal: Decimal): Decimal {
     const { tenantConfig } = this.input;
-    return costTotal.mul(tenantConfig.marginFloorPercent).div(100);
+    
+    // Validate margin percentage is not negative
+    MarginValidator.validateMarginPercent(tenantConfig.marginFloorPercent, 'Tenant config margin floor');
+    
+    // Calculate the margin amount
+    const marginAmount = costTotal.mul(tenantConfig.marginFloorPercent).div(100);
+    
+    // Ensure minimum price is maintained
+    const minimumPrice = MarginValidator.calculateMinimumPrice(costTotal, tenantConfig.marginFloorPercent);
+    const priceWithMargin = costTotal.plus(marginAmount);
+    
+    if (priceWithMargin.lessThan(minimumPrice)) {
+      // Adjust margin to meet minimum requirements
+      return minimumPrice.minus(costTotal);
+    }
+    
+    return marginAmount;
   }
 
-  protected calculateVolumeDiscount(basePrice: Decimal): Decimal {
+  protected calculateVolumeDiscount(basePrice: Decimal, totalCost: Decimal): { discount: Decimal; warnings: string[] } {
     const { quantity, tenantConfig } = this.input;
+    const warnings: string[] = [];
+    
     const applicableDiscount = tenantConfig.volumeDiscounts
       .filter((d) => quantity >= d.minQuantity)
       .sort((a, b) => b.minQuantity - a.minQuantity)[0];
 
     if (applicableDiscount) {
-      return basePrice.mul(applicableDiscount.discountPercent).div(100);
+      const requestedDiscount = basePrice.mul(applicableDiscount.discountPercent).div(100);
+      
+      // Ensure discount doesn't violate margin requirements
+      const { adjustedDiscount, warning } = MarginValidator.adjustDiscountForMargin(
+        basePrice,
+        totalCost,
+        requestedDiscount,
+        tenantConfig.marginFloorPercent
+      );
+      
+      if (warning) {
+        warnings.push(warning);
+      }
+      
+      return { discount: adjustedDiscount, warnings };
     }
 
-    return new Decimal(0);
+    return { discount: new Decimal(0), warnings };
   }
 
   protected calculateSustainability(
@@ -150,6 +196,9 @@ export abstract class BasePricingCalculator {
     margin: Decimal,
     discount?: Decimal,
   ): CostBreakdown {
+    // Validate all cost components
+    CostValidator.validateTotalCosts(material, machine, energy, labor, overhead);
+    
     return {
       material,
       machine,
@@ -159,5 +208,35 @@ export abstract class BasePricingCalculator {
       margin,
       discount,
     };
+  }
+  
+  /**
+   * Validates the final pricing to ensure business rules are met
+   */
+  protected validateFinalPricing(
+    totalCost: Decimal,
+    finalPrice: Decimal,
+    margin: Decimal,
+    discount: Decimal = new Decimal(0)
+  ): { isValid: boolean; warnings: string[] } {
+    const { tenantConfig } = this.input;
+    
+    const validation = MarginValidator.validateFinalMargin(
+      totalCost,
+      finalPrice,
+      tenantConfig.marginFloorPercent,
+      'Final pricing validation'
+    );
+    
+    // Additional validation for effective margin after discount
+    if (discount.greaterThan(0)) {
+      const effectiveMargin = margin.minus(discount);
+      if (effectiveMargin.lessThan(0)) {
+        validation.warnings.push('Discount exceeds margin - selling at a loss!');
+        validation.isValid = false;
+      }
+    }
+    
+    return validation;
   }
 }

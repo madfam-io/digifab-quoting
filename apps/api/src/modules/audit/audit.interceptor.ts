@@ -135,8 +135,8 @@ export class AuditInterceptor implements NestInterceptor {
       for (const key of Object.keys(obj)) {
         if (sensitiveFields.some((field) => key.toLowerCase().includes(field))) {
           obj[key] = '***REDACTED***';
-        } else if (typeof obj[key] === 'object') {
-          removeSensitiveFields(obj[key]);
+        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+          removeSensitiveFields(obj[key] as Record<string, unknown>);
         }
       }
     };

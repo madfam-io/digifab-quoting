@@ -32,9 +32,17 @@ export class CNCPricingCalculator extends BasePricingCalculator {
     const marginAmount = this.calculateMargin(costTotal);
 
     const basePrice = costTotal.plus(marginAmount);
-    const discount = this.calculateVolumeDiscount(basePrice);
+    const { discount, warnings: discountWarnings } = this.calculateVolumeDiscount(basePrice, costTotal);
     const unitPrice = basePrice.minus(discount);
     const totalPrice = unitPrice.mul(this.input.quantity);
+    
+    // Validate final pricing
+    const { warnings: pricingWarnings } = this.validateFinalPricing(
+      costTotal,
+      unitPrice,
+      marginAmount,
+      discount
+    );
 
     // Calculate sustainability
     const energyKwh = new Decimal(time.processingMinutes)
@@ -60,7 +68,11 @@ export class CNCPricingCalculator extends BasePricingCalculator {
       ),
       sustainability,
       confidence: 0.85, // Lower confidence for CNC (more variables)
-      warnings: this.generateWarnings(usage, time),
+      warnings: [
+        ...this.generateWarnings(usage, time),
+        ...discountWarnings,
+        ...pricingWarnings
+      ],
     };
   }
 

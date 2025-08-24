@@ -2,13 +2,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, ConflictException } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../redis/cache.service';
 import { USER_ROLES } from '@madfam/shared';
+
+// Mock bcrypt module
+jest.mock('bcryptjs', () => ({
+  compare: jest.fn(),
+  hash: jest.fn(),
+}));
+
+import * as bcrypt from 'bcryptjs';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -99,8 +106,8 @@ describe('AuthService', () => {
     configService = module.get<ConfigService>(ConfigService);
 
     // Setup default mocks
-    jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
-    jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashedPassword'));
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
     (configService.get as jest.Mock).mockReturnValue(3600);
   });
 
@@ -136,7 +143,7 @@ describe('AuthService', () => {
 
     it('should return null when password is invalid', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
-      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       const result = await service.validateUser('test@example.com', 'wrongpassword');
 

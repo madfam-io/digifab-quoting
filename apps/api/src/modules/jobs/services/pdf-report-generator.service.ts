@@ -137,18 +137,18 @@ export class PdfReportGeneratorService {
     item: Record<string, unknown>,
     index: number,
   ): void {
-    const fileName = item.files?.[0]?.originalName || item.name || 'Unknown file';
-    const materialName = item.material?.name || 'Unknown material';
-    const processName = item.manufacturingProcess?.name || item.processCode || 'Unknown process';
+    const fileName = (item as any).files?.[0]?.originalName || (item as any).name || 'Unknown file';
+    const materialName = (item as any).material?.name || 'Unknown material';
+    const processName = (item as any).manufacturingProcess?.name || (item as any).processCode || 'Unknown process';
 
     doc
       .fontSize(12)
       .text(`${index}. ${fileName}`)
       .text(`   Material: ${materialName}`)
       .text(`   Process: ${processName}`)
-      .text(`   Quantity: ${item.quantity}`)
-      .text(`   Unit Price: ${this.formatCurrency(item.unitPrice, item.currency)}`)
-      .text(`   Total: ${this.formatCurrency(item.unitPrice * item.quantity, item.currency)}`)
+      .text(`   Quantity: ${(item as any).quantity || 0}`)
+      .text(`   Unit Price: ${this.formatCurrency((item as any).unitPrice || 0, (item as any).currency || 'MXN')}`)
+      .text(`   Total: ${this.formatCurrency(((item as any).unitPrice || 0) * ((item as any).quantity || 0), (item as any).currency || 'MXN')}`)
       .moveDown(0.5);
   }
 

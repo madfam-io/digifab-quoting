@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { JobType, FileAnalysisJobData, JobResult, JobProgress } from '../interfaces/job.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { FilesService } from '@/modules/files/files.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -301,7 +302,7 @@ export class FileAnalysisProcessor {
         },
         data: {
           status: 'ANALYZED',
-          analysisResult: analysis,
+          analysisResult: analysis as unknown as Prisma.InputJsonValue,
           analyzedAt: new Date(),
           metadata: {
             ...(((

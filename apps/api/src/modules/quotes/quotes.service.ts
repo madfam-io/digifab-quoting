@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PricingService } from '../pricing/pricing.service';
 import { QuoteCacheService } from '../redis/quote-cache.service';
 import { Cacheable, CacheInvalidate } from '../redis/decorators/cache.decorator';
-import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem } from '@prisma/client';
+import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem, Prisma } from '@prisma/client';
 import { QuoteStatus, Currency, ProcessType } from '@madfam/shared';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AddQuoteItemDto } from './dto/add-quote-item.dto';
@@ -135,8 +135,8 @@ export class QuotesService {
     return this.prisma.quote.update({
       where: { id },
       data: {
-        objective: dto.objective,
-        metadata: dto.metadata,
+        objective: dto.objective as Prisma.InputJsonValue,
+        metadata: dto.metadata as Prisma.InputJsonValue,
       },
     });
   }
@@ -169,7 +169,7 @@ export class QuotesService {
         processCode: dto.process,
         material: (dto.options as Record<string, unknown>)?.material as string || 'PLA', // Extract material from options
         quantity: dto.quantity,
-        selections: dto.options,
+        selections: dto.options as Prisma.InputJsonValue,
       },
     });
 
@@ -195,7 +195,7 @@ export class QuotesService {
     if (dto.objective) {
       await this.prisma.quote.update({
         where: { id: quoteId },
-        data: { objective: dto.objective },
+        data: { objective: dto.objective as Prisma.InputJsonValue },
       });
     }
 
@@ -271,8 +271,8 @@ export class QuotesService {
             costBreakdown: {
               machine: pricingResult.manufacturing.machineCost,
               material: pricingResult.manufacturing.materialCost,
-            } as Record<string, unknown>,
-            sustainability: {} as Record<string, unknown>,
+            } as Prisma.InputJsonValue,
+            sustainability: {} as Prisma.InputJsonValue,
             flags: [],
           },
         });
@@ -296,7 +296,7 @@ export class QuotesService {
       data: {
         status: errors.length > 0 ? QuoteStatus.NEEDS_REVIEW : QuoteStatus.AUTO_QUOTED,
         totals,
-        sustainability: this.calculateSustainabilitySummary(calculatedItems),
+        sustainability: this.calculateSustainabilitySummary(calculatedItems) as Prisma.InputJsonValue,
       },
       include: {
         items: {

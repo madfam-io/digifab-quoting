@@ -32,12 +32,10 @@ import {
 } from '../../common/dto/api-response.dto';
 import { User } from '@madfam/shared';
 import { Public } from './decorators/public.decorator';
+import { Request as ExpressRequest } from 'express';
 
-interface AuthenticatedRequest extends Express.Request {
+interface AuthenticatedRequest extends ExpressRequest {
   user?: User;
-  headers: {
-    authorization?: string;
-  } & Express.Request['headers'];
 }
 
 @ApiTags('auth')
@@ -147,7 +145,7 @@ export class AuthController {
     type: UnauthorizedResponseDto,
   })
   async logout(@Request() req: AuthenticatedRequest) {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const token = req.headers?.authorization?.replace('Bearer ', '');
     await this.authService.logout(token);
   }
 

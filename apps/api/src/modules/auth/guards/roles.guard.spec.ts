@@ -64,7 +64,7 @@ describe('RolesGuard', () => {
 
     it('should throw ForbiddenException when user is not authenticated', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.ADMIN]);
-      const context = mockExecutionContext(null);
+      const context = mockExecutionContext(undefined);
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     });
@@ -73,7 +73,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.MANAGER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -83,7 +83,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.CUSTOMER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.ADMIN] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.ADMIN] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -93,7 +93,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.ADMIN] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.ADMIN] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -103,7 +103,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.OPERATOR]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.MANAGER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -113,7 +113,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.ADMIN]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.CUSTOMER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
@@ -124,7 +124,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.CUSTOMER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
@@ -134,7 +134,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([USER_ROLES.MANAGER]);
 
-      const user = { roles: [USER_ROLES.CUSTOMER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.CUSTOMER] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -147,7 +147,7 @@ describe('RolesGuard', () => {
       ]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.OPERATOR] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.OPERATOR] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -157,7 +157,7 @@ describe('RolesGuard', () => {
       (reflector.getAllAndOverride as jest.Mock).mockReturnValue([USER_ROLES.SUPPORT]);
       (tenantContext.getCurrentUserRoles as jest.Mock).mockReturnValue([]);
 
-      const user = { roles: [USER_ROLES.CUSTOMER, USER_ROLES.SUPPORT] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.CUSTOMER, USER_ROLES.SUPPORT] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);
@@ -170,7 +170,7 @@ describe('RolesGuard', () => {
         USER_ROLES.MANAGER,
       ]);
 
-      const user = { roles: [USER_ROLES.MANAGER] };
+      const user = { id: 'user-1', email: 'test@example.com', roles: [USER_ROLES.MANAGER] };
       const context = mockExecutionContext(user);
 
       expect(guard.canActivate(context)).toBe(true);

@@ -15,11 +15,17 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       providers: [
         {
           provide: PrismaService,
-          useFactory: (tenantContextService: TenantContextService) => {
-            const prisma = new PrismaService(tenantContextService);
+          useFactory: (configService: ConfigService) => {
+            const prisma = new PrismaService(configService);
             return prisma;
           },
-          inject: [TenantContextService],
+          inject: [ConfigService],
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('postgresql://test'),
+          },
         },
       ],
     }).compile();
@@ -85,10 +91,15 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       await tenantContext.run(context, async () => {
         await prismaService.quote.create({
           data: {
+            tenantId: 'tenant-123',
+            number: 'Q-2024-001',
             status: 'draft',
             currency: 'USD',
             validityUntil: new Date(),
-          },
+            subtotal: 0,
+            total: 0,
+            tax: 0,
+          } as any,
         });
       });
 
@@ -158,8 +169,8 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       await tenantContext.run(context, async () => {
         await prismaService.material.createMany({
           data: [
-            { name: 'Material 1', code: 'M1', process: '3d_printing' },
-            { name: 'Material 2', code: 'M2', process: '3d_printing' },
+            { tenantId: 'tenant-123', name: 'Material 1', code: 'M1', process: '3d_printing', density: 1.0, costPerUnit: 10 } as any,
+            { tenantId: 'tenant-123', name: 'Material 2', code: 'M2', process: '3d_printing', density: 1.0, costPerUnit: 20 } as any,
           ],
         });
       });

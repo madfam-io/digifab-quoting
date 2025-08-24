@@ -1,16 +1,7 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  preset: './jest-preset.js',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      {
-        tsconfig: './tsconfig.json',
-      },
-    ],
-  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@madfam/shared$': '<rootDir>/../../packages/shared/src/index.ts',
@@ -26,4 +17,6 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   testTimeout: 30000,
   verbose: true,
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
 };

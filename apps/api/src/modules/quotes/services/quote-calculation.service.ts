@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, QuoteItem } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateQuoteItemDto } from '../dto/update-quote-item.dto';
-import { Material, Machine, ProcessType } from '@madfam/shared';
+import { Material, Machine, ProcessType, QuoteItemSelections } from '@madfam/shared';
+import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@madfam/pricing-engine';
+import { CacheService } from '@/modules/redis/cache.service';
 import Decimal from 'decimal.js';
 
 interface CalculationResult {
@@ -39,11 +41,14 @@ interface ItemWithRelations extends QuoteItem {
 @Injectable()
 export class QuoteCalculationService {
   private readonly logger = new Logger(QuoteCalculationService.name);
+  private readonly pricingEngine: PricingEngine;
 
   constructor(
     private readonly prisma: PrismaService,
-    // private readonly cacheService: CacheService, // Commented out - unused
-  ) {}
+    private readonly cacheService: CacheService,
+  ) {
+    this.pricingEngine = new PricingEngine();
+  }
 
   async calculateQuote(
     quoteId: string,
@@ -159,7 +164,7 @@ export class QuoteCalculationService {
       },
     });
 
-    return new Map(materials.map((m) => [`${m.process}-${m.code}`, m as Material]));
+    return new Map(materials.map((m) => [`${m.process}-${m.code}`, m as unknown as Material]));
   }
 
   private async batchLoadMachines(
@@ -177,15 +182,17 @@ export class QuoteCalculationService {
       distinct: ['process'],
     });
 
-    return new Map(machines.map((m) => [m.process as ProcessType, m as Machine]));
+    return new Map(machines.map((m) => [m.process as ProcessType, m as unknown as Machine]));
   }
 
   private async calculateItemPricing(
     items: ItemWithRelations[],
     materials: Map<string, Material>,
     machines: Map<ProcessType, Machine>,
-    _tenantId: string,
+    tenantId: string,
   ) {
+    // Get tenant configuration
+    const tenantConfig = await this.getCachedTenantConfig(tenantId);
 
     // Calculate pricing for all items in parallel
     const calculations = await Promise.allSettled(
@@ -201,12 +208,19 @@ export class QuoteCalculationService {
         }
 
         try {
-          const pricingResult = {
-            unitPrice: 100,
-            totalPrice: 100 * item.quantity,
-            leadTime: 5,
-            margin: 0.3,
-          };
+          // Extract geometry from DFM report
+          const geometry = this.extractGeometry(item);
+          
+          // Use pricing engine to calculate
+          const pricingResult = this.pricingEngine.calculate({
+            process: item.process as ProcessType,
+            geometry,
+            material: material as Material,
+            machine: machine as Machine,
+            selections: item.selections as unknown as QuoteItemSelections,
+            quantity: item.quantity,
+            tenantConfig,
+          });
 
           return {
             item,
@@ -230,25 +244,28 @@ export class QuoteCalculationService {
     });
   }
 
-  // private extractGeometry(item: ItemWithRelations) {
-  //   const metrics = item.dfmReport?.metrics || {};
+  private extractGeometry(item: ItemWithRelations): PricingGeometryMetrics {
+    const metrics = item.dfmReport?.metrics || {};
+    const metricsData = metrics as Record<string, unknown>;
 
-  //   return {
-  //     volumeCm3: metrics.volumeCm3 || 0,
-  //     surfaceAreaCm2: metrics.surfaceAreaCm2 || 0,
-  //     bboxMm: metrics.bboxMm || { x: 0, y: 0, z: 0 },
-  //     // Additional geometry based on process
-  //     ...(item.process === ProcessType.LASER_2D && {
-  //       cutLengthMm: metrics.cutLengthMm || 0,
-  //       pierceCount: metrics.pierceCount || 0,
-  //     }),
-  //     ...(item.process === ProcessType.CNC_3AXIS && {
-  //       features: metrics.features || {},
-  //     }),
-  //   };
-  // }
+    return {
+      volumeCm3: (metricsData.volumeCm3 as number) || 0,
+      surfaceAreaCm2: (metricsData.surfaceAreaCm2 as number) || 0,
+      bboxMm: (metricsData.bboxMm as { x: number; y: number; z: number }) || { x: 0, y: 0, z: 0 },
+      // Additional geometry based on process
+      ...(item.process === ProcessType.LASER_2D && {
+        cutLengthMm: (metricsData.lengthCutMm as number) || 0,
+        pierceCount: (metricsData.holesCount as number) || 0,
+      }),
+      ...(item.process === ProcessType.CNC_3AXIS && {
+        features: {
+          holes: (metricsData.holesCount as number) || 0,
+        },
+      }),
+    };
+  }
 
-  private prepareCalculationResult(calculations: Array<{ error?: string; item?: ItemWithRelations; pricing?: { unitPrice: number; subtotal: number; [key: string]: unknown } }>, _currency: string): CalculationResult {
+  private prepareCalculationResult(calculations: Array<{ error?: string; item?: ItemWithRelations; pricing?: { unitPrice: Decimal; totalPrice: Decimal; leadDays: number; costBreakdown: { material: Decimal; machine: Decimal; energy: Decimal; labor: Decimal; overhead: Decimal; margin: Decimal; tooling?: Decimal; discount?: Decimal }; sustainability: { score: number; co2eKg: Decimal; energyKwh: Decimal; recycledPercent: number; wastePercent: number }; warnings?: string[] } }>, _currency: string): CalculationResult {
     const itemsToUpdate: Array<{ id: string; data: Prisma.QuoteItemUpdateInput }> = [];
     const warnings: string[] = [];
     let subtotal = new Decimal(0);
@@ -260,11 +277,15 @@ export class QuoteCalculationService {
       }
 
       const { item, pricing } = calc;
+      
+      // Handle warnings from pricing engine
+      if (pricing.warnings && pricing.warnings.length > 0) {
+        warnings.push(...pricing.warnings);
+      }
 
       itemsToUpdate.push({
         id: item.id,
         data: {
-          // status: 'quoted', // Remove if not in schema
           unitPrice: pricing.unitPrice.toNumber(),
           totalPrice: pricing.totalPrice.toNumber(),
           leadDays: pricing.leadDays,
@@ -331,43 +352,48 @@ export class QuoteCalculationService {
     };
   }
 
-  // private async getCachedTenantConfig(tenantId: string) {
-  //   const cacheKey = `tenant-config:${tenantId}`;
+  private async getCachedTenantConfig(tenantId: string): Promise<TenantPricingConfig> {
+    const cacheKey = `tenant-config:${tenantId}`;
 
-  //   // Try cache first
-  //   const cached = await this.cacheService.get(cacheKey);
-  //   if (cached) {
-  //     return this.parseTenantConfig(cached);
-  //   }
+    // Try cache first
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      return this.parseTenantConfig(cached as Record<string, unknown>);
+    }
 
-  //   // Load from database
-  //   const tenant = await this.prisma.tenant.findUnique({
-  //     where: { id: tenantId },
-  //     select: { settings: true },
-  //   });
+    // Load from database
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { settings: true },
+    });
 
-  //   const config = this.parseTenantConfig(tenant?.settings || {});
+    const config = this.parseTenantConfig((tenant?.settings as Record<string, unknown>) || {});
 
-  //   // Cache for 1 hour
-  //   await this.cacheService.set(cacheKey, config, 3600);
+    // Cache for 1 hour
+    await this.cacheService.set(cacheKey, config, 3600);
 
-  //   return config;
-  // }
+    return config;
+  }
 
-  // private parseTenantConfig(settings: any) {
-  //   return {
-  //     marginFloorPercent: new Decimal(settings.marginFloorPercent || 30),
-  //     overheadPercent: new Decimal(settings.overheadPercent || 15),
-  //     energyTariffPerKwh: new Decimal(settings.energyTariffPerKwh || 0.12),
-  //     laborRatePerHour: new Decimal(settings.laborRatePerHour || 25),
-  //     rushUpchargePercent: new Decimal(settings.rushUpchargePercent || 50),
-  //     volumeDiscounts: settings.volumeDiscounts || [
-  //       { minQuantity: 10, discountPercent: new Decimal(5) },
-  //       { minQuantity: 50, discountPercent: new Decimal(10) },
-  //       { minQuantity: 100, discountPercent: new Decimal(15) },
-  //     ],
-  //     gridCo2eFactor: new Decimal(settings.gridCo2eFactor || 0.42),
-  //     logisticsCo2eFactor: new Decimal(settings.logisticsCo2eFactor || 0.0002),
-  //   };
-  // }
+  private parseTenantConfig(settings: Record<string, unknown>): TenantPricingConfig {
+    const volumeDiscounts = settings.volumeDiscounts as Array<{ minQuantity: number; discountPercent: number }> || [
+      { minQuantity: 10, discountPercent: 5 },
+      { minQuantity: 50, discountPercent: 10 },
+      { minQuantity: 100, discountPercent: 15 },
+    ];
+
+    return {
+      marginFloorPercent: new Decimal((settings.marginFloorPercent as number) || 30),
+      overheadPercent: new Decimal((settings.overheadPercent as number) || 15),
+      energyTariffPerKwh: new Decimal((settings.energyTariffPerKwh as number) || 0.12),
+      laborRatePerHour: new Decimal((settings.laborRatePerHour as number) || 25),
+      rushUpchargePercent: new Decimal((settings.rushUpchargePercent as number) || 50),
+      volumeDiscounts: volumeDiscounts.map(vd => ({
+        minQuantity: vd.minQuantity,
+        discountPercent: new Decimal(vd.discountPercent),
+      })),
+      gridCo2eFactor: new Decimal((settings.gridCo2eFactor as number) || 0.42),
+      logisticsCo2eFactor: new Decimal((settings.logisticsCo2eFactor as number) || 0.0002),
+    };
+  }
 }

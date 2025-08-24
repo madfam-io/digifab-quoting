@@ -77,7 +77,7 @@ export class ApiVersionInterceptor implements NestInterceptor {
               version: currentVersion,
               deprecated: handlerVersion?.deprecated || false,
               timestamp: new Date().toISOString(),
-              ...((data as Record<string, unknown>)._meta || {}),
+              ...(((data as Record<string, unknown>)?._meta as Record<string, unknown>) || {}),
             },
           };
         }

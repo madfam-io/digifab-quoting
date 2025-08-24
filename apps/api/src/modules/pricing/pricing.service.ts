@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Cacheable } from '../redis/decorators/cache.decorator';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType, Material, Machine } from '@madfam/shared';
+import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@madfam/pricing-engine';
 import { Decimal } from 'decimal.js';
 
 interface GeometryMetrics {
@@ -32,56 +33,95 @@ interface TenantSettings {
 
 @Injectable()
 export class PricingService {
-  constructor(private prisma: PrismaService) {}
+  private readonly pricingEngine: PricingEngine;
+
+  constructor(private prisma: PrismaService) {
+    this.pricingEngine = new PricingEngine();
+  }
 
   async calculateQuoteItem(
     tenantId: string,
-    _process: ProcessType,
+    process: ProcessType,
     geometryMetrics: GeometryMetrics,
     materialId: string,
     machineId: string,
-    _selections: PricingSelections,
+    selections: PricingSelections,
     quantity: number,
     _objective: PricingObjective,
   ) {
-    // Simplified pricing calculation for MVP
-    const material = await this.prisma.material.findFirst({
-      where: { id: materialId, tenantId },
-    });
-
-    const machine = await this.prisma.machine.findFirst({
-      where: { id: machineId, tenantId },
-    });
+    // Load material and machine
+    const [material, machine] = await Promise.all([
+      this.prisma.material.findFirst({
+        where: { id: materialId, tenantId },
+      }),
+      this.prisma.machine.findFirst({
+        where: { id: machineId, tenantId },
+      }),
+    ]);
 
     if (!material || !machine) {
       throw new Error('Material or machine not found');
     }
 
-    // Basic calculation
-    const volumeCm3 = geometryMetrics.volumeCm3 || 1;
-    const materialCost = new Decimal(volumeCm3)
-      .mul(material.costPerUnit?.toString() || '1')
-      .div(1000); // Convert to cost per cm³
-    const machineHours = volumeCm3 / 60; // Simplified: 60 cm³/hour
-    const machineCost = new Decimal(machineHours).mul(machine.hourlyRate?.toString() || '500');
+    // Get tenant configuration
+    const tenantConfig = await this.getTenantPricingConfig(tenantId);
 
-    const unitPrice = materialCost.plus(machineCost).mul(1.5); // 50% markup
-    const totalPrice = unitPrice.mul(quantity);
+    // Convert to pricing engine format
+    const pricingGeometry: PricingGeometryMetrics = {
+      volumeCm3: geometryMetrics.volumeCm3 || 1,
+      surfaceAreaCm2: geometryMetrics.surfaceAreaCm2 || 1,
+      bboxMm: geometryMetrics.boundingBox || { x: 10, y: 10, z: 10 },
+    };
+
+    const pricingConfig: TenantPricingConfig = {
+      marginFloorPercent: new Decimal(tenantConfig.minimumMargin * 100),
+      overheadPercent: new Decimal((tenantConfig.overheadRate || 0.15) * 100),
+      energyTariffPerKwh: new Decimal(0.12),
+      laborRatePerHour: new Decimal(25),
+      rushUpchargePercent: new Decimal((tenantConfig.rushOrderRate || 0.25) * 100),
+      volumeDiscounts: Object.entries(tenantConfig.volumeDiscountThresholds || {}).map(([qty, discount]) => ({
+        minQuantity: parseInt(qty),
+        discountPercent: new Decimal(discount * 100),
+      })),
+      gridCo2eFactor: new Decimal(0.42),
+      logisticsCo2eFactor: new Decimal(0.0002),
+    };
+
+    // Use pricing engine
+    const pricingResult = this.pricingEngine.calculate({
+      process,
+      geometry: pricingGeometry,
+      material: material as Material,
+      machine: machine as Machine,
+      selections: selections as Record<string, unknown>,
+      quantity,
+      tenantConfig: pricingConfig,
+    });
+
+    // Handle any warnings
+    if (pricingResult.warnings && pricingResult.warnings.length > 0) {
+      // Log warnings using proper logger (should be injected in production)
+      // this.logger.warn('Pricing warnings:', pricingResult.warnings);
+    }
 
     return {
-      unitPrice: unitPrice.toNumber(),
-      totalPrice: totalPrice.toNumber(),
-      leadDays: 5,
+      unitPrice: pricingResult.unitPrice.toNumber(),
+      totalPrice: pricingResult.totalPrice.toNumber(),
+      leadDays: pricingResult.leadDays,
       costBreakdown: {
-        material: materialCost.toNumber(),
-        machine: machineCost.toNumber(),
-        overhead: 0,
-        margin: unitPrice.sub(materialCost).sub(machineCost).toNumber(),
+        material: pricingResult.costBreakdown.material.toNumber(),
+        machine: pricingResult.costBreakdown.machine.toNumber(),
+        energy: pricingResult.costBreakdown.energy.toNumber(),
+        labor: pricingResult.costBreakdown.labor.toNumber(),
+        overhead: pricingResult.costBreakdown.overhead.toNumber(),
+        margin: pricingResult.costBreakdown.margin.toNumber(),
       },
       sustainability: {
-        score: 75,
-        co2eKg: 0.5,
-        recycledPercent: 20,
+        score: pricingResult.sustainability.score,
+        co2eKg: pricingResult.sustainability.co2eKg.toNumber(),
+        energyKwh: pricingResult.sustainability.energyKwh.toNumber(),
+        recycledPercent: pricingResult.sustainability.recycledPercent,
+        wastePercent: pricingResult.sustainability.wastePercent,
       },
     };
   }

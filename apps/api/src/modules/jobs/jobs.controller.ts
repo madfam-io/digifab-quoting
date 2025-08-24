@@ -182,7 +182,7 @@ export class JobsController {
     if (!status) {
       throw new Error('Job not found');
     }
-    return status;
+    return status as unknown as JobStatusDto;
   }
 
   @Get()
@@ -197,12 +197,13 @@ export class JobsController {
     type: [JobStatusDto],
   })
   async getJobs(@Query() query: JobQueryDto, @Tenant() tenantId: string): Promise<JobStatusDto[]> {
-    return this.jobsService.getJobsByTenant(tenantId, {
+    const jobs = await this.jobsService.getJobsByTenant(tenantId, {
       type: query.type,
       status: query.status,
       limit: query.limit,
       offset: query.offset,
     });
+    return jobs as unknown as JobStatusDto[];
   }
 
   @Post(':jobId/retry')

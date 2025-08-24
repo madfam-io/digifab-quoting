@@ -17,24 +17,29 @@ describe('Margin Validation', () => {
     material: {
       id: 'pla',
       name: 'PLA',
-      costPerKg: new Decimal(25),
-      densityGCm3: 1.24,
+      pricePerUom: new Decimal(25),
+      density: 1.24,
       category: 'thermoplastic',
+      co2eFactor: new Decimal(2.5),
+      recycledPercent: 20,
     },
     machine: {
       id: 'prusa',
       name: 'Prusa',
-      costPerHour: new Decimal(10),
+      hourlyRate: new Decimal(10),
       setupMinutes: 15,
       powerW: 150,
     },
     quantity: 1,
     tenantConfig: {
-      markupPercent: 50,
-      overheadPercent: 20,
-      laborCostPerHour: new Decimal(25),
-      currency: 'MXN',
-      minOrderValue: new Decimal(100),
+      marginFloorPercent: new Decimal(50),
+      overheadPercent: new Decimal(20),
+      energyTariffPerKwh: new Decimal(0.15),
+      laborRatePerHour: new Decimal(25),
+      rushUpchargePercent: new Decimal(30),
+      volumeDiscounts: [],
+      gridCo2eFactor: new Decimal(0.5),
+      logisticsCo2eFactor: new Decimal(0.1),
     },
     selections: {
       infill: 35,
@@ -82,10 +87,23 @@ describe('Margin Validation', () => {
   });
 
   it('should ensure profitability after volume discounts', () => {
+    // Set up volume discounts
+    const inputWithDiscounts = createInput({
+      tenantConfig: {
+        ...createInput().tenantConfig,
+        volumeDiscounts: [
+          { minQuantity: 10, discountPercent: new Decimal(5) },
+          { minQuantity: 50, discountPercent: new Decimal(10) },
+          { minQuantity: 100, discountPercent: new Decimal(15) },
+          { minQuantity: 500, discountPercent: new Decimal(20) },
+        ],
+      },
+    });
+
     const quantities = [1, 10, 50, 100, 500];
 
     quantities.forEach((qty) => {
-      const input = createInput({ quantity: qty });
+      const input = { ...inputWithDiscounts, quantity: qty };
       const result = engine.calculate(input);
 
       // Calculate effective margin after discount
@@ -95,7 +113,8 @@ describe('Margin Validation', () => {
         .plus(result.costBreakdown.labor)
         .plus(result.costBreakdown.overhead);
 
-      const netMargin = result.costBreakdown.margin.minus(result.costBreakdown.discount);
+      const discount = result.costBreakdown.discount || new Decimal(0);
+      const netMargin = result.costBreakdown.margin.minus(discount);
       const effectiveMarkup = netMargin.div(totalCost).mul(100);
 
       // Even with max 20% discount, should maintain at least 30% effective markup
@@ -114,7 +133,7 @@ describe('Margin Validation', () => {
       .plus(result.costBreakdown.labor)
       .plus(result.costBreakdown.overhead)
       .plus(result.costBreakdown.margin)
-      .minus(result.costBreakdown.discount);
+      .minus(result.costBreakdown.discount || new Decimal(0));
 
     expect(result.unitPrice.toNumber()).toBeCloseTo(expectedTotal.toNumber(), 2);
     expect(result.totalPrice.toNumber()).toBeCloseTo(
@@ -123,44 +142,48 @@ describe('Margin Validation', () => {
     );
   });
 
-  it('should enforce minimum order value', () => {
-    const minOrderValues = [100, 500, 1000];
-
-    minOrderValues.forEach((minValue) => {
-      const input = createInput({
-        geometry: {
-          volumeCm3: 0.1, // Very small part
-          surfaceAreaCm2: 1,
-          bboxMm: { x: 10, y: 10, z: 1 },
-        },
-        tenantConfig: {
-          ...createInput().tenantConfig,
-          minOrderValue: new Decimal(minValue),
-        },
-      });
-
-      const result = engine.calculate(input);
-
-      expect(result.totalPrice.toNumber()).toBeGreaterThanOrEqual(minValue);
+  it('should handle small parts correctly', () => {
+    const input = createInput({
+      geometry: {
+        volumeCm3: 0.1, // Very small part
+        surfaceAreaCm2: 1,
+        bboxMm: { x: 10, y: 10, z: 1 },
+      },
     });
+
+    const result = engine.calculate(input);
+
+    // Even small parts should have positive pricing
+    expect(result.unitPrice.toNumber()).toBeGreaterThan(0);
+    expect(result.totalPrice.toNumber()).toBeGreaterThan(0);
   });
 
-  it('should handle multi-currency scenarios', () => {
-    const currencies = ['MXN', 'USD', 'EUR'];
+  it('should handle different margin floor configurations', () => {
+    const marginFloors = [30, 50, 70];
 
-    currencies.forEach((currency) => {
+    marginFloors.forEach((floor) => {
       const input = createInput({
         tenantConfig: {
           ...createInput().tenantConfig,
-          currency,
+          marginFloorPercent: new Decimal(floor),
         },
       });
 
       const result = engine.calculate(input);
 
-      // Should calculate successfully regardless of currency
+      // Should calculate successfully with different margin floors
       expect(result.unitPrice.toNumber()).toBeGreaterThan(0);
       expect(result.costBreakdown.margin.toNumber()).toBeGreaterThan(0);
+      
+      // Verify margin floor is respected
+      const totalCost = result.costBreakdown.material
+        .plus(result.costBreakdown.machine)
+        .plus(result.costBreakdown.energy)
+        .plus(result.costBreakdown.labor)
+        .plus(result.costBreakdown.overhead);
+      
+      const actualMarginPercent = result.costBreakdown.margin.div(totalCost).mul(100);
+      expect(actualMarginPercent.toNumber()).toBeGreaterThanOrEqual(floor);
     });
   });
 
@@ -169,20 +192,23 @@ describe('Margin Validation', () => {
     const result = engine.calculate(input);
     const breakdown = result.costBreakdown;
 
-    // Subtotal should equal sum of base costs
-    const expectedSubtotal = breakdown.material
+    // All cost components should be positive
+    expect(breakdown.material.toNumber()).toBeGreaterThan(0);
+    expect(breakdown.machine.toNumber()).toBeGreaterThan(0);
+    expect(breakdown.energy.toNumber()).toBeGreaterThan(0);
+    expect(breakdown.labor.toNumber()).toBeGreaterThan(0);
+    expect(breakdown.overhead.toNumber()).toBeGreaterThan(0);
+    expect(breakdown.margin.toNumber()).toBeGreaterThan(0);
+
+    // Total should equal sum of all components minus discount
+    const expectedTotal = breakdown.material
       .plus(breakdown.machine)
       .plus(breakdown.energy)
-      .plus(breakdown.labor);
-
-    expect(breakdown.subtotal.toNumber()).toBeCloseTo(expectedSubtotal.toNumber(), 2);
-
-    // Total should include overhead and margin, minus discount
-    const expectedTotal = expectedSubtotal
+      .plus(breakdown.labor)
       .plus(breakdown.overhead)
       .plus(breakdown.margin)
-      .minus(breakdown.discount);
+      .minus(breakdown.discount || new Decimal(0));
 
-    expect(breakdown.total.toNumber()).toBeCloseTo(expectedTotal.toNumber(), 2);
+    expect(result.unitPrice.toNumber()).toBeCloseTo(expectedTotal.toNumber(), 2);
   });
 });
