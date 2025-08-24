@@ -1,45 +1,52 @@
-import { Injectable, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
-import { ThrottlerGuard, ThrottlerException } from '@nestjs/throttler';
+import { Injectable, CanActivate, ExecutionContext, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { RateLimitMiddleware } from '../middleware/rate-limit.middleware';
+
+export const RATE_LIMIT_KEY = 'rate_limit';
+
+export interface RateLimitOptions {
+  type: 'global' | 'api' | 'auth' | 'upload' | 'guest';
+  skipIf?: (context: ExecutionContext) => boolean;
+}
+
+export const RateLimit = (options: RateLimitOptions) => 
+  SetMetadata(RATE_LIMIT_KEY, options);
 
 @Injectable()
-export class RateLimitGuard extends ThrottlerGuard {
-  constructor(private reflector: Reflector) {
-    super(
-      {
-        ttl: 60,
-        limit: 100,
-      },
-      {
-        ignoreUserAgents: [/googlebot/i, /bingbot/i],
-      },
-      reflector,
+export class RateLimitGuard implements CanActivate {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly rateLimitMiddleware: RateLimitMiddleware,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const options = this.reflector.get<RateLimitOptions>(
+      RATE_LIMIT_KEY,
+      context.getHandler(),
     );
-  }
 
-  protected async getTracker(req: Record<string, any>): Promise<string> {
-    // Use combination of IP and tenant ID for rate limiting
-    const ip = req.ip || req.connection.remoteAddress;
-    const tenantId = req.headers['x-tenant-id'] || 'default';
-    const userId = req.user?.id || 'anonymous';
-
-    // Different rate limit buckets for authenticated vs anonymous users
-    if (req.user) {
-      return `${tenantId}:${userId}`;
+    if (!options) {
+      return true; // No rate limit specified
     }
 
-    return `${tenantId}:${ip}`;
-  }
+    // Check skip condition
+    if (options.skipIf && options.skipIf(context)) {
+      return true;
+    }
 
-  protected throwThrottlingException(context: ExecutionContext): void {
-    throw new HttpException(
-      {
-        statusCode: HttpStatus.TOO_MANY_REQUESTS,
-        message: 'Too many requests. Please try again later.',
-        error: 'Too Many Requests',
-        retryAfter: 60,
-      },
-      HttpStatus.TOO_MANY_REQUESTS,
-    );
+    const request = context.switchToHttp().getRequest();
+    const response = context.switchToHttp().getResponse();
+
+    return new Promise((resolve, reject) => {
+      const rateLimiter = this.rateLimitMiddleware.createRateLimiter(options.type);
+      
+      rateLimiter(request, response, (error?: any) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(true);
+        }
+      });
+    });
   }
 }
