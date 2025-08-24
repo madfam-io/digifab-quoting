@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CsvReportGeneratorService } from '../csv-report-generator.service';
 import { LoggerService } from '@/common/logger/logger.service';
-import * as fs from 'fs';
 import { createWriteStream } from 'fs';
 
 // Mock fs module
@@ -104,7 +103,7 @@ describe('CsvReportGeneratorService', () => {
     });
 
     it('should escape CSV values with commas', async () => {
-      const result = await service.generateReport('quote', mockQuoteData, {});
+      await service.generateReport('quote', mockQuoteData, {});
 
       const csvContent = mockStream.write.mock.calls[0][0];
       expect(csvContent).toContain('"Acme, Inc."'); // Company name with comma should be quoted
@@ -213,7 +212,7 @@ describe('CsvReportGeneratorService', () => {
         customer: null,
       };
 
-      const result = await service.generateReport('quote', quoteWithoutCustomer, {});
+      await service.generateReport('quote', quoteWithoutCustomer, {});
 
       const csvContent = mockStream.write.mock.calls[0][0];
       expect(csvContent).toContain('Name,N/A');
@@ -226,7 +225,7 @@ describe('CsvReportGeneratorService', () => {
         items: [],
       };
 
-      const result = await service.generateReport('quote', quoteWithNoItems, {});
+      await service.generateReport('quote', quoteWithNoItems, {});
 
       const csvContent = mockStream.write.mock.calls[0][0];
       expect(csvContent).toContain('ITEMS');
@@ -295,7 +294,7 @@ describe('CsvReportGeneratorService', () => {
         },
       };
 
-      const result = await service.generateReport('invoice', invoiceWithoutAddress, {});
+      await service.generateReport('invoice', invoiceWithoutAddress, {});
 
       const csvContent = mockStream.write.mock.calls[0][0];
       expect(csvContent).toContain('BILL TO');

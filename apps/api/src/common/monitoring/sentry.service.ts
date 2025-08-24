@@ -115,7 +115,7 @@ export class SentryService {
 
   private sanitizeObject(obj: any, sensitiveFields: string[]) {
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
           obj[key] = '[Sanitized]';
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {

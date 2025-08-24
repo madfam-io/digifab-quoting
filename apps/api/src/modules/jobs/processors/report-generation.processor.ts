@@ -192,7 +192,7 @@ export class ReportGenerationProcessor {
 
   private extractS3Key(s3Url: string): string {
     // Extract key from s3://bucket/key format
-    const match = s3Url.match(/^s3:\/\/[^\/]+\/(.+)$/);
+    const match = s3Url.match(/^s3:\/\/[^/]+\/(.+)$/);
     return match ? match[1] : '';
   }
 

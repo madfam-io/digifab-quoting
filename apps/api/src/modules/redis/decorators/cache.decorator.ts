@@ -5,23 +5,33 @@ export const CACHE_KEY_METADATA = 'cache_key_metadata';
 export const CACHE_OPTIONS_METADATA = 'cache_options_metadata';
 export const CACHE_INVALIDATE_METADATA = 'cache_invalidate_metadata';
 
+// Type for async methods that can be cached
+export type AsyncMethod<TArgs extends any[] = any[], TReturn = any> = (...args: TArgs) => Promise<TReturn>;
+
+// Type for the decorator target
+export interface DecoratorTarget {
+  constructor: {
+    name: string;
+  };
+}
+
 /**
  * Decorator to cache method results
  * @param options Cache options
  */
 export const Cacheable = (options?: CacheOptions): MethodDecorator => {
-  return (
-    target: Object,
+  return <T extends AsyncMethod>(
+    target: DecoratorTarget,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor | void => {
+    descriptor: TypedPropertyDescriptor<T>,
+  ): TypedPropertyDescriptor<T> | void => {
     SetMetadata(CACHE_OPTIONS_METADATA, options || {})(target, propertyKey, descriptor);
 
-    const originalMethod = descriptor.value as Function;
+    const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
+    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
       const cacheService = this.cacheService || this.cache;
 
       if (!cacheService) {
@@ -31,7 +41,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
 
       // Generate cache key
       const keyPrefix =
-        options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
+        options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
       const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
       const cacheKey = keyGenerator(keyPrefix, ...args);
 
@@ -47,7 +57,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
         fetchFn: () => originalMethod.apply(this, args),
         tenantSpecific: true,
       });
-    } as any;
+    } as T;
 
     return descriptor;
   };
@@ -58,18 +68,18 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to invalidate
  */
 export const CacheInvalidate = (patterns: string | string[]): MethodDecorator => {
-  return (
-    target: Object,
+  return <T extends AsyncMethod>(
+    target: DecoratorTarget,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor | void => {
+    descriptor: TypedPropertyDescriptor<T>,
+  ): TypedPropertyDescriptor<T> | void => {
     SetMetadata(CACHE_INVALIDATE_METADATA, patterns)(target, propertyKey, descriptor);
 
-    const originalMethod = descriptor.value as Function;
+    const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
+    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
@@ -79,7 +89,7 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
       }
 
       return result;
-    } as any;
+    } as T;
 
     return descriptor;
   };
@@ -90,32 +100,34 @@ export const CacheInvalidate = (patterns: string | string[]): MethodDecorator =>
  * @param options Cache options
  */
 export const CachePut = (options?: CacheOptions): MethodDecorator => {
-  return (
-    target: Object,
+  return <T extends AsyncMethod>(
+    target: DecoratorTarget,
     propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor | void => {
-    const originalMethod = descriptor.value as Function;
+    descriptor: TypedPropertyDescriptor<T>,
+  ): TypedPropertyDescriptor<T> | void => {
+    const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
+    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
       const result = await originalMethod.apply(this, args);
 
       const cacheService = this.cacheService || this.cache;
       if (cacheService && result !== null && result !== undefined) {
         const keyPrefix =
-          options?.prefix || `${(target.constructor as any).name}:${String(propertyKey)}`;
+          options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
         const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
         const cacheKey = keyGenerator(keyPrefix, ...args);
 
-        await (cacheService as any).redisService.set(cacheKey, result, options?.ttl, {
-          tenantId: this.tenantContext?.getTenantId(),
-        });
+        if ('redisService' in cacheService && cacheService.redisService) {
+          await cacheService.redisService.set(cacheKey, result, options?.ttl, {
+            tenantId: this.tenantContext?.getTenantId(),
+          });
+        }
       }
 
       return result;
-    } as any;
+    } as T;
 
     return descriptor;
   };
@@ -126,16 +138,16 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
  * @param patterns Cache key patterns to evict
  */
 export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
-  return (
-    _target: Object,
+  return <T extends AsyncMethod>(
+    _target: DecoratorTarget,
     _propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor | void => {
-    const originalMethod = descriptor.value as Function;
+    descriptor: TypedPropertyDescriptor<T>,
+  ): TypedPropertyDescriptor<T> | void => {
+    const originalMethod = descriptor.value;
 
     if (!originalMethod) return descriptor;
 
-    descriptor.value = async function (this: CacheContext, ...args: unknown[]) {
+    descriptor.value = async function (this: CacheContext, ...args: Parameters<T>) {
       const cacheService = this.cacheService || this.cache;
       if (cacheService) {
         // Evict cache before execution
@@ -143,20 +155,35 @@ export const CacheEvict = (patterns: string | string[]): MethodDecorator => {
       }
 
       return originalMethod.apply(this, args);
-    } as any;
+    } as T;
 
     return descriptor;
   };
 };
 
 /**
+ * Type for cache key arguments
+ */
+export type CacheKeyArg = string | number | boolean | Date | { [key: string]: CacheKeyArg } | CacheKeyArg[];
+
+/**
  * Default key generator function
  */
-function defaultKeyGenerator(prefix: string, ...args: unknown[]): string {
+function defaultKeyGenerator(prefix: string, ...args: CacheKeyArg[]): string {
   const argKey = args
     .map((arg) => {
+      if (arg instanceof Date) {
+        return arg.toISOString();
+      }
       if (typeof arg === 'object' && arg !== null) {
-        return JSON.stringify(arg, Object.keys(arg as object).sort());
+        if (Array.isArray(arg)) {
+          return JSON.stringify(arg);
+        }
+        const sortedObj = Object.keys(arg as Record<string, CacheKeyArg>).sort().reduce((result, key) => {
+          result[key] = (arg as Record<string, CacheKeyArg>)[key];
+          return result;
+        }, {} as Record<string, CacheKeyArg>);
+        return JSON.stringify(sortedObj);
       }
       return String(arg);
     })

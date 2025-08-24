@@ -1,10 +1,12 @@
+import type { CacheKeyArg } from '../decorators/cache.decorator';
+
 export interface CacheOptions {
   key?: string;
   ttl?: number; // Time to live in seconds
   prefix?: string;
   invalidateOn?: string[]; // Event names that invalidate this cache
-  condition?: (...args: unknown[]) => boolean; // Condition to cache
-  keyGenerator?: (prefix: string, ...args: unknown[]) => string; // Custom key generation
+  condition?: (...args: CacheKeyArg[]) => boolean; // Condition to cache
+  keyGenerator?: (prefix: string, ...args: CacheKeyArg[]) => string; // Custom key generation
 }
 
 export interface CacheKeyOptions {

@@ -106,7 +106,7 @@ export class VersionUtils {
 
   static isVersionDeprecated(version: string): boolean {
     const versionKey = `v${normalizeVersion(version)}`;
-    return DEPRECATED_VERSIONS.hasOwnProperty(versionKey);
+    return Object.prototype.hasOwnProperty.call(DEPRECATED_VERSIONS, versionKey);
   }
 
   static getDeprecationInfo(version: string) {

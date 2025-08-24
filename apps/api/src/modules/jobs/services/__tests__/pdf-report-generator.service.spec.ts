@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PdfReportGeneratorService } from '../pdf-report-generator.service';
 import { LoggerService } from '@/common/logger/logger.service';
 import * as fs from 'fs';
-import * as path from 'path';
 import PDFDocument from 'pdfkit';
 
 // Mock PDFDocument

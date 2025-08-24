@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExcelReportGeneratorService } from '../excel-report-generator.service';
 import { LoggerService } from '@/common/logger/logger.service';
 import * as ExcelJS from 'exceljs';
-import * as path from 'path';
 
 // Mock ExcelJS
 jest.mock('exceljs');

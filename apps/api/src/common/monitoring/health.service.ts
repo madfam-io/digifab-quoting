@@ -140,11 +140,10 @@ export class HealthService {
 
   private async checkDisk(): Promise<HealthCheck> {
     try {
-      const fs = require('fs');
-      // const stats = fs.statSync('.'); // Future use for disk space metrics
+      const { promises: fs } = await import('fs');
       
-      // For now, just check if we can access the filesystem
-      fs.accessSync('.', fs.constants.R_OK | fs.constants.W_OK);
+      // Check if we can access the filesystem
+      await fs.access('.', fs.constants.R_OK | fs.constants.W_OK);
       
       return {
         name: 'disk',

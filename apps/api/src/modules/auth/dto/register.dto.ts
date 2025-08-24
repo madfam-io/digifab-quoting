@@ -41,7 +41,7 @@ export class RegisterDto {
   @ApiPropertyOptional({
     example: '+1234567890',
     description: 'Contact phone number (optional)',
-    pattern: '^\+?[1-9]\d{1,14}$',
+    pattern: '^\\+?[1-9]\\d{1,14}$',
   })
   @IsOptional()
   @IsString()

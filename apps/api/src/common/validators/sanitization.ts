@@ -110,7 +110,7 @@ export class SecurityValidator {
     if (!filename || typeof filename !== 'string') return '';
 
     // Remove path components
-    filename = filename.replace(/^.*[\\\/]/, '');
+    filename = filename.replace(/^.*[\\/]/, '');
 
     // Remove special characters except dots, dashes, and underscores
     filename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
