@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings, FileText } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { CurrencySelector } from '@/components/currency/CurrencySelector';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export function Navbar() {
@@ -70,6 +71,11 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
+            <CurrencySelector 
+              size="sm" 
+              variant="outline"
+              className="hidden sm:flex"
+            />
             <LanguageSwitcher />
             {session ? (
               <DropdownMenu>
@@ -102,6 +108,13 @@ export function Navbar() {
                       {t('nav.settings')}
                     </Link>
                   </DropdownMenuItem>
+                  
+                  <div className="sm:hidden px-2 py-1">
+                    <CurrencySelector 
+                      size="sm"
+                      variant="ghost"
+                    />
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => signOut({ callbackUrl: '/' })}

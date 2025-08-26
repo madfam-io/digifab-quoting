@@ -56,7 +56,7 @@ export function useCurrency(): UseCurrencyReturn {
   const { currency: detectedCurrency, updatePreferences } = useGeoDetection();
   
   const [currency, setCurrencyState] = useState<Currency>(detectedCurrency);
-  const [rates, setRates] = useState<Record<Currency, number>>({});
+  const [rates, setRates] = useState<Record<Currency, number>>({} as Record<Currency, number>);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [ratesError, setRatesError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
