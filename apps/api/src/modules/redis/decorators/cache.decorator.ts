@@ -43,7 +43,7 @@ export const Cacheable = (options?: CacheOptions): MethodDecorator => {
       const keyPrefix =
         options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
       const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
-      const cacheKey = keyGenerator(keyPrefix, ...args);
+      const cacheKey = keyGenerator(keyPrefix, ...(args as CacheKeyArg[]));
 
       // Check condition
       if (options?.condition && !(options.condition as (...args: unknown[]) => boolean)(...args)) {
@@ -117,7 +117,7 @@ export const CachePut = (options?: CacheOptions): MethodDecorator => {
         const keyPrefix =
           options?.prefix || `${target.constructor.name}:${String(propertyKey)}`;
         const keyGenerator = options?.keyGenerator || defaultKeyGenerator;
-        const cacheKey = keyGenerator(keyPrefix, ...args);
+        const cacheKey = keyGenerator(keyPrefix, ...(args as CacheKeyArg[]));
 
         if ('redisService' in cacheService && cacheService.redisService) {
           await cacheService.redisService.set(cacheKey, result, options?.ttl, {

@@ -354,7 +354,7 @@ export class ReportDataLoaderService {
     startDate: string,
     endDate: string,
   ): Promise<{ rate: number; avgTime: number }> {
-    const result = await this.prisma.$queryRaw<Array<{ material: string; count: bigint; revenue: number }>>`
+    const result = await this.prisma.$queryRaw<Array<{ total_quotes: number; converted_quotes: number; avg_hours_to_convert: number | null }>>`
       SELECT 
         COUNT(DISTINCT q.id)::int as total_quotes,
         COUNT(DISTINCT o.quote_id)::int as converted_quotes,
@@ -371,7 +371,7 @@ export class ReportDataLoaderService {
 
     return {
       rate: parseFloat(rate.toFixed(2)),
-      avgTime: parseFloat(data.avg_hours_to_convert || 0),
+      avgTime: parseFloat(String(data.avg_hours_to_convert || 0)),
     };
   }
 

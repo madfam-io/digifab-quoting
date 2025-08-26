@@ -7,6 +7,11 @@ import {
   JobResult,
   JobProgress,
 } from '../interfaces/job.interface';
+import {
+  QuoteOrderData,
+  InvoiceData,
+  AnalyticsData,
+} from '../interfaces/report.interface';
 import { LoggerService } from '@/common/logger/logger.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -150,11 +155,11 @@ export class ReportGenerationProcessor {
   ): Promise<{ filePath: string; fileName: string }> {
     switch (format) {
       case 'pdf':
-        return this.pdfGenerator.generateReport(reportType, data as QuoteOrderData | InvoiceData | AnalyticsData, options);
+        return this.pdfGenerator.generateReport(reportType, data as unknown as QuoteOrderData | InvoiceData | AnalyticsData, options);
       case 'excel':
-        return this.excelGenerator.generateReport(reportType, data as QuoteOrderData | InvoiceData | AnalyticsData, options);
+        return this.excelGenerator.generateReport(reportType, data as unknown as QuoteOrderData | InvoiceData | AnalyticsData, options);
       case 'csv':
-        return this.csvGenerator.generateReport(reportType, data as QuoteOrderData | InvoiceData | AnalyticsData, options);
+        return this.csvGenerator.generateReport(reportType, data as unknown as QuoteOrderData | InvoiceData | AnalyticsData, options);
       default:
         throw new Error(`Unsupported report format: ${format}`);
     }

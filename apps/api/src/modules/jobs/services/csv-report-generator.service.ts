@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CustomerData } from '../interfaces/report.interface';
 import { createWriteStream } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

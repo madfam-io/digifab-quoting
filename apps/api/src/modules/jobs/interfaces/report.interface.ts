@@ -27,6 +27,11 @@ export interface QuoteOrderData {
   customer: CustomerData;
   totalAmount: number;
   currency: string;
+  quote?: {
+    id: string;
+    number: string;
+    items: ReportItem[];
+  };
 }
 
 export interface QuoteStatistic {

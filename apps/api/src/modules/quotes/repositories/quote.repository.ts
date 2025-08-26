@@ -21,13 +21,15 @@ interface QuoteItemWithRelations {
   process: string;
   material: string;
   quantity: number;
-  unitPrice?: number;
-  totalPrice?: number;
+  unitPrice?: import('@prisma/client').Decimal | null;
+  totalPrice?: import('@prisma/client').Decimal | null;
   leadDays?: number;
   files: Array<{
     id: string;
-    name: string;
-    url: string;
+    filename: string;
+    originalName: string;
+    path: string;
+    size: number;
     analyzedAt?: Date | null;
   }>;
   dfmReport?: {
@@ -96,7 +98,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     const orderBy = this.buildOrderBy(sort);
 
     const [items, total] = await Promise.all([
-      this.findMany(tenantId, { where, orderBy, skip, take, include }),
+      this.findMany(tenantId, { where, orderBy: Array.isArray(orderBy) ? orderBy[0] : orderBy, skip, take, include }),
       this.count(tenantId, where),
     ]);
 
@@ -116,7 +118,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
   }
 
   async create(data: Prisma.QuoteCreateInput & { tenantId: string }): Promise<QuoteWithRelations> {
-    return this.prisma.quote.create({ data });
+    return this.prisma.quote.create({ data: data as Prisma.QuoteCreateInput });
   }
 
   async update(

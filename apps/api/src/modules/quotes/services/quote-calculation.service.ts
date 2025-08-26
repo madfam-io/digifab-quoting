@@ -26,12 +26,28 @@ interface FileData {
   name: string;
   url: string;
   analyzedAt?: Date | null;
+  filename?: string;
+  originalName?: string;
+  size?: number;
 }
 
 interface DfmReport {
   id: string;
   metrics: Record<string, unknown>;
 }
+
+type PrismaQuoteWithItems = Prisma.QuoteGetPayload<{
+  include: {
+    items: {
+      include: {
+        files: {
+          where: { analyzedAt: { not: null } };
+        };
+        dfmReport: true;
+      };
+    };
+  };
+}>;
 
 interface ItemWithRelations extends QuoteItem {
   files: FileData[];
@@ -105,11 +121,13 @@ export class QuoteCalculationService {
   }
 
   private prepareItemsForCalculation(
-    existingItems: ItemWithRelations[],
+    existingItems: PrismaQuoteWithItems['items'],
     updates?: UpdateQuoteItemDto[],
   ): ItemWithRelations[] {
     if (!updates || updates.length === 0) {
-      return existingItems.filter((item) => item.files.length > 0);
+      return existingItems
+        .filter((item) => item.files.length > 0)
+        .map((item) => this.mapPrismaItemToItemWithRelations(item));
     }
 
     // Create a map for quick lookup
@@ -122,13 +140,36 @@ export class QuoteCalculationService {
         if (!update) {
           throw new Error(`Update not found for item ${item.id}`);
         }
+        const mappedItem = this.mapPrismaItemToItemWithRelations(item);
         return {
-          ...item,
-          material: update.material || item.material,
-          selections: { ...(item.selections as Record<string, unknown>), ...(update.selections || {}) },
-          quantity: update.quantity ?? item.quantity,
+          ...mappedItem,
+          material: update.material || mappedItem.material,
+          selections: { 
+            ...(typeof mappedItem.selections === 'object' && mappedItem.selections !== null ? mappedItem.selections as Record<string, unknown> : {}),
+            ...(update.selections || {})
+          } as Prisma.JsonValue,
+          quantity: update.quantity ?? mappedItem.quantity,
         };
       });
+  }
+
+  private mapPrismaItemToItemWithRelations(prismaItem: PrismaQuoteWithItems['items'][0]): ItemWithRelations {
+    return {
+      ...prismaItem,
+      files: prismaItem.files.map(file => ({
+        id: file.id,
+        name: file.originalName,
+        url: file.path, // or generate URL from S3 path
+        analyzedAt: file.analyzedAt,
+        filename: file.filename,
+        originalName: file.originalName,
+        size: file.size,
+      })),
+      dfmReport: prismaItem.dfmReport ? {
+        id: prismaItem.dfmReport.id,
+        metrics: prismaItem.dfmReport.metrics as Record<string, unknown>,
+      } : null,
+    };
   }
 
   private async batchLoadResources(

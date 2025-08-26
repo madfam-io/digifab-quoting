@@ -13,6 +13,7 @@ import {
   RevenueByPeriod,
   AnalyticsData,
   InvoiceData,
+  CustomerData,
 } from '../interfaces/report.interface';
 
 @Injectable()
@@ -180,7 +181,18 @@ export class PdfReportGeneratorService {
 
       // Add quote items if requested
       if (options?.includeItemDetails && order.quote.items) {
-        this.addQuoteContent(doc, order.quote, options);
+        // Create a minimal QuoteOrderData for the quote content
+        const quoteData: QuoteOrderData = {
+          id: order.quote.id,
+          number: order.quote.number,
+          status: 'QUOTED', // Default status for quote within order
+          createdAt: order.createdAt,
+          items: order.quote.items,
+          customer: order.customer,
+          totalAmount: order.totalAmount || 0,
+          currency: order.currency || 'MXN',
+        };
+        this.addQuoteContent(doc, quoteData, options);
       }
     }
 

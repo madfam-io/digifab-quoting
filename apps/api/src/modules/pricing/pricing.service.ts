@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Cacheable } from '../redis/decorators/cache.decorator';
-import { ProcessType, Material, Machine } from '@madfam/shared';
+import { ProcessType, Material, Machine, QuoteItemSelections } from '@madfam/shared';
 import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@madfam/pricing-engine';
 import { Decimal } from 'decimal.js';
 
@@ -91,9 +91,9 @@ export class PricingService {
     const pricingResult = this.pricingEngine.calculate({
       process,
       geometry: pricingGeometry,
-      material: material as Material,
-      machine: machine as Machine,
-      selections: selections as Record<string, unknown>,
+      material: material as unknown as Material,
+      machine: machine as unknown as Machine,
+      selections: { material: materialId, ...selections } as QuoteItemSelections,
       quantity,
       tenantConfig: pricingConfig,
     });
@@ -131,15 +131,13 @@ export class PricingService {
     const where: {
       tenantId: string;
       process?: ProcessType;
-      isActive?: boolean;
+      active?: boolean;
     } = {
       tenantId,
     };
 
     if (process) {
-      where.processTypes = {
-        has: process,
-      };
+      where.process = process;
     }
 
     return this.prisma.material.findMany({
@@ -153,13 +151,13 @@ export class PricingService {
     const where: {
       tenantId: string;
       process?: ProcessType;
-      isActive?: boolean;
+      active?: boolean;
     } = {
       tenantId,
     };
 
     if (process) {
-      where.processType = process;
+      where.process = process;
     }
 
     return this.prisma.machine.findMany({
@@ -173,7 +171,7 @@ export class PricingService {
     const where: {
       tenantId: string;
       process?: ProcessType;
-      isActive?: boolean;
+      active?: boolean;
     } = {
       tenantId,
     };

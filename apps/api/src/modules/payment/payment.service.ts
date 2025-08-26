@@ -45,7 +45,7 @@ export class PaymentService {
     const lineItems = quote.items.map((item: QuoteItem) => ({
       name: item.name || 'Quote Item',
       description: `${item.process} - ${item.material} - Qty: ${item.quantity}`,
-      amount: Math.round((item.unitPrice || 0) * 100), // Convert to cents
+      amount: Math.round(Number(item.unitPrice || 0) * 100), // Convert to cents
       currency: quote.currency.toLowerCase(),
       quantity: item.quantity,
     }));
