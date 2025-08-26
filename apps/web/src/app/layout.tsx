@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: 'Get instant quotes for 3D printing, CNC machining, and laser cutting',
 };
 
+// Force dynamic rendering to prevent NextRouter mounting issues during build
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
