@@ -6,18 +6,20 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Loader2, Download, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/components/ui/use-toast';
-import { QuoteStatus } from '@cotiza/shared';
+import { QuoteStatus, Currency } from '@cotiza/shared';
+import { PriceDisplay, QuotePrice } from '@/components/pricing/PriceDisplay';
+import { useCurrency } from '@/hooks/useCurrency';
+// import { useTranslation } from '@/hooks/useTranslation';
 
 interface Quote {
   id: string;
   quoteNumber: string;
   status: QuoteStatus;
-  currency: string;
+  currency: Currency;
   subtotal: number;
   tax: number;
   total: number;
@@ -41,6 +43,8 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { data: session, status } = useSession();
   const { toast } = useToast();
+  const { currency: userCurrency } = useCurrency();
+  // const { t } = useTranslation('quotes');
 
   const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -177,11 +181,20 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">
-                            ${item.subtotal.toFixed(2)} {quote.currency}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            ${item.unitPrice.toFixed(2)} each
+                          <PriceDisplay
+                            amount={item.subtotal}
+                            currency={quote.currency}
+                            size="sm"
+                            variant="inline"
+                            showConversion={quote.currency !== userCurrency}
+                          />
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <PriceDisplay
+                              amount={item.unitPrice}
+                              currency={quote.currency}
+                              size="sm"
+                              variant="minimal"
+                            /> each
                           </p>
                         </div>
                       </div>
@@ -198,23 +211,17 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                 <CardTitle>Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${quote.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>${quote.tax.toFixed(2)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span>
-                      ${quote.total.toFixed(2)} {quote.currency}
-                    </span>
-                  </div>
-                </div>
+                <QuotePrice
+                  quote={{
+                    totalPrice: quote.total,
+                    currency: quote.currency,
+                    breakdown: {
+                      subtotal: quote.subtotal,
+                      tax: quote.tax,
+                    },
+                  }}
+                  showConversion={quote.currency !== userCurrency}
+                />
 
                 <div className="text-sm text-muted-foreground">
                   Valid until: {new Date(quote.validUntil).toLocaleDateString()}

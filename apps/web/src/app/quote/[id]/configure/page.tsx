@@ -18,6 +18,11 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/components/ui/use-toast';
+import { CurrencySelector } from '@/components/currency/CurrencySelector';
+import { PriceDisplay } from '@/components/pricing/PriceDisplay';
+import { useCurrency } from '@/hooks/useCurrency';
+// import { useTranslation } from '@/hooks/useTranslation';
+import { Currency } from '@cotiza/shared';
 
 interface Material {
   id: string;
@@ -45,6 +50,9 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const { toast } = useToast();
+  const { currency } = useCurrency();
+  // const { t } = useTranslation('quotes');
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currency);
 
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
@@ -56,6 +64,7 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
   const [selectedMachine, setSelectedMachine] = useState('');
   const [selectedFinish, setSelectedFinish] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [estimatedPrice] = useState<number | null>(null);
 
   const fileIds = searchParams.get('files')?.split(',') || [];
 
@@ -117,8 +126,9 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
         });
       }
 
-      // Calculate quote
+      // Calculate quote with selected currency
       await apiClient.post(`/quotes/${params.id}/calculate`, {
+        currency: selectedCurrency,
         objective: {
           cost: 0.5,
           lead: 0.3,
@@ -165,8 +175,18 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
         <div className="max-w-3xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Configure Your Quote</CardTitle>
-              <p className="text-muted-foreground">Select materials and options for your parts</p>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle>Configure Your Quote</CardTitle>
+                  <p className="text-muted-foreground mt-1">Select materials and options for your parts</p>
+                </div>
+                <CurrencySelector
+                  value={selectedCurrency}
+                  onChange={setSelectedCurrency}
+                  size="sm"
+                  showRates={true}
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,6 +249,23 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
                   />
                 </div>
               </div>
+
+              {estimatedPrice && (
+                <Card className="bg-muted/50">
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Estimated Price:</span>
+                      <PriceDisplay
+                        amount={estimatedPrice}
+                        currency={selectedCurrency}
+                        size="lg"
+                        variant="inline"
+                        showConversion={true}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="pt-4">
                 <Button

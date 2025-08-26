@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { LoggerService } from '@/common/logger/logger.service';
-import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem } from '@prisma/client';
+import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem, Currency } from '@prisma/client';
 import * as PDFKit from 'pdfkit';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -173,10 +173,18 @@ export class QuotePdfService {
   }
 
   private addQuoteDetails(doc: PDFKit.PDFDocument, quote: any): void {
+    const currency = quote.currency as Currency || Currency.MXN;
+    const symbol = this.getCurrencySymbol(currency);
+    
     doc
       .fontSize(14)
       .font('Helvetica-Bold')
       .text('Quote Details:', 300, 130);
+    
+    doc
+      .fontSize(12)
+      .font('Helvetica')
+      .text(`Currency: ${currency} (${symbol})`, 300, 150);
 
     doc
       .fontSize(12)
@@ -219,8 +227,8 @@ export class QuotePdfService {
         item.process,
         item.material,
         item.quantity.toString(),
-        `$${(item.unitPrice || 0).toFixed(2)}`,
-        `$${(item.totalPrice || 0).toFixed(2)}`,
+        `${this.formatMoney(item.unitPrice || 0, quote.currency)}`,
+        `${this.formatMoney(item.totalPrice || 0, quote.currency)}`,
       ];
 
       rowData.forEach((data, i) => {
@@ -246,19 +254,19 @@ export class QuotePdfService {
 
     if (quote.subtotal) {
       doc.text(`Subtotal:`, totalsX, y);
-      doc.text(`$${quote.subtotal.toFixed(2)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.subtotal, quote.currency)}`, totalsX + 80, y, { align: 'right' });
       y += 20;
     }
 
     if (quote.tax) {
       doc.text(`Tax:`, totalsX, y);
-      doc.text(`$${quote.tax.toFixed(2)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.tax, quote.currency)}`, totalsX + 80, y, { align: 'right' });
       y += 20;
     }
 
     if (quote.shipping) {
       doc.text(`Shipping:`, totalsX, y);
-      doc.text(`$${quote.shipping.toFixed(2)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.shipping, quote.currency)}`, totalsX + 80, y, { align: 'right' });
       y += 20;
     }
 
@@ -268,7 +276,7 @@ export class QuotePdfService {
 
     doc.fontSize(14).font('Helvetica-Bold');
     doc.text(`Total:`, totalsX, y);
-    doc.text(`$${(quote.total || 0).toFixed(2)}`, totalsX + 80, y, { align: 'right' });
+    doc.text(`${this.formatMoney(quote.total || 0, quote.currency)}`, totalsX + 80, y, { align: 'right' });
   }
 
   private addTermsAndFooter(doc: PDFKit.PDFDocument, quote: any): void {
@@ -285,5 +293,67 @@ export class QuotePdfService {
     
     doc.text(`Generated on ${new Date().toLocaleString()}`, 50, footerY + 75);
     doc.text('Powered by Cotiza Studio Digital Fabrication Platform', 300, footerY + 75);
+  }
+
+  private formatMoney(amount: number, currency?: Currency | string): string {
+    const curr = currency as Currency || Currency.MXN;
+    const symbol = this.getCurrencySymbol(curr);
+    const decimals = this.getCurrencyDecimals(curr);
+    
+    // Format based on currency conventions
+    const formatted = amount.toFixed(decimals);
+    
+    // Apply symbol position based on currency
+    if (curr === Currency.EUR) {
+      return `${formatted} ${symbol}`; // EUR format: 100.00 €
+    } else if (curr === Currency.BRL) {
+      return `${symbol} ${formatted}`; // BRL format: R$ 100.00
+    } else {
+      return `${symbol}${formatted}`; // Default format: $100.00
+    }
+  }
+
+  private getCurrencySymbol(currency: Currency): string {
+    const symbols: Record<Currency, string> = {
+      [Currency.MXN]: '$',
+      [Currency.USD]: '$',
+      [Currency.EUR]: '€',
+      [Currency.BRL]: 'R$',
+      [Currency.GBP]: '£',
+      [Currency.CAD]: 'C$',
+      [Currency.CNY]: '¥',
+      [Currency.JPY]: '¥',
+      [Currency.ARS]: '$',
+      [Currency.CLP]: '$',
+      [Currency.COP]: '$',
+      [Currency.PEN]: 'S/',
+      [Currency.CHF]: 'Fr',
+      [Currency.SEK]: 'kr',
+      [Currency.NOK]: 'kr',
+      [Currency.DKK]: 'kr',
+      [Currency.PLN]: 'zł',
+      [Currency.KRW]: '₩',
+      [Currency.INR]: '₹',
+      [Currency.SGD]: 'S$',
+      [Currency.HKD]: 'HK$',
+      [Currency.AUD]: 'A$',
+      [Currency.NZD]: 'NZ$',
+      [Currency.TWD]: 'NT$',
+      [Currency.THB]: '฿',
+      [Currency.AED]: 'د.إ',
+      [Currency.SAR]: '﷼',
+      [Currency.ZAR]: 'R',
+      [Currency.EGP]: '£',
+    };
+    return symbols[currency] || '$';
+  }
+
+  private getCurrencyDecimals(currency: Currency): number {
+    // Currencies with no decimal places
+    if ([Currency.JPY, Currency.KRW].includes(currency)) {
+      return 0;
+    }
+    // Most currencies use 2 decimal places
+    return 2;
   }
 }

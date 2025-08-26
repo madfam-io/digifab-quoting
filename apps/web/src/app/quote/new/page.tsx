@@ -9,11 +9,18 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/components/ui/use-toast';
+import { CurrencySelector } from '@/components/currency/CurrencySelector';
+import { useCurrency } from '@/hooks/useCurrency';
+// import { useTranslation } from '@/hooks/useTranslation';
+import { Currency } from '@cotiza/shared';
 
 export default function NewQuotePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { toast } = useToast();
+  const { currency } = useCurrency();
+  // const { t } = useTranslation('quotes');
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currency);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
@@ -35,7 +42,7 @@ export default function NewQuotePage() {
     try {
       // Create quote
       const quote = await apiClient.post<{ id: string }>('/quotes', {
-        currency: 'MXN',
+        currency: selectedCurrency,
         objective: {
           cost: 0.5,
           lead: 0.3,
@@ -72,11 +79,23 @@ export default function NewQuotePage() {
         <div className="max-w-3xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Nueva Cotización</CardTitle>
-              <p className="text-muted-foreground">
-                Sube tus archivos para comenzar. Nuestro sistema analizará automáticamente tus
-                piezas y generará una cotización en minutos.
-              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-2xl">Nueva Cotización</CardTitle>
+                  <p className="text-muted-foreground mt-2">
+                    Sube tus archivos para comenzar. Nuestro sistema analizará automáticamente tus
+                    piezas y generará una cotización en minutos.
+                  </p>
+                </div>
+                <div className="ml-4">
+                  <CurrencySelector
+                    value={selectedCurrency}
+                    onChange={setSelectedCurrency}
+                    size="sm"
+                    showRates={true}
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <FileUpload onFilesUploaded={handleFilesUploaded} maxFiles={50} />
