@@ -17,6 +17,13 @@ export function initializeSentry() {
     replaysSessionSampleRate: isProduction ? 0.01 : 0.1, // 1% in prod, 10% in dev
     replaysOnErrorSampleRate: 1.0, // Always capture replays on errors
     
+    // Trace propagation targets (moved to global level in v8)
+    tracePropagationTargets: [
+      'localhost',
+      /^https:\/\/api\.madfam\.com/,
+      /^https:\/\/.*\.madfam\.com/,
+    ],
+    
     // Error filtering
     beforeSend(event, _hint) {
       // Filter out development-only errors
@@ -47,19 +54,9 @@ export function initializeSentry() {
     
     // Integration configuration
     integrations: [
-      new Sentry.BrowserTracing({
-        // Capture interactions
-        tracePropagationTargets: [
-          'localhost',
-          /^https:\/\/api\.madfam\.com/,
-          /^https:\/\/.*\.madfam\.com/,
-        ],
-        
-        // Custom routing instrumentation for Next.js
-        routingInstrumentation: Sentry.nextRouterInstrumentation,
-      }),
+      Sentry.browserTracingIntegration(),
       
-      new Sentry.Replay({
+      Sentry.replayIntegration({
         // Privacy settings
         maskAllText: isProduction,
         blockAllMedia: isProduction,
@@ -175,10 +172,10 @@ export function addBreadcrumb(message: string, category?: string, level?: Sentry
 }
 
 export function startTransaction(name: string, operation?: string) {
-  return Sentry.startTransaction({
+  return Sentry.startSpan({
     name,
     op: operation || 'custom',
-  });
+  }, (span) => span);
 }
 
 // Performance monitoring helpers
@@ -188,36 +185,24 @@ export function measureFunction<T extends (...args: unknown[]) => unknown>(
   operation: string = 'function'
 ): T {
   return ((...args: unknown[]) => {
-    const transaction = Sentry.startTransaction({ name, op: operation });
-    
-    try {
-      const result = fn(...args);
-      
-      // Handle promises
-      if (result instanceof Promise) {
-        return result
-          .then((value) => {
-            transaction.setStatus('ok');
-            transaction.finish();
-            return value;
-          })
-          .catch((error) => {
-            transaction.setStatus('internal_error');
+    return Sentry.startSpan({ name, op: operation }, () => {
+      try {
+        const result = fn(...args);
+        
+        // Handle promises
+        if (result instanceof Promise) {
+          return result.catch((error) => {
             Sentry.captureException(error);
-            transaction.finish();
             throw error;
           });
+        }
+        
+        return result;
+      } catch (error) {
+        Sentry.captureException(error);
+        throw error;
       }
-      
-      transaction.setStatus('ok');
-      transaction.finish();
-      return result;
-    } catch (error) {
-      transaction.setStatus('internal_error');
-      Sentry.captureException(error);
-      transaction.finish();
-      throw error;
-    }
+    });
   }) as T;
 }
 
