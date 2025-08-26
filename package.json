@@ -14,6 +14,9 @@
     "health": "node scripts/health-check.js",
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:cov": "turbo run test:cov", 
+    "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -22,6 +25,11 @@
     "db:migrate": "turbo run db:migrate",
     "db:seed": "turbo run db:seed",
     "db:utils": "node scripts/db-utils.js",
+    "implementation:status": "node scripts/implementation-tracker.js progress",
+    "implementation:list": "node scripts/implementation-tracker.js list",
+    "implementation:complete": "node scripts/implementation-tracker.js complete",
+    "implementation:note": "node scripts/implementation-tracker.js note",
+    "implementation:report": "node scripts/implementation-tracker.js report",
     "postinstall": "npm run db:generate"
   },
   "devDependencies": {
