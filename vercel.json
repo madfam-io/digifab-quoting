@@ -1,4 +1,6 @@
 {
   "installCommand": "npm install --include=dev",
-  "buildCommand": "npm run build"
+  "buildCommand": "npm run build -- --filter=@cotiza/web",
+  "framework": "nextjs",
+  "outputDirectory": "apps/web/.next"
 }

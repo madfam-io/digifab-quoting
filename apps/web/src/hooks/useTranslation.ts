@@ -1,4 +1,5 @@
-import { useRouter } from 'next/router';
+'use client';
+
 import { useEffect, useState } from 'react';
 
 type TranslationDictionary = {
@@ -7,13 +8,39 @@ type TranslationDictionary = {
 
 const translationCache = new Map<string, TranslationDictionary>();
 
+// Get initial locale (SSR-safe)
+function getInitialLocale(): string {
+  if (typeof window === 'undefined') {
+    return 'es'; // Default for SSR
+  }
+  
+  const storedLocale = localStorage.getItem('locale');
+  if (storedLocale) return storedLocale;
+  
+  const browserLocale = navigator.language.split('-')[0];
+  const supportedLocales = ['es', 'en', 'pt-BR'];
+  
+  return supportedLocales.includes(browserLocale) ? browserLocale : 'es';
+}
+
 export function useTranslation(namespace = 'common') {
-  const router = useRouter();
-  const locale = router.locale || 'es';
+  // In App Router, we'll manage locale differently
+  const [locale, setLocale] = useState(() => getInitialLocale());
   const [translations, setTranslations] = useState<TranslationDictionary>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    // Update locale on client side
+    const actualLocale = getInitialLocale();
+    if (actualLocale !== locale) {
+      setLocale(actualLocale);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // Skip on SSR
     const loadTranslations = async () => {
       const cacheKey = `${locale}/${namespace}`;
       
@@ -51,7 +78,7 @@ export function useTranslation(namespace = 'common') {
     };
 
     loadTranslations();
-  }, [locale, namespace]);
+  }, [locale, namespace, mounted]);
 
   /**
    * Get translation by key with optional parameter interpolation
@@ -152,6 +179,18 @@ export function useTranslation(namespace = 'common') {
     return `/${locale}${path}`;
   };
 
+  /**
+   * Change the application language
+   */
+  const changeLanguage = (newLocale: string) => {
+    setLocale(newLocale);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locale', newLocale);
+      // Force reload to apply new translations
+      window.location.reload();
+    }
+  };
+
   return {
     t,
     locale,
@@ -161,5 +200,6 @@ export function useTranslation(namespace = 'common') {
     formatCurrency,
     formatDate,
     localizedPath,
+    changeLanguage,
   };
 }
