@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CurrencySelector } from '../CurrencySelector';
+import { CurrencySelector, CurrencyBadge, CurrencyToggle } from '../CurrencySelector';
 import { Currency } from '@cotiza/shared';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -262,7 +262,6 @@ describe('CurrencySelector', () => {
 // Sub-component tests
 describe('CurrencyBadge', () => {
   it('should render currency badge with flag and symbol', () => {
-    const { CurrencyBadge } = require('../CurrencySelector');
     render(<CurrencyBadge currency={Currency.EUR} />);
     
     expect(screen.getByText('EUR')).toBeInTheDocument();
@@ -271,14 +270,12 @@ describe('CurrencyBadge', () => {
   });
 
   it('should hide flag when showFlag is false', () => {
-    const { CurrencyBadge } = require('../CurrencySelector');
     render(<CurrencyBadge currency={Currency.EUR} showFlag={false} />);
     
     expect(screen.queryByRole('img', { name: /flag/i })).not.toBeInTheDocument();
   });
 
   it('should hide symbol when showSymbol is false', () => {
-    const { CurrencyBadge } = require('../CurrencySelector');
     render(<CurrencyBadge currency={Currency.EUR} showSymbol={false} />);
     
     expect(screen.queryByText('€')).not.toBeInTheDocument();
@@ -287,7 +284,6 @@ describe('CurrencyBadge', () => {
 
 describe('CurrencyToggle', () => {
   it('should render toggle between two currencies', () => {
-    const { CurrencyToggle } = require('../CurrencySelector');
     const mockOnChange = jest.fn();
     
     render(
@@ -303,7 +299,6 @@ describe('CurrencyToggle', () => {
   });
 
   it('should call onChange when toggled', async () => {
-    const { CurrencyToggle } = require('../CurrencySelector');
     const mockOnChange = jest.fn();
     const user = userEvent.setup();
     
@@ -320,7 +315,6 @@ describe('CurrencyToggle', () => {
   });
 
   it('should highlight selected currency', () => {
-    const { CurrencyToggle } = require('../CurrencySelector');
     const mockOnChange = jest.fn();
     
     render(

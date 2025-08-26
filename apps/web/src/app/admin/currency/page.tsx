@@ -16,17 +16,20 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   RefreshCw, 
   TrendingUp, 
   TrendingDown, 
   AlertCircle, 
   CheckCircle,
-  Clock,
-  Globe,
-  DollarSign,
-  Activity,
-  Settings
+  Clock
 } from 'lucide-react';
 import { Currency } from '@cotiza/shared';
 import { apiClient } from '@/lib/api-client';
@@ -44,12 +47,6 @@ interface ExchangeRate {
   lastUpdated: string;
 }
 
-interface CurrencyMetrics {
-  conversionCount: number;
-  avgConversionAmount: number;
-  errorRate: number;
-  cacheHitRate: number;
-}
 
 interface RateAlert {
   id: string;
@@ -66,7 +63,6 @@ export default function CurrencyAdminPage() {
   
   // State for different sections
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
-  const [metrics, setMetrics] = useState<Record<string, CurrencyMetrics>>({});
   const [alerts, setAlerts] = useState<RateAlert[]>([]);
   const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.USD);
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
@@ -81,8 +77,6 @@ export default function CurrencyAdminPage() {
 
   useEffect(() => {
     loadDashboardData();
-    const interval = setInterval(loadMetrics, 30000); // Refresh metrics every 30s
-    return () => clearInterval(interval);
   }, [baseCurrency]);
 
   const loadDashboardData = async () => {
@@ -90,7 +84,6 @@ export default function CurrencyAdminPage() {
     try {
       await Promise.all([
         loadExchangeRates(),
-        loadMetrics(),
         loadAlerts(),
         loadConfiguration(),
       ]);
@@ -129,14 +122,6 @@ export default function CurrencyAdminPage() {
     }
   };
 
-  const loadMetrics = async () => {
-    try {
-      const response = await apiClient.get<any>('/admin/metrics/currency');
-      setMetrics(response.conversions || {});
-    } catch (error) {
-      console.error('Failed to load metrics:', error);
-    }
-  };
 
   const loadAlerts = async () => {
     // Mock alerts for demo
@@ -215,7 +200,7 @@ export default function CurrencyAdminPage() {
     }
   };
 
-  const renderRateChange = (rate: ExchangeRate) => {
+  const renderRateChange = (_rate: ExchangeRate) => {
     // Calculate mock change
     const change = (Math.random() - 0.5) * 5;
     const isPositive = change > 0;
@@ -448,7 +433,6 @@ export default function CurrencyAdminPage() {
                         {currency}
                       </Label>
                       <Switch
-                        id={currency}
                         checked={enabledCurrencies.includes(currency)}
                         onCheckedChange={() => handleToggleCurrency(currency)}
                       />
@@ -620,11 +604,3 @@ export default function CurrencyAdminPage() {
   );
 }
 
-// Missing imports
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
