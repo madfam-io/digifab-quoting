@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Wrench, 
   Building, 
@@ -100,7 +100,7 @@ export function DIYCalculator() {
     
     // Time calculation (hours)
     const baseTime = { simple: 4, medium: 12, complex: 24 }[config.complexity];
-    const experienceMultiplier = { beginner: 2, intermediate: 1.3, expert: 1 }[userProfile.experience as keyof typeof { beginner: number; intermediate: number; expert: number }];
+    const experienceMultiplier = { beginner: 2, intermediate: 1.3, expert: 1 }[userProfile.experience as keyof { beginner: number; intermediate: number; expert: number }];
     const timeHours = baseTime * experienceMultiplier * materialCost.difficulty;
     
     const timeValue = timeHours * userProfile.valueTime;
@@ -170,7 +170,6 @@ export function DIYCalculator() {
 
     // Recommendation logic
     const costSavings = professionalCost - diyCost.total;
-    const timeValue = timeHours * userProfile.valueTime;
     
     let recommendation: 'diy' | 'professional' = 'diy';
     
@@ -243,7 +242,7 @@ export function DIYCalculator() {
                   <label className="block text-sm font-medium mb-3">Size</label>
                   <select
                     value={config.size}
-                    onChange={(e) => setConfig(prev => ({ ...prev, size: e.target.value as any }))}
+                    onChange={(e) => setConfig(prev => ({ ...prev, size: e.target.value as 'small' | 'medium' | 'large' }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="small">Small</option>

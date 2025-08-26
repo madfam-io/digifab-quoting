@@ -24,6 +24,9 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { GuestModule } from './modules/guest/guest.module';
 import { LinkProcessingModule } from './modules/link-processing/link-processing.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { ConversionModule } from './modules/conversion/conversion.module';
+import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 
 @Module({
   imports: [
@@ -58,6 +61,9 @@ import { LinkProcessingModule } from './modules/link-processing/link-processing.
     OrdersModule,
     GuestModule,
     LinkProcessingModule,
+    BillingModule,
+    ConversionModule,
+    EnterpriseModule,
   ],
   controllers: [AppController],
   providers: [

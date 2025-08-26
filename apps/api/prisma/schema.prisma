@@ -10,20 +10,26 @@ datasource db {
 // ==================== CORE MODELS ====================
 
 model Tenant {
-  id                  String   @id @default(cuid())
-  name                String
-  code                String   @unique
-  domain              String?  @unique
-  defaultCurrency     String   @default("MXN")
-  supportedCurrencies String[] @default(["MXN", "USD"])
-  defaultLocale       String   @default("es")
-  supportedLocales    String[] @default(["es", "en"])
-  features            Json     @default("{}")
-  settings            Json     @default("{}")
-  branding            Json     @default("{}")
-  active              Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  name                  String
+  code                  String   @unique
+  domain                String?  @unique
+  defaultCurrency       String   @default("MXN")
+  supportedCurrencies   String[] @default(["MXN", "USD"])
+  defaultLocale         String   @default("es")
+  supportedLocales      String[] @default(["es", "en"])
+  features              Json     @default("{}")
+  settings              Json     @default("{}")
+  branding              Json     @default("{}")
+  active                Boolean  @default(true)
+  
+  // Billing fields
+  billingPlanId         String?
+  stripeCustomerId      String?  @unique
+  stripeSubscriptionId  String?  @unique
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   // Relations
   users          User[]
@@ -39,9 +45,14 @@ model Tenant {
   margins        Margin[]
   customers      Customer[]
   apiKeys        ApiKey[]
+  billingPlan    BillingPlan? @relation(fields: [billingPlanId], references: [id])
+  invoices       Invoice[]
+  usageEvents    UsageEvent[]
 
   @@index([code])
   @@index([domain])
+  @@index([billingPlanId])
+  @@index([stripeCustomerId])
 }
 
 model User {
@@ -72,6 +83,10 @@ model User {
   invoices             Invoice[]
   convertedSessions    GuestSession[]
   quoteConversions     QuoteConversion[]
+  usageEvents          UsageEvent[]
+  supportTickets       SupportTicket[]
+  assignedTickets      SupportTicket[]      @relation("AssignedTickets")
+  ticketMessages       SupportTicketMessage[]
 
   @@index([tenantId])
   @@index([email])
@@ -742,23 +757,182 @@ model OrderItem {
 }
 
 model Invoice {
-  id         String   @id @default(cuid())
-  tenantId   String
-  number     String   @unique
-  orderId    String
-  customerId String
-  currency   String
-  total      Decimal  @db.Decimal(10, 2)
-  dueDate    DateTime
-  metadata   Json     @default("{}")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id               String    @id @default(cuid())
+  tenantId         String
+  number           String?   @unique
+  orderId          String?
+  customerId       String?
+  period           String    // For billing invoices (YYYY-MM)
+  baseFee          Decimal?  @db.Decimal(10, 2)
+  usageCost        Decimal?  @db.Decimal(10, 2)
+  currency         String    @default("USD")
+  totalAmount      Decimal   @db.Decimal(10, 2) @map("total")
+  status           String    @default("pending") // pending, paid, overdue, failed
+  dueDate          DateTime
+  paidAt           DateTime?
+  stripeInvoiceId  String?   @unique
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  order    Order @relation(fields: [orderId], references: [id])
-  customer User  @relation(fields: [customerId], references: [id])
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  order    Order? @relation(fields: [orderId], references: [id])
+  customer User?  @relation(fields: [customerId], references: [id])
 
   @@index([tenantId])
   @@index([orderId])
   @@index([customerId])
+  @@index([period])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ==================== BILLING MODELS ====================
+
+model BillingPlan {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  description     String?
+  monthlyPrice    Decimal  @db.Decimal(10, 2)
+  yearlyPrice     Decimal  @db.Decimal(10, 2)
+  includedQuotas  Json     // Record<UsageEventType, number>
+  overageRates    Json     // Record<UsageEventType, number>
+  features        Json     // string[]
+  maxTeamMembers  Int      @default(1)
+  apiRateLimit    Int      @default(100)
+  supportLevel    String   @default("community") // community, email, priority, white-glove
+  customBranding  Boolean  @default(false)
+  whiteLabel      Boolean  @default(false)
+  sla             String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenants Tenant[]
+
+  @@index([name])
+  @@index([active])
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  eventType String   // UsageEventType enum
+  quantity  Int      @default(1)
+  metadata  Json     @default("{}")
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, eventType, timestamp])
+  @@index([tenantId, timestamp])
+  @@index([eventType])
+  @@map("usage_events")
+}
+
+// ==================== ENTERPRISE MODELS ====================
+
+model SSOProvider {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  type          String   // SSOProviderType enum
+  enabled       Boolean  @default(true)
+  configuration Json     // SSOConfiguration
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([enabled])
+  @@map("sso_providers")
+}
+
+model WhiteLabelConfiguration {
+  id            String   @id @default(cuid())
+  tenantId      String   @unique
+  branding      Json     // BrandingConfiguration
+  customization Json     // CustomizationConfiguration  
+  domain        Json     // DomainConfiguration
+  features      Json     // FeatureConfiguration
+  deployment    Json     // DeploymentConfiguration
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("white_label_configurations")
+}
+
+model DataRetentionPolicy {
+  id                        String    @id @default(cuid())
+  tenantId                  String    @unique
+  auditLogRetentionDays     Int       @default(365)
+  fileRetentionDays         Int       @default(730)
+  inactiveUserRetentionDays Int       @default(90)
+  autoDeleteEnabled         Boolean   @default(false)
+  lastEnforcedAt            DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@map("data_retention_policies")
+}
+
+model SupportTicket {
+  id             String    @id @default(cuid())
+  tenantId       String
+  userId         String?
+  subject        String
+  description    String
+  priority       String    // TicketPriority enum
+  status         String    @default("open") // TicketStatus enum
+  category       String
+  assignedToId   String?
+  tags           String[]  @default([])
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  resolvedAt     DateTime?
+  firstResponseAt DateTime?
+  escalatedAt    DateTime?
+
+  // Relations
+  user       User?                   @relation(fields: [userId], references: [id])
+  assignedTo User?                   @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  messages   SupportTicketMessage[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id          String   @id @default(cuid())
+  ticketId    String
+  userId      String
+  content     String
+  isInternal  Boolean  @default(false)
+  attachments String[] @default([])
+  createdAt   DateTime @default(now())
+
+  // Relations
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("support_ticket_messages")
 }

@@ -146,7 +146,6 @@ export function LinkQuoteDemo() {
   const getMockProject = (url: string) => {
     const isArduino = url.includes('arduino') || url.includes('weather');
     const is3DPrint = url.includes('thingiverse') || url.includes('mount');
-    const isCNC = url.includes('cnc') || url.includes('router');
 
     if (isArduino) {
       return {

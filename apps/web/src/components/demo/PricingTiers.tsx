@@ -132,7 +132,6 @@ const PRICING_TIERS: PricingTier[] = [
 
 export function PricingTiers() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [hoveredTier, setHoveredTier] = useState<string | null>(null);
 
   const yearlyDiscount = (monthly: number, yearly: number) => {
     if (monthly === 0) return 0;
@@ -186,8 +185,6 @@ export function PricingTiers() {
             className={`relative p-8 rounded-2xl border-2 transition-all ${
               tier.popular ? 'scale-105 shadow-xl' : 'hover:shadow-lg'
             } ${tier.color}`}
-            onHoverStart={() => setHoveredTier(tier.id)}
-            onHoverEnd={() => setHoveredTier(null)}
             whileHover={{ y: tier.popular ? 0 : -5 }}
           >
             {/* Badge */}

@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
-  TrendingDown, 
   BarChart3, 
   Layers, 
   Clock, 
-  DollarSign,
   Brain,
   Globe,
   Smartphone,

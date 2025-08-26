@@ -161,7 +161,6 @@ const PERSONAS: Persona[] = [
 
 export function PersonaSelector() {
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
-  const [hoveredPersona, setHoveredPersona] = useState<string | null>(null);
 
   return (
     <div className="space-y-8">
@@ -176,8 +175,6 @@ export function PersonaSelector() {
                 : 'border-gray-200 hover:border-gray-300 hover:shadow-lg'
             }`}
             onClick={() => setSelectedPersona(persona.id)}
-            onHoverStart={() => setHoveredPersona(persona.id)}
-            onHoverEnd={() => setHoveredPersona(null)}
             whileHover={{ y: -5 }}
             layout
           >

@@ -124,7 +124,7 @@ export function FileUploadDemo() {
                           analysis: {
                             volume: (Math.random() * 50 + 5).toFixed(1) + ' cm³',
                             surfaceArea: (Math.random() * 200 + 20).toFixed(1) + ' cm²',
-                            complexity: ['Simple', 'Medium', 'Complex'][Math.floor(Math.random() * 3)] as any,
+                            complexity: ['Simple', 'Medium', 'Complex'][Math.floor(Math.random() * 3)] as 'Simple' | 'Medium' | 'Complex',
                             materialRecommendation: ['PLA', 'PETG', 'ABS', 'Carbon Fiber'][Math.floor(Math.random() * 4)],
                             estimatedCost: '$' + (Math.random() * 100 + 10).toFixed(2),
                             leadTime: Math.floor(Math.random() * 7 + 1) + ' days'
@@ -376,8 +376,8 @@ export function FileUploadDemo() {
           </p>
           <button 
             onClick={() => processFiles([
-              new File([''], 'sample-bracket.stl', { type: 'application/octet-stream' }),
-              new File([''], 'custom-enclosure.step', { type: 'application/step' })
+              new File([new Blob()], 'sample-bracket.stl', { type: 'application/octet-stream' }),
+              new File([new Blob()], 'custom-enclosure.step', { type: 'application/step' })
             ])}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >

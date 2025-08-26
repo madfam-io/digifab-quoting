@@ -54,7 +54,7 @@ export class BusinessMetricsService {
       // Store time-series data for trends
       await this.recordTimeSeries(metric, value, labels);
     } catch (error) {
-      this.logger.error('Failed to increment counter metric', { metric, labels, error });
+      this.logger.error('Failed to increment counter metric', { metric, labels }, error);
     }
   }
 
@@ -77,7 +77,7 @@ export class BusinessMetricsService {
       
       await this.recordTimeSeries(metric, value, labels);
     } catch (error) {
-      this.logger.error('Failed to record histogram metric', { metric, value, labels, error });
+      this.logger.error('Failed to record histogram metric', { metric, value, labels }, error);
     }
   }
 
@@ -93,7 +93,7 @@ export class BusinessMetricsService {
       
       await this.recordTimeSeries(metric, value, labels);
     } catch (error) {
-      this.logger.error('Failed to set gauge metric', { metric, value, labels, error });
+      this.logger.error('Failed to set gauge metric', { metric, value, labels }, error);
     }
   }
 
@@ -202,7 +202,7 @@ export class BusinessMetricsService {
         averageOrderValue: avgOrderValue,
       };
     } catch (error) {
-      this.logger.error('Failed to get business metrics', { tenantId, error });
+      this.logger.error('Failed to get business metrics', { tenantId }, error);
       throw error;
     }
   }
