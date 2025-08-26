@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,7 @@ const languages: Language[] = [
 ];
 
 export function LanguageSwitcher() {
-  const router = useRouter();
-  const { locale = 'es', asPath } = router;
+  const { locale, changeLanguage } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -43,8 +42,8 @@ export function LanguageSwitcher() {
       localStorage.setItem('preferredLocale', newLocale);
     }
 
-    // Navigate to new locale
-    router.push(asPath, asPath, { locale: newLocale });
+    // Change language using the hook
+    changeLanguage(newLocale);
   };
 
   // Prevent hydration mismatch
