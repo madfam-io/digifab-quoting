@@ -238,6 +238,30 @@ npm run test:e2e
 - Functions: 90%+
 - Lines: 80%+
 
+## 📚 Documentation
+
+### Complete Documentation Guide
+
+All project documentation is organized in the `/docs` directory. See [**docs/INDEX.md**](docs/INDEX.md) for the complete documentation guide.
+
+### Key Documents
+
+- **[Business Plan](docs/BUSINESS_PLAN.md)** - Three-year strategic vision and growth roadmap
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design principles
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation with examples
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Comprehensive development handbook
+- **[Routes Documentation](docs/ROUTES.md)** - All routes with auth requirements
+- **[Local Setup Guide](docs/LOCAL_SETUP_GUIDE.md)** - Detailed environment setup
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment procedures
+
+### Documentation by Role
+
+**For Product Managers**: [Business Plan](docs/BUSINESS_PLAN.md) | [Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md) | [Navigation Audit](docs/NAVIGATION_AUDIT.md)
+
+**For Developers**: [Developer Guide](docs/DEVELOPER_GUIDE.md) | [API Reference](docs/API_REFERENCE.md) | [Local Setup](docs/LOCAL_SETUP_GUIDE.md)
+
+**For DevOps**: [Architecture](docs/ARCHITECTURE.md) | [Deployment](docs/DEPLOYMENT.md) | [Migration Guide](docs/MIGRATION_GUIDE.md)
+
 ## 📦 API Documentation
 
 ### Base URL
