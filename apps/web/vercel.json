@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && npm install && npm run build -- --filter=@cotiza/web",
+  "buildCommand": "cd ../.. && npm install --include=dev && npm run build -- --filter=@cotiza/web",
   "outputDirectory": ".next",
   "framework": "nextjs"
 }
