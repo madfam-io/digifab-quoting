@@ -27,6 +27,7 @@ import { LinkProcessingModule } from './modules/link-processing/link-processing.
 import { BillingModule } from './modules/billing/billing.module';
 import { ConversionModule } from './modules/conversion/conversion.module';
 import { EnterpriseModule } from './modules/enterprise/enterprise.module';
+import { GeoModule } from './modules/geo/geo.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { EnterpriseModule } from './modules/enterprise/enterprise.module';
     BillingModule,
     ConversionModule,
     EnterpriseModule,
+    GeoModule,
   ],
   controllers: [AppController],
   providers: [

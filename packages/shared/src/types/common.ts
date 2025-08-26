@@ -1,6 +1,6 @@
 export type UUID = string;
 export type ISO8601 = string;
-export type Locale = 'es' | 'en';
+export type Locale = 'es' | 'en' | 'pt-BR';
 
 export interface Timestamped {
   createdAt: ISO8601;

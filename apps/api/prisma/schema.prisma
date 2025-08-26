@@ -7,6 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==================== ENUMS ====================
+
+enum Currency {
+  // Americas
+  MXN  // Mexican Peso
+  USD  // US Dollar
+  CAD  // Canadian Dollar
+  BRL  // Brazilian Real
+  ARS  // Argentine Peso
+  CLP  // Chilean Peso
+  COP  // Colombian Peso
+  PEN  // Peruvian Sol
+  
+  // Europe
+  EUR  // Euro
+  GBP  // British Pound
+  CHF  // Swiss Franc
+  SEK  // Swedish Krona
+  NOK  // Norwegian Krone
+  DKK  // Danish Krone
+  PLN  // Polish Zloty
+  
+  // Asia Pacific
+  CNY  // Chinese Yuan
+  JPY  // Japanese Yen
+  KRW  // South Korean Won
+  INR  // Indian Rupee
+  SGD  // Singapore Dollar
+  HKD  // Hong Kong Dollar
+  AUD  // Australian Dollar
+  NZD  // New Zealand Dollar
+  TWD  // Taiwan Dollar
+  THB  // Thai Baht
+  
+  // Middle East & Africa
+  AED  // UAE Dirham
+  SAR  // Saudi Riyal
+  ZAR  // South African Rand
+  EGP  // Egyptian Pound
+}
+
 // ==================== CORE MODELS ====================
 
 model Tenant {
@@ -14,8 +55,8 @@ model Tenant {
   name                  String
   code                  String   @unique
   domain                String?  @unique
-  defaultCurrency       String   @default("MXN")
-  supportedCurrencies   String[] @default(["MXN", "USD"])
+  defaultCurrency       Currency @default(MXN)
+  supportedCurrencies   Currency[] @default([MXN, USD])
   defaultLocale         String   @default("es")
   supportedLocales      String[] @default(["es", "en"])
   features              Json     @default("{}")
@@ -105,6 +146,7 @@ model User {
   supportTickets       SupportTicket[]
   assignedTickets      SupportTicket[]      @relation("AssignedTickets")
   ticketMessages       SupportTicketMessage[]
+  preferences          UserPreferences?
 
   @@index([tenantId])
   @@index([email])
@@ -153,7 +195,9 @@ model Quote {
   customerId     String?
   number         String    @unique
   status         String    @default("draft")
-  currency       String    @default("MXN")
+  currency       Currency  @default(MXN)
+  exchangeRate   Decimal?  @db.Decimal(12, 6) // Rate used at quote creation
+  baseCurrency   Currency? // Original pricing currency
   objective      Json      @default("{\"cost\": 0.5, \"lead\": 0.3, \"green\": 0.2}")
   validityUntil  DateTime
   validUntil     DateTime?
@@ -975,4 +1019,71 @@ model Translation {
   @@index([namespace])
   @@index([key])
   @@map("translations")
+}
+
+// ==================== MULTICURRENCY & GEO MODELS ====================
+
+model ExchangeRate {
+  id             String   @id @default(cuid())
+  baseCurrency   Currency
+  targetCurrency Currency
+  rate           Decimal  @db.Decimal(12, 6)
+  source         String   // 'openexchangerates', 'xe', 'manual'
+  validFrom      DateTime
+  validUntil     DateTime
+  createdAt      DateTime @default(now())
+
+  @@unique([baseCurrency, targetCurrency, validFrom])
+  @@index([baseCurrency, targetCurrency])
+  @@index([validFrom, validUntil])
+  @@index([source])
+  @@map("exchange_rates")
+}
+
+model UserPreferences {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  preferredLocale   String   @default("es")
+  preferredCurrency Currency @default(MXN)
+  timezone          String?
+  autoDetect        Boolean  @default(true)
+  currencyDisplayMode String @default("symbol") // 'symbol', 'code', 'name'
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([preferredCurrency])
+  @@index([preferredLocale])
+  @@map("user_preferences")
+}
+
+model GeoSession {
+  id               String    @id @default(cuid())
+  sessionId        String    @unique
+  ipAddress        String
+  country          String?
+  countryCode      String?
+  city             String?
+  region           String?
+  timezone         String?
+  detectedLocale   String?
+  detectedCurrency Currency?
+  selectedLocale   String?
+  selectedCurrency Currency?
+  confidence       Int?      // Detection confidence score 0-100
+  source           String?   // 'edge-header', 'ip-service', 'browser', 'default'
+  userAgent        String?
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([sessionId])
+  @@index([ipAddress])
+  @@index([countryCode])
+  @@index([detectedCurrency])
+  @@index([createdAt])
+  @@map("geo_sessions")
 }

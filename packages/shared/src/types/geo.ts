@@ -2,6 +2,9 @@
  * Geo-detection and multicurrency types for Cotiza Studio
  */
 
+import { Currency } from './enums';
+import { Locale } from './common';
+
 export interface GeoDetection {
   detected: {
     country: string;
@@ -72,48 +75,8 @@ export interface ConversionOptions {
   roundingMode?: 'floor' | 'ceil' | 'round';
 }
 
-// Enhanced Currency enum with more international support
-export enum Currency {
-  // Americas
-  MXN = 'MXN', // Mexican Peso
-  USD = 'USD', // US Dollar
-  CAD = 'CAD', // Canadian Dollar
-  BRL = 'BRL', // Brazilian Real
-  ARS = 'ARS', // Argentine Peso
-  CLP = 'CLP', // Chilean Peso
-  COP = 'COP', // Colombian Peso
-  PEN = 'PEN', // Peruvian Sol
-  
-  // Europe
-  EUR = 'EUR', // Euro
-  GBP = 'GBP', // British Pound
-  CHF = 'CHF', // Swiss Franc
-  SEK = 'SEK', // Swedish Krona
-  NOK = 'NOK', // Norwegian Krone
-  DKK = 'DKK', // Danish Krone
-  PLN = 'PLN', // Polish Zloty
-  
-  // Asia Pacific
-  CNY = 'CNY', // Chinese Yuan
-  JPY = 'JPY', // Japanese Yen
-  KRW = 'KRW', // South Korean Won
-  INR = 'INR', // Indian Rupee
-  SGD = 'SGD', // Singapore Dollar
-  HKD = 'HKD', // Hong Kong Dollar
-  AUD = 'AUD', // Australian Dollar
-  NZD = 'NZD', // New Zealand Dollar
-  TWD = 'TWD', // Taiwan Dollar
-  THB = 'THB', // Thai Baht
-  
-  // Middle East & Africa
-  AED = 'AED', // UAE Dirham
-  SAR = 'SAR', // Saudi Riyal
-  ZAR = 'ZAR', // South African Rand
-  EGP = 'EGP', // Egyptian Pound
-}
-
-// Locale type matching our i18n setup
-export type Locale = 'es' | 'en' | 'pt-BR';
+// Re-export types for convenience
+export type { Currency, Locale };
 
 // Country code mapping
 export const COUNTRY_CURRENCY_MAP: Record<string, Currency> = {
