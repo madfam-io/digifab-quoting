@@ -69,8 +69,8 @@ export class ComplianceService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
-    private readonly auditTrail: AuditTrailService,
+    private readonly _redis: RedisService,
+    private readonly _auditTrail: AuditTrailService,
     private readonly configService: ConfigService,
   ) {
     this.bucketName = this.configService.get<string>('S3_BUCKET', '');

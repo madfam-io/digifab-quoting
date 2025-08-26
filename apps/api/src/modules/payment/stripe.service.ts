@@ -143,4 +143,61 @@ export class StripeService {
       throw error;
     }
   }
+
+  async createSubscription(params: {
+    customer: string;
+    priceId: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Subscription> {
+    try {
+      const subscription = await this.stripe.subscriptions.create({
+        customer: params.customer,
+        items: [{ price: params.priceId }],
+        metadata: params.metadata || {},
+      });
+
+      this.logger.log(`Created subscription ${subscription.id} for customer ${params.customer}`);
+      return subscription;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create subscription: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async createInvoice(params: {
+    customer: string;
+    amount: number;
+    currency: string;
+    description: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Invoice> {
+    try {
+      const invoice = await this.stripe.invoices.create({
+        customer: params.customer,
+        currency: params.currency,
+        description: params.description,
+        metadata: params.metadata || {},
+        auto_advance: true,
+      });
+
+      // Add line item for the amount
+      await this.stripe.invoiceItems.create({
+        customer: params.customer,
+        amount: params.amount * 100, // Convert to cents
+        currency: params.currency,
+        description: params.description,
+        invoice: invoice.id,
+      });
+
+      this.logger.log(`Created invoice ${invoice.id} for customer ${params.customer}`);
+      return invoice;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create invoice: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
 }

@@ -480,4 +480,188 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       throw new Error('Redis ping failed');
     }
   }
+
+  /**
+   * Hash increment by amount
+   */
+  async hincrby(key: string, field: string, amount: number): Promise<number> {
+    if (!this.client) {
+      throw new Error('Redis not connected');
+    }
+    try {
+      return await this.client.hincrby(key, field, amount);
+    } catch (error) {
+      this.statistics.errors++;
+      throw error;
+    }
+  }
+
+  /**
+   * List push (left)
+   */
+  async lpush(key: string, ...values: string[]): Promise<number> {
+    if (!this.client) {
+      throw new Error('Redis not connected');
+    }
+    try {
+      return await this.client.lpush(key, ...values);
+    } catch (error) {
+      this.statistics.errors++;
+      throw error;
+    }
+  }
+
+  /**
+   * List trim
+   */
+  async ltrim(key: string, start: number, stop: number): Promise<string> {
+    if (!this.client) {
+      throw new Error('Redis not connected');
+    }
+    try {
+      return await this.client.ltrim(key, start, stop);
+    } catch (error) {
+      this.statistics.errors++;
+      throw error;
+    }
+  }
+
+  // ===== SORTED SET OPERATIONS =====
+
+  /**
+   * Add member to sorted set
+   */
+  async zadd(key: string, score: number, member: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.zadd(key, score, member);
+    } catch (error) {
+      this.logger.error(
+        `Error adding to sorted set ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  /**
+   * Get members from sorted set by score range
+   */
+  async zrangebyscore(key: string, min: number, max: number): Promise<string[]> {
+    if (!this.client) {
+      return [];
+    }
+    try {
+      return await this.client.zrangebyscore(key, min, max);
+    } catch (error) {
+      this.logger.error(
+        `Error getting sorted set range ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return [];
+    }
+  }
+
+  // ===== HASH OPERATIONS =====
+
+  /**
+   * Get all hash fields and values
+   */
+  async hgetall(key: string): Promise<Record<string, string>> {
+    if (!this.client) {
+      return {};
+    }
+    try {
+      return await this.client.hgetall(key);
+    } catch (error) {
+      this.logger.error(
+        `Error getting hash ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return {};
+    }
+  }
+
+  /**
+   * Set hash field
+   */
+  async hset(key: string, field: string, value: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.hset(key, field, value);
+    } catch (error) {
+      this.logger.error(
+        `Error setting hash field ${key}.${field}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  /**
+   * Get hash field
+   */
+  async hget(key: string, field: string): Promise<string | null> {
+    if (!this.client) {
+      return null;
+    }
+    try {
+      return await this.client.hget(key, field);
+    } catch (error) {
+      this.logger.error(
+        `Error getting hash field ${key}.${field}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return null;
+    }
+  }
+
+  // ===== LIST OPERATIONS =====
+
+  /**
+   * Get list length
+   */
+  async llen(key: string): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+    try {
+      return await this.client.llen(key);
+    } catch (error) {
+      this.logger.error(
+        `Error getting list length ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return 0;
+    }
+  }
+
+  /**
+   * Get list range
+   */
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    if (!this.client) {
+      return [];
+    }
+    try {
+      return await this.client.lrange(key, start, stop);
+    } catch (error) {
+      this.logger.error(
+        `Error getting list range ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return [];
+    }
+  }
 }

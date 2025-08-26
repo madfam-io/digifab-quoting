@@ -143,7 +143,7 @@ export class UsageTrackingService {
       for (const eventType of Object.values(UsageEventType)) {
         const key = this.buildUsageKey(tenantId, period, eventType);
         const count = await this.redis.get(key);
-        events[eventType] = parseInt(count || '0');
+        events[eventType] = parseInt(String(count) || '0');
       }
 
       const totalCost = await this.calculateCost(tenantId, events);
@@ -214,11 +214,14 @@ export class UsageTrackingService {
     }
 
     let totalCost = 0;
-    const pricing = tenant.billingPlan.pricing as Record<string, number>;
+    const overageRates = tenant.billingPlan.overageRates as Record<string, number>;
+    const includedQuotas = tenant.billingPlan.includedQuotas as Record<string, number>;
 
     Object.entries(events).forEach(([eventType, quantity]) => {
-      const unitPrice = pricing[eventType] || 0;
-      totalCost += quantity * unitPrice;
+      const included = includedQuotas[eventType] || 0;
+      const overage = Math.max(0, quantity - included);
+      const unitPrice = overageRates[eventType] || 0;
+      totalCost += overage * unitPrice;
     });
 
     return totalCost;
@@ -304,5 +307,35 @@ export class UsageTrackingService {
     await this.redis.del(eventKey);
 
     this.logger.log(`Reset usage for tenant ${tenantId}, period ${targetPeriod}`);
+  }
+
+  async getCurrentMonthUsage(tenantId: string): Promise<Record<UsageEventType, number>> {
+    const currentPeriod = new Date().toISOString().substring(0, 7); // YYYY-MM
+    const summary = await this.getUsageSummary(tenantId, currentPeriod);
+    return summary.events;
+  }
+
+  async getTenantLimits(tenantId: string): Promise<Record<UsageEventType, number>> {
+    // Get tenant's billing plan limits
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { billingPlan: true },
+    });
+
+    if (!tenant?.billingPlan) {
+      // Return default limits if no billing plan
+      return {
+        [UsageEventType.API_CALL]: 1000,
+        [UsageEventType.QUOTE_GENERATION]: 100,
+        [UsageEventType.FILE_ANALYSIS]: 50,
+        [UsageEventType.DFM_REPORT]: 25,
+        [UsageEventType.PDF_GENERATION]: 100,
+        [UsageEventType.STORAGE_GB_HOUR]: 10,
+        [UsageEventType.COMPUTE_SECONDS]: 3600,
+      };
+    }
+
+    const includedQuotas = tenant.billingPlan.includedQuotas as Record<UsageEventType, number>;
+    return includedQuotas;
   }
 }

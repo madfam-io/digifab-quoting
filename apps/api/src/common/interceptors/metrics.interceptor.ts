@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
@@ -12,6 +13,8 @@ import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(MetricsInterceptor.name);
+
   constructor(
     private readonly metricsService: BusinessMetricsService,
     private readonly tenantContext: TenantContextService,
@@ -46,7 +49,7 @@ export class MetricsInterceptor implements NestInterceptor {
           true,
           tenantId
         ).catch(error => {
-          console.error('Failed to record success metric:', error);
+          this.logger.error('Failed to record success metric:', error);
         });
 
         // Record HTTP metrics
@@ -58,7 +61,7 @@ export class MetricsInterceptor implements NestInterceptor {
             tenant: tenantId || 'unknown',
           }
         ).catch(error => {
-          console.error('Failed to record HTTP metric:', error);
+          this.logger.error('Failed to record HTTP metric:', error);
         });
 
         this.metricsService.recordHistogram(
@@ -70,7 +73,7 @@ export class MetricsInterceptor implements NestInterceptor {
             tenant: tenantId || 'unknown',
           }
         ).catch(error => {
-          console.error('Failed to record HTTP duration:', error);
+          this.logger.error('Failed to record HTTP duration:', error);
         });
       }),
       catchError((error) => {
@@ -83,7 +86,7 @@ export class MetricsInterceptor implements NestInterceptor {
           false,
           tenantId
         ).catch(metricsError => {
-          console.error('Failed to record error metric:', metricsError);
+          this.logger.error('Failed to record error metric:', metricsError);
         });
 
         // Record error metrics
@@ -93,7 +96,7 @@ export class MetricsInterceptor implements NestInterceptor {
           this.getErrorSeverity(error),
           tenantId
         ).catch(metricsError => {
-          console.error('Failed to record error:', metricsError);
+          this.logger.error('Failed to record error:', metricsError);
         });
 
         // Record HTTP error metrics
@@ -105,7 +108,7 @@ export class MetricsInterceptor implements NestInterceptor {
             tenant: tenantId || 'unknown',
           }
         ).catch(metricsError => {
-          console.error('Failed to record HTTP error metric:', metricsError);
+          this.logger.error('Failed to record HTTP error metric:', metricsError);
         });
 
         // Re-throw the error

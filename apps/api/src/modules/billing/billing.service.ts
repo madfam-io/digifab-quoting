@@ -104,7 +104,7 @@ export class BillingService {
     if (amount > 0) {
       // Create Stripe subscription
       const subscription = await this.stripeService.createSubscription({
-        customerId: tenant.stripeCustomerId,
+        customer: tenant.stripeCustomerId,
         priceId: this.getStripePriceId(tier.name, billingCycle),
         metadata: {
           tenantId,
@@ -156,10 +156,10 @@ export class BillingService {
       id: invoice.id,
       tenantId: invoice.tenantId,
       period: invoice.period,
-      baseFee: invoice.baseFee || 0,
-      usageCost: invoice.usageCost || 0,
-      totalAmount: invoice.totalAmount,
-      status: invoice.status as any,
+      baseFee: invoice.baseFee ? Number(invoice.baseFee) : 0,
+      usageCost: invoice.usageCost ? Number(invoice.usageCost) : 0,
+      totalAmount: Number(invoice.totalAmount),
+      status: invoice.status as Invoice['status'],
       dueDate: invoice.dueDate,
       paidAt: invoice.paidAt || undefined,
       stripeInvoiceId: invoice.stripeInvoiceId || undefined,
@@ -180,10 +180,10 @@ export class BillingService {
       id: invoice.id,
       tenantId: invoice.tenantId,
       period: invoice.period,
-      baseFee: invoice.baseFee || 0,
-      usageCost: invoice.usageCost || 0,
-      totalAmount: invoice.totalAmount,
-      status: invoice.status as any,
+      baseFee: invoice.baseFee ? Number(invoice.baseFee) : 0,
+      usageCost: invoice.usageCost ? Number(invoice.usageCost) : 0,
+      totalAmount: Number(invoice.totalAmount),
+      status: invoice.status as Invoice['status'],
       dueDate: invoice.dueDate,
       paidAt: invoice.paidAt || undefined,
       stripeInvoiceId: invoice.stripeInvoiceId || undefined,
@@ -202,6 +202,7 @@ export class BillingService {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
+      include: { users: { take: 1 } },
     });
 
     if (!tenant) {
@@ -209,13 +210,19 @@ export class BillingService {
     }
 
     const session = await this.stripeService.createCheckoutSession({
-      customerId: tenant.stripeCustomerId,
-      amount: invoice.totalAmount,
-      currency: 'usd',
-      description: `Invoice for ${invoice.period}`,
+      quoteId: invoiceId, // Using invoice ID as quote ID for billing context
+      customerEmail: tenant.users[0]?.email || 'noreply@madfam.com', // Get first user's email
+      lineItems: [{
+        name: `Invoice for ${invoice.period}`,
+        description: `MADFAM Quoting Service - ${invoice.period}`,
+        amount: Number(invoice.totalAmount) * 100, // Convert to cents
+        currency: 'usd',
+        quantity: 1,
+      }],
       metadata: {
         tenantId,
         invoiceId,
+        type: 'billing_invoice',
       },
       successUrl: `${process.env.FRONTEND_URL}/billing/success?invoice=${invoiceId}`,
       cancelUrl: `${process.env.FRONTEND_URL}/billing/invoices`,
@@ -239,7 +246,7 @@ export class BillingService {
     const includedQuotas = tenant.billingPlan.includedQuotas as Record<UsageEventType, number>;
     const overageRates = tenant.billingPlan.overageRates as Record<UsageEventType, number>;
 
-    const baseCost = tenant.billingPlan.monthlyPrice || 0;
+    const baseCost = Number(tenant.billingPlan.monthlyPrice) || 0;
     let overageCost = 0;
     const breakdown: Record<string, { quantity: number; cost: number; overage?: number }> = {};
 
@@ -291,9 +298,9 @@ export class BillingService {
       throw new BadRequestException('No billing plan found for tenant');
     }
 
-    const _usage = await this.usageTracking.getUsageSummary(tenantId, period);
+    const _unused_usage = await this.usageTracking.getUsageSummary(tenantId, period);
     const overageCost = await this.pricingTierService.calculateOverageCost(tenantId, period);
-    const baseFee = tenant.billingPlan.monthlyPrice || 0;
+    const baseFee = Number(tenant.billingPlan.monthlyPrice) || 0;
     const totalAmount = baseFee + overageCost;
 
     // Check if invoice already exists
@@ -309,10 +316,10 @@ export class BillingService {
         id: existingInvoice.id,
         tenantId: existingInvoice.tenantId,
         period: existingInvoice.period,
-        baseFee: existingInvoice.baseFee || 0,
-        usageCost: existingInvoice.usageCost || 0,
-        totalAmount: existingInvoice.totalAmount,
-        status: existingInvoice.status as any,
+        baseFee: existingInvoice.baseFee ? Number(existingInvoice.baseFee) : 0,
+        usageCost: existingInvoice.usageCost ? Number(existingInvoice.usageCost) : 0,
+        totalAmount: Number(existingInvoice.totalAmount),
+        status: existingInvoice.status as Invoice['status'],
         dueDate: existingInvoice.dueDate,
         paidAt: existingInvoice.paidAt || undefined,
         stripeInvoiceId: existingInvoice.stripeInvoiceId || undefined,
@@ -338,8 +345,9 @@ export class BillingService {
     // Create Stripe invoice if amount > 0
     if (totalAmount > 0) {
       const stripeInvoice = await this.stripeService.createInvoice({
-        customerId: tenant.stripeCustomerId,
+        customer: tenant.stripeCustomerId,
         amount: totalAmount,
+        currency: 'usd',
         description: `MADFAM Quoting - ${period}`,
         metadata: {
           tenantId,
@@ -362,10 +370,10 @@ export class BillingService {
       id: invoice.id,
       tenantId: invoice.tenantId,
       period: invoice.period,
-      baseFee: invoice.baseFee || 0,
-      usageCost: invoice.usageCost || 0,
-      totalAmount: invoice.totalAmount,
-      status: invoice.status as any,
+      baseFee: invoice.baseFee ? Number(invoice.baseFee) : 0,
+      usageCost: invoice.usageCost ? Number(invoice.usageCost) : 0,
+      totalAmount: Number(invoice.totalAmount),
+      status: invoice.status as Invoice['status'],
       dueDate: invoice.dueDate,
       paidAt: invoice.paidAt || undefined,
       stripeInvoiceId: invoice.stripeInvoiceId || undefined,

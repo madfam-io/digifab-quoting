@@ -45,7 +45,7 @@ export class InvoiceService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly usageTracking: UsageTrackingService,
-    private readonly pricingTier: PricingTierService,
+    private readonly _pricingTier: PricingTierService,
   ) {}
 
   async generateInvoice(tenantId: string, period: string): Promise<InvoiceGeneration> {
@@ -53,38 +53,39 @@ export class InvoiceService {
       // Get tenant and billing plan
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
-        include: { billing: { include: { plan: true } } },
+        include: { billingPlan: true },
       });
 
       if (!tenant) {
         return { success: false, errors: ['Tenant not found'] };
       }
 
-      if (!tenant.billing?.plan) {
+      if (!tenant.billingPlan) {
         return { success: false, errors: ['No billing plan configured'] };
       }
 
       // Calculate period dates
       const [year, month] = period.split('-').map(Number);
-      const periodStart = new Date(year, month - 1, 1);
-      const periodEnd = new Date(year, month, 0);
+      const _unused_periodStart = new Date(year, month - 1, 1);
+      const _unused_periodEnd = new Date(year, month, 0);
 
       // Get usage data for the period
-      const usage = await this.usageTracking.getTenantUsage(tenantId, periodStart, periodEnd);
+      const usage = await this.usageTracking.getUsageSummary(tenantId, period);
+      const usageEvents = usage.events || {};
 
       // Calculate base fee
-      const plan = tenant.billing.plan;
-      const baseFee = plan.monthlyPrice;
+      const plan = tenant.billingPlan;
+      const baseFee = Number(plan.monthlyPrice) || 0;
 
       // Calculate usage charges
       const usageCharges: InvoiceLineItem[] = [];
       let usageTotal = 0;
 
-      for (const [eventType, quantity] of Object.entries(usage)) {
+      for (const [eventType, quantity] of Object.entries(usageEvents)) {
         if (quantity === 0) continue;
 
         const includedQuota = (plan.includedQuotas as any)[eventType] || 0;
-        const overageQuantity = Math.max(0, quantity - includedQuota);
+        const overageQuantity = Math.max(0, Number(quantity) - Number(includedQuota));
 
         if (overageQuantity > 0) {
           const overageRate = (plan.overageRates as any)[eventType] || 0;
@@ -129,12 +130,12 @@ export class InvoiceService {
           data: {
             baseFee,
             usageCost: usageTotal,
-            total,
-            metadata: {
+            totalAmount: total,
+            metadata: JSON.stringify({
               lineItems: usageCharges,
               generatedAt: new Date().toISOString(),
               planId: plan.id,
-            },
+            }) as any,
           },
         });
         invoiceId = updated.id;
@@ -146,14 +147,14 @@ export class InvoiceService {
             period,
             baseFee,
             usageCost: usageTotal,
-            total,
+            totalAmount: total,
             currency: tenant.defaultCurrency,
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-            metadata: {
+            metadata: JSON.stringify({
               lineItems: usageCharges,
               generatedAt: new Date().toISOString(),
               planId: plan.id,
-            },
+            }) as any,
           },
         });
         invoiceId = invoice.id;
@@ -213,7 +214,7 @@ export class InvoiceService {
       period: invoice.period,
       baseFee: invoice.baseFee,
       usageCost: invoice.usageCost,
-      total: invoice.total,
+      total: Number(invoice.totalAmount || 0),
       currency: invoice.currency,
       status: invoice.status,
       dueDate: invoice.dueDate,
@@ -233,7 +234,7 @@ export class InvoiceService {
     return invoices.map(invoice => ({
       id: invoice.id,
       period: invoice.period,
-      total: invoice.total,
+      total: Number(invoice.totalAmount || 0),
       currency: invoice.currency,
       status: invoice.status,
       dueDate: invoice.dueDate,
@@ -310,7 +311,7 @@ export class InvoiceService {
       tenantName: invoice.tenant?.name,
       tenantCode: invoice.tenant?.code,
       period: invoice.period,
-      total: invoice.total,
+      total: Number(invoice.totalAmount || 0),
       currency: invoice.currency,
       status: invoice.status,
       dueDate: invoice.dueDate,
@@ -327,14 +328,14 @@ export class InvoiceService {
     const now = new Date();
     const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextMonth = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+    const _unused_nextMonth = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
 
     const where: any = {};
     if (tenantIds) {
       where.tenantId = { in: tenantIds };
     }
 
-    const [thisMonthInvoices, activeTenantsCount] = await Promise.all([
+    const [thisMonthInvoices, _unused_activeTenantsCount] = await Promise.all([
       this.prisma.invoice.findMany({
         where: { ...where, period: thisMonth },
       }),
@@ -347,7 +348,7 @@ export class InvoiceService {
     ]);
 
     // Calculate current month revenue
-    const thisMonthRevenue = thisMonthInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+    const thisMonthRevenue = thisMonthInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
 
     // Estimate next month (assumes similar usage patterns)
     const recurringRevenue = thisMonthInvoices.reduce((sum, inv) => sum + Number(inv.baseFee || 0), 0);

@@ -154,11 +154,11 @@ export class WhiteLabelService {
     const savedConfig = await this.prisma.whiteLabelConfiguration.create({
       data: {
         tenantId: config.tenantId,
-        branding: config.branding,
-        customization: config.customization,
-        domain: config.domain,
-        features: config.features,
-        deployment: config.deployment,
+        branding: JSON.stringify(config.branding) as any,
+        customization: JSON.stringify(config.customization) as any,
+        domain: JSON.stringify(config.domain) as any,
+        features: JSON.stringify(config.features) as any,
+        deployment: JSON.stringify(config.deployment) as any,
       },
     });
 

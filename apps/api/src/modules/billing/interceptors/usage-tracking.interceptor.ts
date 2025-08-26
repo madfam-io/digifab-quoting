@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
@@ -12,6 +13,8 @@ import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 
 @Injectable()
 export class UsageTrackingInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(UsageTrackingInterceptor.name);
+
   constructor(
     private readonly usageTracking: UsageTrackingService,
     private readonly tenantContext: TenantContextService,
@@ -73,7 +76,7 @@ export class UsageTrackingInterceptor implements NestInterceptor {
       }
     } catch (trackingError) {
       // Don't fail the request if usage tracking fails
-      console.error('Usage tracking failed:', trackingError);
+      this.logger.error('Usage tracking failed:', trackingError);
     }
   }
 

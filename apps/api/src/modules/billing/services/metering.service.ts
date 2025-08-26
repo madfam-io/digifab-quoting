@@ -97,7 +97,7 @@ export class MeteringService {
         
         for (const [eventType, value] of Object.entries(data)) {
           if (!metrics[eventType]) metrics[eventType] = [];
-          metrics[eventType].push(parseInt(value));
+          metrics[eventType].push(parseInt(String(value)));
         }
       }
     } else if (period === 'day') {
@@ -108,7 +108,7 @@ export class MeteringService {
         
         for (const [eventType, value] of Object.entries(data)) {
           if (!metrics[eventType]) metrics[eventType] = [];
-          metrics[eventType].push(parseInt(value));
+          metrics[eventType].push(parseInt(String(value)));
         }
       }
     }
@@ -150,7 +150,7 @@ export class MeteringService {
     }
 
     // Calculate statistics
-    const processedReadings: Record<UsageEventType, any> = {};
+    const processedReadings: Partial<Record<UsageEventType, any>> = {};
     for (const [eventType, data] of Object.entries(readings)) {
       const values = data.values.sort((a: number, b: number) => a - b);
       processedReadings[eventType as UsageEventType] = {
@@ -165,7 +165,7 @@ export class MeteringService {
     const snapshot: MeterSnapshot = {
       tenantId,
       period,
-      readings: processedReadings,
+      readings: processedReadings as Record<UsageEventType, any>,
       aggregatedAt: new Date(),
     };
 
@@ -182,7 +182,7 @@ export class MeteringService {
   async getSnapshot(tenantId: string, period: string): Promise<MeterSnapshot | null> {
     const cached = await this.redis.get(`meter:snapshot:${tenantId}:${period}`);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(String(cached));
     }
     return null;
   }
@@ -231,7 +231,7 @@ export class MeteringService {
           eventType: reading.eventType,
           quantity: reading.value,
           timestamp: reading.timestamp,
-          metadata: reading.metadata || {},
+          metadata: JSON.stringify(reading.metadata || {}) as any,
         },
       });
     } catch (error) {

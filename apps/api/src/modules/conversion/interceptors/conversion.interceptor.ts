@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -11,6 +12,8 @@ import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 
 @Injectable()
 export class ConversionInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(ConversionInterceptor.name);
+
   constructor(
     private readonly conversionTracking: ConversionTrackingService,
     private readonly tenantContext: TenantContextService,
@@ -53,7 +56,7 @@ export class ConversionInterceptor implements NestInterceptor {
       await this.conversionTracking.trackAction(action, context);
     } catch (error) {
       // Don't fail the request if conversion tracking fails
-      console.error('Conversion tracking failed:', error);
+      this.logger.error('Conversion tracking failed:', error);
     }
   }
 

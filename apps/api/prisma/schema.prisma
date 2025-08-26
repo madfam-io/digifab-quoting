@@ -48,11 +48,28 @@ model Tenant {
   billingPlan    BillingPlan? @relation(fields: [billingPlanId], references: [id])
   invoices       Invoice[]
   usageEvents    UsageEvent[]
+  tenantSettings TenantSettings?
 
   @@index([code])
   @@index([domain])
   @@index([billingPlanId])
   @@index([stripeCustomerId])
+}
+
+model TenantSettings {
+  id        String   @id @default(cuid())
+  tenantId  String   @unique
+  settings  Json     @default("{}")
+  branding  Json     @default("{}")
+  features  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_settings")
 }
 
 model User {
@@ -216,6 +233,7 @@ model File {
   type            String
   size            Int
   path            String
+  s3Key           String?
   hash            String
   version         Int      @default(1)
   ndaAcceptanceId String?
@@ -223,6 +241,7 @@ model File {
   status          String   @default("PENDING")
   analysisResult  Json?
   analyzedAt      DateTime?
+  at              DateTime @default(now()) // For compliance date-based queries
   createdAt       DateTime @default(now())
 
   // Relations
@@ -236,6 +255,7 @@ model File {
   @@index([quoteItemId])
   @@index([hash])
   @@index([status])
+  @@index([at])
 }
 
 model DFMReport {
