@@ -5,6 +5,7 @@ export enum JobType {
   QUOTE_CALCULATION = 'quote-calculation',
   EMAIL_NOTIFICATION = 'email-notification',
   REPORT_GENERATION = 'report-generation',
+  LINK_ANALYSIS = 'link-analysis',
 }
 
 export enum JobStatus {
@@ -82,6 +83,17 @@ export interface ReportGenerationJobData extends BaseJobData {
   };
 }
 
+export interface LinkAnalysisJobData extends BaseJobData {
+  analysisId: string;
+  url: string;
+  persona?: string;
+  preferences?: {
+    budget_range?: 'low' | 'medium' | 'high';
+    time_priority?: 'speed' | 'quality' | 'cost';
+    quality_level?: 'prototype' | 'production' | 'premium';
+  };
+}
+
 export interface JobResult<T = unknown> {
   success: boolean;
   data?: T;
@@ -139,6 +151,7 @@ export type JobData =
   | FileAnalysisJobData
   | QuoteCalculationJobData
   | EmailNotificationJobData
-  | ReportGenerationJobData;
+  | ReportGenerationJobData
+  | LinkAnalysisJobData;
 
 export type TypedJob<T extends JobData> = Job<T>;

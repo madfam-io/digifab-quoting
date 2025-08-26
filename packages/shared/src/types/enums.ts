@@ -42,6 +42,20 @@ export enum ProcessType {
   CNC_5AXIS = 'CNC_5AXIS',
   LASER_2D = 'LASER_2D',
   SHEET_METAL = 'SHEET_METAL',
+  // Legacy aliases for backward compatibility
+  PRINTING_3D_FFF = 'FFF',
+  PRINTING_3D_SLA = 'SLA',
+  CNC_MILLING_3AXIS = 'CNC_3AXIS',
+  LASER_CUTTING = 'LASER_2D',
+}
+
+// User persona types
+export enum UserPersona {
+  DIY_MAKER = 'diy_maker',
+  PROFESSIONAL_SHOP = 'professional_shop',
+  EDUCATOR = 'educator',
+  PRODUCT_DESIGNER = 'product_designer',
+  PROCUREMENT_SPECIALIST = 'procurement_specialist',
 }
 
 // Financial enums

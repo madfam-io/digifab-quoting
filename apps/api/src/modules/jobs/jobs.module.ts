@@ -9,6 +9,7 @@ import { FileAnalysisProcessor } from './processors/file-analysis.processor';
 import { QuoteCalculationProcessor } from './processors/quote-calculation.processor';
 import { EmailNotificationProcessor } from './processors/email-notification.processor';
 import { ReportGenerationProcessor } from './processors/report-generation.processor';
+import { LinkAnalysisProcessor } from './processors/link-analysis.processor';
 import { RedisModule } from '@/modules/redis/redis.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { TenantModule } from '@/modules/tenant/tenant.module';
@@ -23,6 +24,11 @@ import { PdfReportGeneratorService } from './services/pdf-report-generator.servi
 import { ExcelReportGeneratorService } from './services/excel-report-generator.service';
 import { CsvReportGeneratorService } from './services/csv-report-generator.service';
 import { ReportUploaderService } from './services/report-uploader.service';
+
+// Import link processing services  
+import { ContentFetcherService } from '../link-processing/services/content-fetcher.service';
+import { BOMParserService } from '../link-processing/services/bom-parser.service';
+import { PersonaQuoteGeneratorService } from '../link-processing/services/persona-quote-generator.service';
 
 @Module({
   imports: [
@@ -96,6 +102,17 @@ import { ReportUploaderService } from './services/report-uploader.service';
           timeout: 3 * 60 * 1000, // 3 minutes
         },
       },
+      {
+        name: JobType.LINK_ANALYSIS,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000,
+          },
+          timeout: 5 * 60 * 1000, // 5 minutes
+        },
+      },
     ),
     // Dead letter queue
     BullModule.registerQueue({
@@ -121,12 +138,17 @@ import { ReportUploaderService } from './services/report-uploader.service';
     QuoteCalculationProcessor,
     EmailNotificationProcessor,
     ReportGenerationProcessor,
+    LinkAnalysisProcessor,
     // Report generation services
     ReportDataLoaderService,
     PdfReportGeneratorService,
     ExcelReportGeneratorService,
     CsvReportGeneratorService,
     ReportUploaderService,
+    // Link processing services
+    ContentFetcherService,
+    BOMParserService,
+    PersonaQuoteGeneratorService,
   ],
   exports: [JobsService],
 })

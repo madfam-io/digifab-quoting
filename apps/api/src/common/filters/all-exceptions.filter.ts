@@ -93,8 +93,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorResponse.error = error;
     }
 
-    if (details && process.env.NODE_ENV !== 'production') {
-      errorResponse.details = details;
+    // Only expose sanitized details for debugging in development
+    if (details && process.env.NODE_ENV === 'development') {
+      // Sanitize sensitive information from details
+      errorResponse.details = this.sanitizeErrorDetails(details);
     }
 
     // Log all errors
@@ -123,5 +125,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     response.status(status).json(errorResponse);
+  }
+
+  private sanitizeErrorDetails(details: Record<string, unknown>): Record<string, unknown> {
+    const sanitized = { ...details };
+    
+    // Remove sensitive keys
+    const sensitiveKeys = ['password', 'token', 'secret', 'apiKey', 'authorization'];
+    for (const key of sensitiveKeys) {
+      if (key in sanitized) {
+        delete sanitized[key];
+      }
+    }
+    
+    // Recursively sanitize nested objects
+    for (const [key, value] of Object.entries(sanitized)) {
+      if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this.sanitizeErrorDetails(value as Record<string, unknown>);
+      }
+    }
+    
+    return sanitized;
   }
 }

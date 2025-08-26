@@ -6,17 +6,14 @@ import { validateEnv } from './env.validation';
  */
 export function validateEnvironment(): void {
   try {
-    // eslint-disable-next-line no-console
-    console.log('[ENV] Validating environment variables...');
+    // Use process.stdout for initialization logging (before logger is available)
+    process.stdout.write('[ENV] Validating environment variables...\n');
     validateEnv(process.env);
-    // eslint-disable-next-line no-console
-    console.log('[ENV] Environment validation successful');
+    process.stdout.write('[ENV] Environment validation successful\n');
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('[ENV] Environment validation failed:');
+    process.stderr.write('[ENV] Environment validation failed:\n');
     const errorMessage = error instanceof Error ? error.message : 'Validation failed';
-    // eslint-disable-next-line no-console
-    console.error(errorMessage);
+    process.stderr.write(`${errorMessage}\n`);
     process.exit(1);
   }
 }

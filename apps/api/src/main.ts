@@ -24,11 +24,17 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          styleSrc: ["'self'", "'sha256-{HASH_PLACEHOLDER}'"],
+          scriptSrc: ["'self'", "'sha256-{HASH_PLACEHOLDER}'"],
           imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'", 'https:'],
+          fontSrc: ["'self'", 'https:', 'data:'],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
         },
       },
+      crossOriginEmbedderPolicy: false, // Allow for API usage
     }),
   );
 

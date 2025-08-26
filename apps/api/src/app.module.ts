@@ -23,6 +23,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { GuestModule } from './modules/guest/guest.module';
+import { LinkProcessingModule } from './modules/link-processing/link-processing.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { GuestModule } from './modules/guest/guest.module';
     PaymentModule,
     OrdersModule,
     GuestModule,
+    LinkProcessingModule,
   ],
   controllers: [AppController],
   providers: [

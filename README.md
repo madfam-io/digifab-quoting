@@ -1,6 +1,10 @@
-# MADFAM Quoting MVP
+# MADFAM Digital Fabrication Quoting System
 
-A multi-tenant automated quoting system for digital fabrication services including 3D printing (FFF/SLA), CNC machining, and laser cutting.
+[![Build Status](https://github.com/madfam/digifab-quoting/workflows/CI/badge.svg)](https://github.com/madfam/digifab-quoting/actions)
+[![Security Score](https://img.shields.io/badge/Security-A-green)](docs/SECURITY.md)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+> Enterprise-grade multi-tenant quoting system for digital fabrication services including 3D printing, CNC machining, and laser cutting with advanced link-to-quote capabilities.
 
 ## 🚀 Quick Start
 
@@ -18,17 +22,33 @@ npm run dev
 # API Docs: http://localhost:4000/api/docs
 ```
 
-## 📋 Features
+## ✨ Features
 
-- **Multi-Process Support**: 3D printing (FFF/SLA), CNC machining, 2D laser cutting
-- **Automated Pricing**: Real-time cost calculation with material, machine, labor, and overhead factors
-- **DFM Analysis**: Geometry validation and manufacturability checking
-- **Multi-Tenant**: Complete tenant isolation with row-level security
-- **Internationalization**: Spanish/English support with locale-based pricing
-- **Payment Integration**: Stripe payment processing with PCI compliance
-- **Sustainability Scoring**: CO₂e tracking and environmental impact metrics
-- **Volume Discounts**: Automatic quantity-based pricing tiers
-- **Rush Orders**: Expedited manufacturing with dynamic pricing
+### 🏢 Multi-Tenant Architecture
+- **Tenant Isolation**: Complete data separation between organizations
+- **Custom Branding**: Tenant-specific UI themes and branding
+- **Flexible Pricing**: Per-tenant pricing rules and margins
+
+### 🔧 Manufacturing Processes
+- **3D Printing**: FFF and SLA with material optimization
+- **CNC Machining**: 3-axis milling for aluminum, steel, and plastics
+- **Laser Cutting**: 2D cutting with material and thickness optimization
+
+### 🤖 Link-to-Quote System
+- **Platform Support**: Instructables, Thingiverse, GitHub, Hackster.io
+- **Intelligent BOM Parsing**: AI-powered bill of materials extraction
+- **Persona-Based Quotes**: Customized pricing for different user types
+
+### 📊 Advanced Analytics
+- **Real-time Metrics**: Business KPIs and performance monitoring
+- **Quote Analytics**: Conversion rates and pricing optimization
+- **Sustainability Scoring**: Environmental impact assessment
+
+### 🔒 Enterprise Security
+- **Multi-factor Authentication**: JWT with refresh tokens
+- **Role-based Access Control**: Granular permissions system
+- **Audit Logging**: Complete activity tracking
+- **Data Encryption**: At-rest and in-transit protection
 
 ## 🏗 Architecture
 

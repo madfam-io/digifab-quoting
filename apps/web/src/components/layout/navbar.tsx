@@ -21,26 +21,49 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-bold">
+            <Link href="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               MADFAM Quoting
             </Link>
 
-            {session && (
-              <div className="hidden md:flex items-center gap-6">
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/quote/new"
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900"
-                >
-                  New Quote
-                </Link>
-              </div>
-            )}
+            <div className="hidden md:flex items-center gap-6">
+              <Link
+                href="/demo"
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 font-semibold"
+              >
+                Interactive Demo
+              </Link>
+              {session ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/quote/new"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    New Quote
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/pricing"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Pricing
+                  </Link>
+                  <Link
+                    href="/features"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Features
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -90,8 +113,10 @@ export function Navbar() {
                 <Link href="/auth/login">
                   <Button variant="ghost">Sign in</Button>
                 </Link>
-                <Link href="/auth/register">
-                  <Button>Get Started</Button>
+                <Link href="/demo">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
+                    Try Demo Free
+                  </Button>
                 </Link>
               </div>
             )}

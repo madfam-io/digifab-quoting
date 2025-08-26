@@ -49,22 +49,24 @@ export class PricingService {
     quantity: number,
     _objective: PricingObjective,
   ) {
-    // Load material and machine
-    const [material, machine] = await Promise.all([
+    // Load all required data in parallel with better error handling
+    const [material, machine, tenantConfig] = await Promise.all([
       this.prisma.material.findFirst({
-        where: { id: materialId, tenantId },
+        where: { id: materialId, tenantId, active: true },
       }),
       this.prisma.machine.findFirst({
-        where: { id: machineId, tenantId },
+        where: { id: machineId, tenantId, active: true },
       }),
+      this.getTenantPricingConfig(tenantId),
     ]);
 
-    if (!material || !machine) {
-      throw new Error('Material or machine not found');
+    if (!material) {
+      throw new Error(`Material with ID ${materialId} not found or inactive`);
     }
-
-    // Get tenant configuration
-    const tenantConfig = await this.getTenantPricingConfig(tenantId);
+    
+    if (!machine) {
+      throw new Error(`Machine with ID ${machineId} not found or inactive`);
+    }
 
     // Convert to pricing engine format
     const pricingGeometry: PricingGeometryMetrics = {
