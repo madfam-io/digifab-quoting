@@ -10,6 +10,15 @@ Cotiza Studio Quoting MVP is a multi-tenant quoting system for digital fabricati
 - CNC machining (3-axis for aluminum, steel, and plastics)
 - 2D laser cutting
 
+## Documentation
+
+### Core Documentation Files
+
+- **[docs/ROUTES.md](docs/ROUTES.md)** - Complete route inventory with auth requirements, rate limits, and caching
+- **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)** - Full API documentation with request/response examples
+- **[docs/NAVIGATION_AUDIT.md](docs/NAVIGATION_AUDIT.md)** - Navigation audit report with user flows and accessibility
+- **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** - Developer guide for adding and managing routes
+
 ## Commands
 
 ### Development Setup
@@ -122,6 +131,12 @@ terraform destroy
 - `POST /api/v1/quotes/{id}/accept` - Accept quote and proceed to payment
 - `GET /api/v1/admin/*` - Admin configuration endpoints (role-protected)
 
+For complete route documentation, see:
+- [docs/ROUTES.md](docs/ROUTES.md) - Comprehensive route listing with auth requirements
+- [docs/API_REFERENCE.md](docs/API_REFERENCE.md) - Full API documentation with examples
+- [docs/NAVIGATION_AUDIT.md](docs/NAVIGATION_AUDIT.md) - Navigation audit and user flows
+- [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) - Guide for adding and managing routes
+
 ### Environment Variables
 
 Key environment variables required:
@@ -170,6 +185,8 @@ FX_SOURCE=openexchangerates
 - Integration tests for file upload → DFM → pricing pipeline
 - E2E tests (Playwright) for critical user journeys
 - Performance tests for concurrent quote processing
+- Route testing coverage >80% for all endpoints
+- Component testing for currency and pricing displays
 
 ### Development Notes
 
@@ -178,3 +195,10 @@ FX_SOURCE=openexchangerates
 - Bilingual support (ES/EN) using i18next
 - Sustainability scoring integrated into all quotes
 - Quote validity default: 14 days
+
+### Recent Features
+
+- **Multicurrency System**: 30+ currencies with geo-detection and automatic conversion
+- **Performance Monitoring**: MetricsService with Redis-backed distributed metrics
+- **Admin Dashboard**: Currency management interface at `/admin/currency`
+- **Comprehensive Testing**: 90+ tests for currency components and services
