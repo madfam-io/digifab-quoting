@@ -4,7 +4,7 @@ import { RedisService } from './redis.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 import { LoggerService } from '@/common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
-import type { PricingRule, Tenant, Quote, QuoteItem } from '@madfam/shared';
+import type { PricingRule, Tenant, Quote, QuoteItem } from '@cotiza/shared';
 import type { CacheStatistics } from './interfaces/cache-options.interface';
 
 export interface CacheAsideOptions<T> {

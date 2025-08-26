@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
 import { LoggerService } from '../../common/logger/logger.service';
 import { ConfigService } from '@nestjs/config';
-import { AuditAction, AuditEntity } from '@madfam/shared';
+import { AuditAction, AuditEntity } from '@cotiza/shared';
 import { Prisma } from '@prisma/client';
 
 // Re-export for backward compatibility

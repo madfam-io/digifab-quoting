@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CacheService } from '@/modules/redis/cache.service';
 import { Material, Machine } from '@prisma/client';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 interface TenantConfig {
   id: string;

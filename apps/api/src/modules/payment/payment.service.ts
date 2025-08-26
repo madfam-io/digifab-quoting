@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { PrismaService } from '../../prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ConfigService } from '@nestjs/config';
-import { PaymentStatus, OrderStatus, QuoteStatus } from '@madfam/shared';
+import { PaymentStatus, OrderStatus, QuoteStatus } from '@cotiza/shared';
 // import { OrdersService } from '../orders/orders.service'; // Removed to avoid circular dependency
 import Stripe from 'stripe';
 import { QuoteItem } from '@prisma/client';

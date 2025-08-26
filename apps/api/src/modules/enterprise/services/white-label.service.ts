@@ -385,7 +385,7 @@ To complete domain setup for ${domainConfig.customDomain}:
 
 3. Once DNS is updated, verification will happen automatically.
 
-For assistance, contact support@madfam.io
+For assistance, contact support@cotiza.studio
     `;
 
     this.logger.log(`Initiated domain setup for ${domainConfig.customDomain} (tenant: ${tenantId})`);

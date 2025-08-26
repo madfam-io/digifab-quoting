@@ -348,7 +348,7 @@ export class ConversionTrackingService {
         triggers.push({
           type: TriggerType.TIME_BASED,
           priority: 6,
-          message: "You're getting great value from MADFAM! Upgrade for unlimited access.",
+          message: "You're getting great value from Cotiza Studio! Upgrade for unlimited access.",
           cta: "Upgrade Now",
           context,
           createdAt: new Date(),

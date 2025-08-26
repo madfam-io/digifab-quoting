@@ -13,7 +13,7 @@ export class CloudWatchService {
     this.cloudWatch = new CloudWatch({
       region: this.configService.get('AWS_REGION', 'us-east-1'),
     });
-    this.namespace = 'MADFAM/Quoting';
+    this.namespace = 'Cotiza Studio/Quoting';
     this.environment = this.configService.get('NODE_ENV', 'development');
   }
 

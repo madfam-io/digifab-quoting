@@ -12,7 +12,7 @@ async function main() {
     where: { code: 'madfam' },
     update: {},
     create: {
-      name: 'MADFAM',
+      name: 'Cotiza Studio',
       code: 'madfam',
       domain: 'madfam.localhost',
       defaultCurrency: 'MXN',
@@ -54,11 +54,11 @@ async function main() {
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@madfam.com' },
+    where: { email: 'admin@cotiza.studio' },
     update: {},
     create: {
       tenantId: tenant.id,
-      email: 'admin@madfam.com',
+      email: 'admin@cotiza.studio',
       passwordHash: adminPassword,
       name: 'Admin User',
       roles: ['admin'],

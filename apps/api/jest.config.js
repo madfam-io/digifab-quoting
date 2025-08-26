@@ -4,8 +4,8 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@madfam/shared$': '<rootDir>/../../packages/shared/src/index.ts',
-    '^@madfam/pricing-engine$': '<rootDir>/../../packages/pricing-engine/src/index.ts',
+    '^@cotiza/shared$': '<rootDir>/../../packages/shared/src/index.ts',
+    '^@cotiza/pricing-engine$': '<rootDir>/../../packages/pricing-engine/src/index.ts',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

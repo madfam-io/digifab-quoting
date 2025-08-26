@@ -22,4 +22,4 @@ WORKDIR /app
 
 EXPOSE 4000
 
-CMD ["npm", "run", "dev", "--", "--filter=@madfam/api"]
+CMD ["npm", "run", "dev", "--", "--filter=@cotiza/api"]

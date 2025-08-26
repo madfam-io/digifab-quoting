@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { CNCPricingCalculator } from '../cnc.calculator';
 import { PricingInput, TenantPricingConfig } from '../../types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 describe('CNCPricingCalculator', () => {
   let calculator: CNCPricingCalculator;

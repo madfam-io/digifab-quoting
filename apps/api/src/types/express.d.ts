@@ -1,4 +1,4 @@
-import { User as MadfamUser } from '@madfam/shared';
+import { User as MadfamUser } from '@cotiza/shared';
 
 declare global {
   namespace Express {

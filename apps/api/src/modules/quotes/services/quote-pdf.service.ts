@@ -138,7 +138,7 @@ export class QuotePdfService {
     doc
       .fontSize(24)
       .font('Helvetica-Bold')
-      .text(quote.tenant?.name || 'MADFAM Quote', 50, 50);
+      .text(quote.tenant?.name || 'Cotiza Studio Quote', 50, 50);
 
     doc
       .fontSize(12)
@@ -284,6 +284,6 @@ export class QuotePdfService {
     doc.moveTo(50, footerY + 65).lineTo(530, footerY + 65).stroke();
     
     doc.text(`Generated on ${new Date().toLocaleString()}`, 50, footerY + 75);
-    doc.text('Powered by MADFAM Digital Fabrication Platform', 300, footerY + 75);
+    doc.text('Powered by Cotiza Studio Digital Fabrication Platform', 300, footerY + 75);
   }
 }

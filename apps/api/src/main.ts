@@ -63,7 +63,7 @@ async function bootstrap() {
 
   // API Documentation
   const config = new DocumentBuilder()
-    .setTitle('MADFAM Quoting API')
+    .setTitle('Cotiza Studio Quoting API')
     .setDescription('Multi-tenant quoting system for digital fabrication')
     .setVersion('1.0')
     .addBearerAuth()

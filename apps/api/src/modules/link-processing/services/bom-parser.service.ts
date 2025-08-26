@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 import { BOMItemDto } from '../dto/analyze-link.dto';
 import { RawContent } from './content-fetcher.service';
 

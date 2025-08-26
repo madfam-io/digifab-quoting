@@ -464,7 +464,7 @@ export class DedicatedSupportService {
       {
         id: 'agent-1',
         name: 'Sarah Connor',
-        email: 'sarah@madfam.io',
+        email: 'sarah@cotiza.studio',
         specialties: ['technical', 'billing'],
         active: true,
         capacity: 10,
@@ -473,7 +473,7 @@ export class DedicatedSupportService {
       {
         id: 'agent-2',
         name: 'John Doe',
-        email: 'john@madfam.io',
+        email: 'john@cotiza.studio',
         specialties: ['general', 'onboarding'],
         active: true,
         capacity: 15,
@@ -487,7 +487,7 @@ export class DedicatedSupportService {
     return {
       id: 'senior-agent-1',
       name: 'Jane Smith',
-      email: 'jane.smith@madfam.io',
+      email: 'jane.smith@cotiza.studio',
       specialties: ['escalations', 'technical'],
       active: true,
       capacity: 5,

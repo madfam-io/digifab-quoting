@@ -4,7 +4,7 @@ import {
   Material as BaseMaterial,
   Machine,
   QuoteItemSelections,
-} from '@madfam/shared';
+} from '@cotiza/shared';
 import { Decimal } from 'decimal.js';
 
 // Extended geometry metrics for pricing calculations

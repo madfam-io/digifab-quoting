@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import * as AWS from 'aws-sdk';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { FileType, FILE_SIZE_LIMITS } from '@madfam/shared';
+import { FileType, FILE_SIZE_LIMITS } from '@cotiza/shared';
 import { getErrorMessage } from '@/common/utils/error-handling';
 
 export interface PresignedUrlResponse {

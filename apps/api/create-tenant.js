@@ -21,7 +21,7 @@ async function createDefaultTenant() {
     // Create default tenant
     const defaultTenant = await prisma.tenant.create({
       data: {
-        name: 'MADFAM Default',
+        name: 'Cotiza Studio Default',
         code: 'default',
         domain: 'localhost',
         defaultCurrency: 'MXN',

@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { BasePricingCalculator } from './base.calculator';
 import { PricingResult, ProcessingTime, MaterialUsage } from '../types';
-import { GeometryMetrics } from '@madfam/shared';
+import { GeometryMetrics } from '@cotiza/shared';
 
 export class SLAPricingCalculator extends BasePricingCalculator {
   calculate(): PricingResult {

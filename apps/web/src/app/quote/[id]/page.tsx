@@ -11,7 +11,7 @@ import { Loader2, Download, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/components/ui/use-toast';
-import { QuoteStatus } from '@madfam/shared';
+import { QuoteStatus } from '@cotiza/shared';
 
 interface Quote {
   id: string;

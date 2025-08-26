@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { FileType, FILE_SIZE_LIMITS } from '@madfam/shared';
+import { FileType, FILE_SIZE_LIMITS } from '@cotiza/shared';
 import { apiClient } from '@/lib/api-client';
 
 interface UploadedFile {

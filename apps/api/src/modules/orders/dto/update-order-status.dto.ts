@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { OrderStatus } from '@madfam/shared';
+import { OrderStatus } from '@cotiza/shared';
 
 export class UpdateOrderStatusDto {
   @ApiProperty({

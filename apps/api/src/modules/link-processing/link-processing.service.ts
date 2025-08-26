@@ -10,7 +10,7 @@ import {
   AnalysisStatus,
   SourceType 
 } from './dto/analyze-link.dto';
-import { UserPersona, Currency } from '@madfam/shared';
+import { UserPersona, Currency } from '@cotiza/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 interface LinkAnalysis {

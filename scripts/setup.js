@@ -274,7 +274,7 @@ async function setupDatabase() {
       log.success('Database seeded');
 
       log.info('\nTest users created:');
-      log.info('  Admin: admin@madfam.io (password: Admin123!)');
+      log.info('  Admin: admin@cotiza.studio (password: Admin123!)');
       log.info('  User: user@example.com (password: User123!)');
     }
   } catch (err) {
@@ -286,7 +286,7 @@ async function setupDatabase() {
 // Main setup function
 async function main() {
   console.log(`
-${colors.bright}${colors.blue}MADFAM Quoting System - Initial Setup${colors.reset}
+${colors.bright}${colors.blue}Cotiza Studio Quoting System - Initial Setup${colors.reset}
 ${'='.repeat(50)}
 
 This script will help you set up your development environment.

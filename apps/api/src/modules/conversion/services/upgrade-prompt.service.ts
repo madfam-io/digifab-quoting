@@ -205,7 +205,7 @@ export class UpgradePromptService {
       ...basePrompt,
       type: PromptType.TOAST,
       title: "Special Offer",
-      message: "You've been using MADFAM for a week! Upgrade now and save 20% on your first month.",
+      message: "You've been using Cotiza Studio for a week! Upgrade now and save 20% on your first month.",
       cta: "Claim Offer",
       ctaUrl: "/billing/upgrade?plan=pro&trigger=time_based&discount=20",
       dismissible: true,

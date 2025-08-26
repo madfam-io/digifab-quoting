@@ -1,6 +1,6 @@
 import { IsString, IsEnum, IsInt, Min, Max, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { FileType } from '@madfam/shared';
+import { FileType } from '@cotiza/shared';
 
 export class CreatePresignedUploadDto {
   @ApiProperty({

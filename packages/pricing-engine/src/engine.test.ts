@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { PricingEngine } from './engine';
 import { PricingInput, TenantPricingConfig } from './types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 describe('PricingEngine', () => {
   let engine: PricingEngine;

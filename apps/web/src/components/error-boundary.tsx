@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   handleContact = () => {
     // Open contact/support modal or redirect to support page
-    window.open('mailto:support@madfam.com', '_blank');
+    window.open('mailto:support@cotiza.studio', '_blank');
   };
 
   handleRetry = () => {

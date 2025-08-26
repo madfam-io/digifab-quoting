@@ -46,7 +46,7 @@ export class TenantValidationMiddleware implements NestMiddleware {
 
   private extractTenantFromHost(hostname: string): string | undefined {
     // Extract subdomain from hostname
-    // e.g., "tenant1.madfam.io" -> "tenant1"
+    // e.g., "tenant1.cotiza.studio" -> "tenant1"
     const parts = hostname.split('.');
 
     if (parts.length >= 2) {

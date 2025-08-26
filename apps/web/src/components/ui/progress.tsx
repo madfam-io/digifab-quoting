@@ -1,1 +1,1 @@
-export { Progress } from '@madfam/ui';
+export { Progress } from '@cotiza/ui';

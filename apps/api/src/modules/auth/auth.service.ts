@@ -6,7 +6,7 @@ import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../redis/cache.service';
-import { AuthTokens, JWTPayload, User, UserRole } from '@madfam/shared';
+import { AuthTokens, JWTPayload, User, UserRole } from '@cotiza/shared';
 import { RegisterDto } from './dto/register.dto';
 
 @Injectable()

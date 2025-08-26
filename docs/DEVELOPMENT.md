@@ -1,8 +1,8 @@
-# MADFAM Quoting Development Guide
+# Cotiza Studio Development Guide
 
 ## Getting Started
 
-This guide covers setting up your development environment, understanding the codebase structure, and following best practices for contributing to the MADFAM Quoting system.
+This guide covers setting up your development environment, understanding the codebase structure, and following best practices for contributing to the Cotiza Studio system.
 
 ## Prerequisites
 

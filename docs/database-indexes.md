@@ -1,6 +1,6 @@
 # Database Performance Indexes
 
-This document contains the SQL commands to create performance indexes for the MADFAM Quoting MVP database.
+This document contains the SQL commands to create performance indexes for the Cotiza Studio MVP database.
 
 ## Prerequisites
 

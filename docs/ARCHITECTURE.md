@@ -1,8 +1,8 @@
-# MADFAM Quoting System Architecture
+# Cotiza Studio System Architecture
 
 ## System Overview
 
-The MADFAM Quoting System is a multi-tenant SaaS platform for automated digital fabrication quotes. Built with a microservices architecture, it supports 3D printing, CNC machining, and laser cutting with real-time pricing calculations.
+The Cotiza Studio System is a multi-tenant SaaS platform for automated digital fabrication quotes. Built with a microservices architecture, it supports 3D printing, CNC machining, and laser cutting with real-time pricing calculations.
 
 ```mermaid
 graph TB

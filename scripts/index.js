@@ -10,7 +10,7 @@ const colors = {
 };
 
 console.log(`
-${colors.bright}${colors.blue}MADFAM Development Scripts${colors.reset}
+${colors.bright}${colors.blue}Cotiza Studio Development Scripts${colors.reset}
 ${'='.repeat(50)}
 
 Available commands:

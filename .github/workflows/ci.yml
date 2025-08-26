@@ -91,19 +91,19 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npm run db:generate --workspace=@madfam/api
+        run: npm run db:generate --workspace=@cotiza/api
 
       - name: Run migrations
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        run: npm run db:push --workspace=@madfam/api
+        run: npm run db:push --workspace=@cotiza/api
 
       - name: Run API tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret
-        run: npm run test --workspace=@madfam/api
+        run: npm run test --workspace=@cotiza/api
 
   test-worker:
     name: Worker Tests
@@ -172,7 +172,7 @@ jobs:
           context: .
           file: ./apps/${{ matrix.service }}/Dockerfile
           push: false
-          tags: madfam/${{ matrix.service }}:${{ github.sha }}
+          tags: cotiza/${{ matrix.service }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -193,6 +193,6 @@ jobs:
 
       - name: Run type checking
         run: |
-          npm run typecheck --workspace=@madfam/shared
-          npm run typecheck --workspace=@madfam/pricing-engine
-          npm run typecheck --workspace=@madfam/ui
+          npm run typecheck --workspace=@cotiza/shared
+          npm run typecheck --workspace=@cotiza/pricing-engine
+          npm run typecheck --workspace=@cotiza/ui

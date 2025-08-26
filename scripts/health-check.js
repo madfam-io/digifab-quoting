@@ -354,7 +354,7 @@ function generateReport() {
 
 // Main health check function
 async function main() {
-  console.log(`\n${colors.bright}${colors.blue}MADFAM System Health Check${colors.reset}`);
+  console.log(`\n${colors.bright}${colors.blue}Cotiza Studio System Health Check${colors.reset}`);
   console.log('═'.repeat(50));
 
   // Load environment

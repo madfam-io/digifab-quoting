@@ -3,9 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: madfam-postgres
+    container_name: cotiza-postgres
     environment:
-      POSTGRES_DB: madfam_quoting
+      POSTGRES_DB: cotiza_quoting
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: madfam-redis
+    container_name: cotiza-redis
     ports:
       - "6379:6379"
     volumes:
@@ -35,16 +35,16 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile.dev
-    container_name: madfam-api
+    container_name: cotiza-api
     ports:
       - "4000:4000"
     environment:
       NODE_ENV: development
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/madfam_quoting?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cotiza_quoting?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-change-in-production
-      S3_BUCKET: madfam-quoting-dev
+      S3_BUCKET: cotiza-quoting-dev
       AWS_REGION: us-east-1
     volumes:
       - ./apps/api:/app/apps/api
@@ -62,7 +62,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.dev
-    container_name: madfam-web
+    container_name: cotiza-web
     ports:
       - "3000:3000"
     environment:
@@ -81,12 +81,12 @@ services:
     build:
       context: ./apps/worker
       dockerfile: Dockerfile.dev
-    container_name: madfam-worker
+    container_name: cotiza-worker
     ports:
       - "8000:8000"
     environment:
       PYTHONUNBUFFERED: 1
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/madfam_quoting
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cotiza_quoting
       REDIS_URL: redis://redis:6379
     volumes:
       - ./apps/worker:/app

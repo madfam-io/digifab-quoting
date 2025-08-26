@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { SLAPricingCalculator } from '../sla.calculator';
 import { PricingInput, TenantPricingConfig } from '../../types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 describe('SLAPricingCalculator', () => {
   let calculator: SLAPricingCalculator;

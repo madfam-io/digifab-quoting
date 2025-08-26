@@ -31,7 +31,7 @@ import {
   CreateGuestQuote,
   UpdateGuestQuoteItem,
   GuestQuote,
-} from '@madfam/shared';
+} from '@cotiza/shared';
 
 @ApiTags('Guest Quotes')
 @Controller('api/v1/guest/quotes')

@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - MADFAM Quoting MVP
+# 🚀 Quick Start Guide - Cotiza Studio Quoting MVP
 
 ## Your setup is ready! Here's how to test the app:
 
@@ -25,7 +25,7 @@ Use these accounts to test:
 
 **Admin Account** (full access):
 
-- Email: `admin@madfam.io`
+- Email: `admin@cotiza.studio`
 - Password: `admin123`
 
 **Customer Account** (limited access):

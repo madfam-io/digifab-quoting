@@ -1,15 +1,15 @@
-# MADFAM Quoting API Documentation
+# Cotiza Studio API Documentation
 
 ## Overview
 
-The MADFAM Quoting API provides programmatic access to digital fabrication quoting services. This RESTful API supports 3D printing (FFF/SLA), CNC machining, and laser cutting quotes with real-time pricing calculations.
+The Cotiza Studio API provides programmatic access to digital fabrication quoting services. This RESTful API supports 3D printing (FFF/SLA), CNC machining, and laser cutting quotes with real-time pricing calculations.
 
 ## Base URL
 
 ```
 Development: http://localhost:4000/api/v1
-Staging: https://api-staging.madfam.io/v1
-Production: https://api.madfam.io/v1
+Staging: https://api-staging.cotiza.studio/v1
+Production: https://api.cotiza.studio/v1
 ```
 
 ## Authentication
@@ -463,8 +463,8 @@ Authorization: Bearer <token>
 
 {
   "quoteId": "quote_789012",
-  "successUrl": "https://app.madfam.io/orders/success",
-  "cancelUrl": "https://app.madfam.io/quotes/quote_789012"
+  "successUrl": "https://app.cotiza.studio/orders/success",
+  "cancelUrl": "https://app.cotiza.studio/quotes/quote_789012"
 }
 ```
 
@@ -676,7 +676,7 @@ GET /health/ready
 // Using axios
 import axios from 'axios';
 
-const API_BASE = 'https://api.madfam.io/v1';
+const API_BASE = 'https://api.cotiza.studio/v1';
 let accessToken: string;
 
 // Login
@@ -738,8 +738,8 @@ async function uploadFile(file: File) {
 import requests
 from typing import Dict, List
 
-class MADFAMClient:
-    def __init__(self, base_url: str = "https://api.madfam.io/v1"):
+class Cotiza StudioClient:
+    def __init__(self, base_url: str = "https://api.cotiza.studio/v1"):
         self.base_url = base_url
         self.access_token = None
 
@@ -771,7 +771,7 @@ class MADFAMClient:
         return response.json()
 
 # Usage
-client = MADFAMClient()
+client = Cotiza StudioClient()
 client.login("user@example.com", "password123")
 
 # Create quote
@@ -795,7 +795,7 @@ print(f"Quote ID: {quote['data']['id']}")
 
 ```bash
 # Login
-curl -X POST https://api.madfam.io/v1/auth/login \
+curl -X POST https://api.cotiza.studio/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"password123"}'
 
@@ -803,7 +803,7 @@ curl -X POST https://api.madfam.io/v1/auth/login \
 TOKEN="eyJhbGciOiJIUzI1NiIs..."
 
 # Create quote
-curl -X POST https://api.madfam.io/v1/quotes \
+curl -X POST https://api.cotiza.studio/v1/quotes \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -820,7 +820,7 @@ curl -X POST https://api.madfam.io/v1/quotes \
   }'
 
 # Get quote
-curl -X GET https://api.madfam.io/v1/quotes/quote_789012 \
+curl -X GET https://api.cotiza.studio/v1/quotes/quote_789012 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -855,6 +855,6 @@ curl -X GET https://api.madfam.io/v1/quotes/quote_789012 \
 
 For API support:
 
-- Email: api-support@madfam.io
-- Documentation: https://docs.madfam.io/api
-- Status Page: https://status.madfam.io
+- Email: api-support@cotiza.studio
+- Documentation: https://docs.cotiza.studio/api
+- Status Page: https://status.cotiza.studio

@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { GuestQuoteService } from './guest-quote.service';
 import { RedisService } from '../redis/redis.service';
-import { RegisterWithQuote, ConvertGuestQuote } from '@madfam/shared';
+import { RegisterWithQuote, ConvertGuestQuote } from '@cotiza/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { GuestSession } from '@prisma/client';
 

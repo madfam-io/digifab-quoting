@@ -30,7 +30,7 @@ export class ExcelReportGeneratorService {
     this.logger.log(`Generating Excel report: ${fileName}`);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'MADFAM Quoting System';
+    workbook.creator = 'Cotiza Studio Quoting System';
     workbook.created = new Date();
 
     switch (reportType) {

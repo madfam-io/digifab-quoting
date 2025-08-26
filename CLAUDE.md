@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MADFAM Quoting MVP is a multi-tenant quoting system for digital fabrication services. The system provides automated quoting for:
+Cotiza Studio Quoting MVP is a multi-tenant quoting system for digital fabrication services. The system provides automated quoting for:
 
 - 3D printing (FFF and SLA)
 - CNC machining (3-axis for aluminum, steel, and plastics)

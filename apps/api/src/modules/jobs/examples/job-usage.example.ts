@@ -119,7 +119,7 @@ export class NotificationServiceExample {
           currency: quoteData.currency,
           total: quoteData.total,
           validUntil: quoteData.validUntil,
-          quoteUrl: `https://app.madfam.com/quotes/${quoteId}`,
+          quoteUrl: `https://app.cotiza.studio/quotes/${quoteId}`,
         },
       },
       {
@@ -147,7 +147,7 @@ export class NotificationServiceExample {
         templateData: {
           quoteNumber: `Q-${quoteId}`,
           expirationDate: expiryDate.toLocaleDateString(),
-          newQuoteUrl: 'https://app.madfam.com/quotes/new',
+          newQuoteUrl: 'https://app.cotiza.studio/quotes/new',
         },
       },
       delay,

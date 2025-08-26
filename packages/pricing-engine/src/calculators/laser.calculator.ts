@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { BasePricingCalculator } from './base.calculator';
 import { PricingResult, ProcessingTime, MaterialUsage } from '../types';
-import { GeometryMetrics } from '@madfam/shared';
+import { GeometryMetrics } from '@cotiza/shared';
 
 export class LaserPricingCalculator extends BasePricingCalculator {
   private readonly CUTTING_SPEEDS: Record<string, Record<number, number>> = {

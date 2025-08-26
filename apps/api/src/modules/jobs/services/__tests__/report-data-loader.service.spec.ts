@@ -63,7 +63,7 @@ describe('ReportDataLoaderService', () => {
         status: 'active',
         items: [],
         customer: { id: 'customer-123', name: 'John Doe' },
-        tenant: { name: 'MADFAM Inc.' },
+        tenant: { name: 'Cotiza Studio Inc.' },
       };
 
       (prismaService.quote.findUnique as jest.Mock).mockResolvedValue(mockQuote as any);
@@ -121,7 +121,7 @@ describe('ReportDataLoaderService', () => {
         status: 'paid',
         order: { id: 'order-123' },
         customer: { id: 'customer-123' },
-        tenant: { name: 'MADFAM Inc.' },
+        tenant: { name: 'Cotiza Studio Inc.' },
       };
 
       (prismaService.invoice.findUnique as jest.Mock).mockResolvedValue(mockInvoice as any);

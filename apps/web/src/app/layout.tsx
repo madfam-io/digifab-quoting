@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'MADFAM Quoting - Digital Fabrication Services',
+  title: 'Cotiza Studio - Digital Fabrication Services',
   description: 'Get instant quotes for 3D printing, CNC machining, and laser cutting',
 };
 

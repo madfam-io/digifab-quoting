@@ -22,7 +22,7 @@ import { RedisService } from './redis.service';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/modules/auth/guards/roles.guard';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
-import { Role } from '@madfam/shared';
+import { Role } from '@cotiza/shared';
 import { ForbiddenResponseDto } from '../../common/dto/api-response.dto';
 
 @ApiTags('cache')

@@ -1,6 +1,6 @@
 # Redis Caching Module
 
-This module provides comprehensive Redis caching functionality for the MADFAM Quoting MVP, including decorators, services, and monitoring capabilities.
+This module provides comprehensive Redis caching functionality for the Cotiza Studio Quoting MVP, including decorators, services, and monitoring capabilities.
 
 ## Features
 

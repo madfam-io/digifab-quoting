@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { Decimal } from 'decimal.js';
 import { FFFPricingCalculator } from '../../calculators/fff.calculator';
 import { PricingInput } from '../../types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 describe('Margin Validation Integration', () => {
   const createTestInput = (): PricingInput => ({

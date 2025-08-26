@@ -1,6 +1,6 @@
-# MADFAM Quoting MVP — Deploy‑Ready Software Spec (v1.0)
+# Cotiza Studio MVP — Deploy‑Ready Software Spec (v1.0)
 
-_Audience: Founders, PM, Tech Lead, Ops, Finance. Goal: ship a secure, multi‑tenant MVP usable by MADFAM and pilot tenants within 6–8 weeks._
+_Audience: Founders, PM, Tech Lead, Ops, Finance. Goal: ship a secure, multi‑tenant MVP usable by Cotiza Studio and pilot tenants within 6–8 weeks._
 
 ---
 
@@ -223,7 +223,7 @@ Draft → Submitted → (Auto‑Quoted | Needs‑Review) → Quoted → Approved
 
 ```yaml
 openapi: 3.0.3
-info: { title: MADFAM Quoting API, version: 1.0.0 }
+info: { title: Cotiza Studio API, version: 1.0.0 }
 servers: [{ url: https://api.{tenant}.madfam.app/v1 }]
 paths:
   /auth/login:

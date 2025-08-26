@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, QuoteItem } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateQuoteItemDto } from '../dto/update-quote-item.dto';
-import { Material, Machine, ProcessType, QuoteItemSelections } from '@madfam/shared';
-import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@madfam/pricing-engine';
+import { Material, Machine, ProcessType, QuoteItemSelections } from '@cotiza/shared';
+import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@cotiza/pricing-engine';
 import { CacheService } from '@/modules/redis/cache.service';
 import Decimal from 'decimal.js';
 

@@ -13,7 +13,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@madfam/shared$': '<rootDir>/../shared/src/index.ts',
+    '^@cotiza/shared$': '<rootDir>/../shared/src/index.ts',
   },
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts'],
 };

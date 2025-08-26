@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UserPersona, ProcessType } from '@madfam/shared';
+import { UserPersona, ProcessType } from '@cotiza/shared';
 import { 
   BOMItemDto, 
   QuoteRecommendationDto, 

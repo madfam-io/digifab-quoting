@@ -1,6 +1,6 @@
 # Job Queue System
 
-This module provides async job processing capabilities using Bull (Redis-based queue) for the MADFAM Quoting MVP.
+This module provides async job processing capabilities using Bull (Redis-based queue) for the Cotiza Studio Quoting MVP.
 
 ## Features
 

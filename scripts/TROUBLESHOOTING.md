@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions for the MADFAM development environment.
+Common issues and solutions for the Cotiza Studio development environment.
 
 ## Table of Contents
 

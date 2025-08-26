@@ -1,8 +1,8 @@
-# MADFAM Quoting System Troubleshooting Guide
+# Cotiza Studio System Troubleshooting Guide
 
 ## Overview
 
-This guide provides solutions to common issues encountered during development, deployment, and operation of the MADFAM Quoting system. Issues are organized by component and severity level.
+This guide provides solutions to common issues encountered during development, deployment, and operation of the Cotiza Studio system. Issues are organized by component and severity level.
 
 ## Quick Diagnostics
 
@@ -825,7 +825,7 @@ Create these helper scripts in `scripts/troubleshooting/`:
 #!/bin/bash
 set -e
 
-echo "=== MADFAM System Health Check ==="
+echo "=== Cotiza Studio System Health Check ==="
 
 # Check API
 echo -n "API Health: "
@@ -878,7 +878,7 @@ echo "=== Analysis Complete ==="
 Add to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-# MADFAM shortcuts
+# Cotiza Studio shortcuts
 alias mf-logs='aws logs tail /ecs/madfam-api --follow'
 alias mf-health='curl -s http://localhost:4000/health | jq'
 alias mf-db='psql $DATABASE_URL'

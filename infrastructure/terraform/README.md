@@ -1,6 +1,6 @@
-# MADFAM Infrastructure as Code
+# Cotiza Studio Infrastructure as Code
 
-This directory contains Terraform configurations for deploying the MADFAM Quoting Platform on AWS.
+This directory contains Terraform configurations for deploying the Cotiza Studio Quoting Platform on AWS.
 
 ## Architecture Overview
 

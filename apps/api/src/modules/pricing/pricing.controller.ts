@@ -10,7 +10,7 @@ import {
 } from '@nestjs/swagger';
 import { PricingService } from './pricing.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 import { UnauthorizedResponseDto } from '../../common/dto/api-response.dto';
 import { AuthenticatedRequest } from '../../types/auth-request';
 

@@ -211,10 +211,10 @@ export class BillingService {
 
     const session = await this.stripeService.createCheckoutSession({
       quoteId: invoiceId, // Using invoice ID as quote ID for billing context
-      customerEmail: tenant.users[0]?.email || 'noreply@madfam.com', // Get first user's email
+      customerEmail: tenant.users[0]?.email || 'noreply@cotiza.studio', // Get first user's email
       lineItems: [{
         name: `Invoice for ${invoice.period}`,
-        description: `MADFAM Quoting Service - ${invoice.period}`,
+        description: `Cotiza Studio Quoting Service - ${invoice.period}`,
         amount: Number(invoice.totalAmount) * 100, // Convert to cents
         currency: 'usd',
         quantity: 1,
@@ -348,7 +348,7 @@ export class BillingService {
         customer: tenant.stripeCustomerId,
         amount: totalAmount,
         currency: 'usd',
-        description: `MADFAM Quoting - ${period}`,
+        description: `Cotiza Studio Quoting - ${period}`,
         metadata: {
           tenantId,
           invoiceId: invoice.id,

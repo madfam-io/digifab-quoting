@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JobsService } from '../jobs/jobs.service';
-import { OrderStatus, PaymentStatus, QuoteStatus, InvoiceStatus } from '@madfam/shared';
+import { OrderStatus, PaymentStatus, QuoteStatus, InvoiceStatus } from '@cotiza/shared';
 import { JobType } from '../jobs/interfaces/job.interface';
 import { QuoteItem } from '@prisma/client';
 import { Decimal } from 'decimal.js';

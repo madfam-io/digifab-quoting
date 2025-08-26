@@ -2,7 +2,7 @@ import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/com
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { JWTPayload } from '@madfam/shared';
+import { JWTPayload } from '@cotiza/shared';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { TokenBlacklistService } from '../services/token-blacklist.service';
 

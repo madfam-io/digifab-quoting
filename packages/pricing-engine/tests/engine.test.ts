@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { PricingEngine } from '../src/engine';
 import { PricingInput } from '../src/types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 import { Decimal } from 'decimal.js';
 
 describe('PricingEngine', () => {

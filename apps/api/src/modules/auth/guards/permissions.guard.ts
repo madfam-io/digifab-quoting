@@ -6,7 +6,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserRole } from '@madfam/shared';
+import { UserRole } from '@cotiza/shared';
 
 /**
  * Define permissions for each role

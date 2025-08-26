@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Quote, PrismaClient } from '@prisma/client';
-import { QuoteStatus } from '@madfam/shared';
+import { QuoteStatus } from '@cotiza/shared';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   BaseRepositoryImpl,

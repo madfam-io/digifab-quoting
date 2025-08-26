@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useGuestSession } from '@/hooks/useGuestSession';
 import { guestApi } from '@/lib/guest-api';
-import { GuestQuote } from '@madfam/shared';
+import { GuestQuote } from '@cotiza/shared';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 

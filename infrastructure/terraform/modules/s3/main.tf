@@ -98,7 +98,7 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
-    allowed_origins = var.environment == "prod" ? ["https://app.madfam.io"] : ["http://localhost:3002", "https://*.vercel.app"]
+    allowed_origins = var.environment == "prod" ? ["https://app.cotiza.studio"] : ["http://localhost:3002", "https://*.vercel.app"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }

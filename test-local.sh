@@ -19,7 +19,7 @@ fi
 
 # Test PostgreSQL
 echo -n "PostgreSQL: "
-if docker exec madfam-postgres pg_isready > /dev/null 2>&1; then
+if docker exec cotiza-postgres pg_isready > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ Not running${NC}"
@@ -27,7 +27,7 @@ fi
 
 # Test Redis
 echo -n "Redis: "
-if docker exec madfam-redis redis-cli ping > /dev/null 2>&1; then
+if docker exec cotiza-redis redis-cli ping > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ Not running${NC}"
@@ -35,7 +35,7 @@ fi
 
 # Test Database Connection
 echo -n "Database Tables: "
-TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres -d madfam_quoting -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'" 2>/dev/null | tr -d ' ')
+TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres -d cotiza_quoting -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'" 2>/dev/null | tr -d ' ')
 if [ "$TABLE_COUNT" -gt "0" ]; then
     echo -e "${GREEN}✓ ($TABLE_COUNT tables)${NC}"
 else
@@ -44,7 +44,7 @@ fi
 
 # Test if seeded
 echo -n "Database Seeded: "
-USER_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres -d madfam_quoting -t -c "SELECT COUNT(*) FROM \"User\"" 2>/dev/null | tr -d ' ')
+USER_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres -d cotiza_quoting -t -c "SELECT COUNT(*) FROM \"User\"" 2>/dev/null | tr -d ' ')
 if [ "$USER_COUNT" -gt "0" ]; then
     echo -e "${GREEN}✓ ($USER_COUNT users)${NC}"
 else

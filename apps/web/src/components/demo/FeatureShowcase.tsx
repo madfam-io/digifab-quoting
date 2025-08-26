@@ -44,10 +44,10 @@ const FEATURES: Feature[] = [
     ],
     demo: {
       title: 'Speed Comparison',
-      description: 'Traditional vs MADFAM quoting timeline',
+      description: 'Traditional vs Cotiza Studio quoting timeline',
       metrics: [
         { label: 'Traditional', value: '3-7 days', improvement: '' },
-        { label: 'MADFAM', value: '< 3 seconds', improvement: '99.9% faster' },
+        { label: 'Cotiza Studio', value: '< 3 seconds', improvement: '99.9% faster' },
         { label: 'Accuracy', value: '±5%', improvement: 'Industry leading' }
       ]
     }
@@ -110,7 +110,7 @@ const FEATURES: Feature[] = [
     ],
     demo: {
       title: 'Business Impact',
-      description: 'How MADFAM transforms business operations',
+      description: 'How Cotiza Studio transforms business operations',
       metrics: [
         { label: 'Quote time', value: '60%', improvement: 'reduction' },
         { label: 'Customer satisfaction', value: '40%', improvement: 'increase' },
@@ -154,7 +154,7 @@ const FEATURES: Feature[] = [
     ],
     demo: {
       title: 'Integration Options',
-      description: 'Connect MADFAM to your existing workflow',
+      description: 'Connect Cotiza Studio to your existing workflow',
       metrics: [
         { label: 'API uptime', value: '99.9%', improvement: 'reliability' },
         { label: 'Response time', value: '< 200ms', improvement: 'average' },
@@ -175,7 +175,7 @@ export function FeatureShowcase() {
           Powerful Features for Every Need
         </h2>
         <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-          From instant quotes to market intelligence, MADFAM provides everything you need to make informed manufacturing decisions
+          From instant quotes to market intelligence, Cotiza Studio provides everything you need to make informed manufacturing decisions
         </p>
       </div>
 

@@ -25,7 +25,7 @@ export class ApiKeyService {
   ): Promise<{ key: string; keyData: ApiKeyData }> {
     // Generate a secure API key
     const rawKey = crypto.randomBytes(32).toString('hex');
-    const keyPrefix = 'mfm_'; // MADFAM prefix
+    const keyPrefix = 'mfm_'; // Cotiza Studio prefix
     const apiKey = `${keyPrefix}${rawKey}`;
 
     // Hash the key for storage

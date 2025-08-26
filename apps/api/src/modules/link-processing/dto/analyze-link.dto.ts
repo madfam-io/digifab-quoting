@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsUrl, IsOptional, IsEnum, IsObject, IsString } from 'class-validator';
-import { UserPersona, ProcessType } from '@madfam/shared';
+import { UserPersona, ProcessType } from '@cotiza/shared';
 
 export enum SourceType {
   INSTRUCTABLES = 'instructables',

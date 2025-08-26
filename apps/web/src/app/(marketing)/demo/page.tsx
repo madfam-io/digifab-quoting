@@ -7,7 +7,7 @@ import { PricingTiers } from '@/components/demo/PricingTiers';
 import { LinkQuoteDemo } from '@/components/demo/LinkQuoteDemo';
 
 export const metadata = {
-  title: 'MADFAM Quoting Demo - See Manufacturing Costs in Real-Time',
+  title: 'Cotiza Studio Quoting Demo - See Manufacturing Costs in Real-Time',
   description: 'Get instant quotes for 3D printing, CNC machining, and laser cutting. See costs, compare materials, and optimize your designs in seconds.',
   keywords: 'manufacturing quotes, 3D printing cost, CNC pricing, laser cutting quotes, rapid prototyping',
 };

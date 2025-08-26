@@ -93,7 +93,7 @@ const commands = {
 
       log.success('Database seeded successfully');
       log.info('Test users created:');
-      log.info('  - admin@madfam.io (password: Admin123!)');
+      log.info('  - admin@cotiza.studio (password: Admin123!)');
       log.info('  - user@example.com (password: User123!)');
     } catch (err) {
       log.error(`Seeding failed: ${err.message}`);
@@ -246,7 +246,7 @@ const commands = {
 // Help text
 function showHelp() {
   console.log(`
-${colors.bright}${colors.blue}MADFAM Database Utilities${colors.reset}
+${colors.bright}${colors.blue}Cotiza Studio Database Utilities${colors.reset}
 
 Usage: npm run db:utils <command> [options]
 

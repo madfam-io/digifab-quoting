@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { BasePricingCalculator } from '../../src/calculators/base.calculator';
 import { PricingInput, PricingResult } from '../../src/types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 import { Decimal } from 'decimal.js';
 
 // Create a concrete implementation for testing

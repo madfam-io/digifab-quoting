@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { QuoteStatus, ProcessType } from '@madfam/shared';
+import { QuoteStatus, ProcessType } from '@cotiza/shared';
 
 // Quote objective validation
 export const QuoteObjectiveSchema = z

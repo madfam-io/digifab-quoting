@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY_PREFIX: madfam-quoting
+  ECR_REPOSITORY_PREFIX: cotiza-quoting
 
 jobs:
   deploy-staging:
@@ -56,19 +56,19 @@ jobs:
         run: |
           # Update API service
           aws ecs update-service \
-            --cluster madfam-staging \
+            --cluster cotiza-staging \
             --service api \
             --force-new-deployment
 
           # Update Web service  
           aws ecs update-service \
-            --cluster madfam-staging \
+            --cluster cotiza-staging \
             --service web \
             --force-new-deployment
 
           # Update Worker service
           aws ecs update-service \
-            --cluster madfam-staging \
+            --cluster cotiza-staging \
             --service worker \
             --force-new-deployment
 

@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { CacheService } from './cache.service';
 import { RedisService } from './redis.service';
 import { LoggerService } from '@/common/logger/logger.service';
-import type { PricingRule } from '@madfam/shared';
+import type { PricingRule } from '@cotiza/shared';
 
 export interface QuoteCacheKey {
   fileHash: string;

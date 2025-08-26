@@ -30,7 +30,7 @@ import { AddQuoteItemDto, QuoteItemResponseDto } from './dto/add-quote-item.dto'
 import { CalculateQuoteDto } from './dto/calculate-quote.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { QuoteStatus } from '@madfam/shared';
+import { QuoteStatus } from '@cotiza/shared';
 import { Audit } from '../audit/audit.interceptor';
 import { AuditAction, AuditEntity } from '../audit/audit.service';
 import {

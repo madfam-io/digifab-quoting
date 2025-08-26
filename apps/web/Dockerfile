@@ -15,7 +15,7 @@ COPY apps/web/ ./apps/web/
 RUN npm ci
 
 # Build the application
-RUN npm run build -- --filter=@madfam/web...
+RUN npm run build -- --filter=@cotiza/web...
 
 # Production image
 FROM node:20-alpine AS runner

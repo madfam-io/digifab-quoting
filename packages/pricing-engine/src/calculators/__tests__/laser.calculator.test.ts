@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { LaserPricingCalculator } from '../laser.calculator';
 import { PricingInput, TenantPricingConfig } from '../../types';
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 
 describe('LaserPricingCalculator', () => {
   let calculator: LaserPricingCalculator;

@@ -30,7 +30,7 @@ import {
   ValidationErrorResponseDto,
   ConflictResponseDto,
 } from '../../common/dto/api-response.dto';
-import { User } from '@madfam/shared';
+import { User } from '@cotiza/shared';
 import { Public } from './decorators/public.decorator';
 import { Request as ExpressRequest } from 'express';
 

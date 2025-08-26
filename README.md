@@ -1,4 +1,4 @@
-# MADFAM Digital Fabrication Quoting System
+# Cotiza Studio Digital Fabrication Quoting System
 
 [![Build Status](https://github.com/madfam/digifab-quoting/workflows/CI/badge.svg)](https://github.com/madfam/digifab-quoting/actions)
 [![Security Score](https://img.shields.io/badge/Security-A-green)](docs/SECURITY.md)
@@ -185,8 +185,8 @@ npm run clean         # Clean build artifacts
 
 ### Default Test Users
 
-- **Admin**: `admin@madfam.io` / `Admin123!`
-- **Manager**: `manager@madfam.io` / `Manager123!`
+- **Admin**: `admin@cotiza.studio` / `Admin123!`
+- **Manager**: `manager@cotiza.studio` / `Manager123!`
 - **Customer**: `customer@example.com` / `Customer123!`
 
 ## 🧪 Testing
@@ -232,7 +232,7 @@ npm run test:e2e
 
 ```
 Development: http://localhost:4000/api/v1
-Production: https://api.madfam.io/v1
+Production: https://api.cotiza.studio/v1
 ```
 
 ### Authentication
@@ -565,6 +565,6 @@ This project is proprietary software. All rights reserved.
 
 ## 🆘 Support
 
-- Documentation: [https://docs.madfam.io](https://docs.madfam.io)
-- Email: support@madfam.io
+- Documentation: [https://docs.cotiza.studio](https://docs.cotiza.studio)
+- Email: support@cotiza.studio
 - Issues: [GitHub Issues](https://github.com/madfam-io/digifab-quoting/issues)

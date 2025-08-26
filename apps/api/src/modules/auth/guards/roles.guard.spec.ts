@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { RolesGuard } from './roles.guard';
 import { TenantContextService } from '../../tenant/tenant-context.service';
-import { USER_ROLES } from '@madfam/shared';
+import { USER_ROLES } from '@cotiza/shared';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;

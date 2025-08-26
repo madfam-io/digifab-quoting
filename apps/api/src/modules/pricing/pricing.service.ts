@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Cacheable } from '../redis/decorators/cache.decorator';
-import { ProcessType, Material, Machine, QuoteItemSelections } from '@madfam/shared';
-import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@madfam/pricing-engine';
+import { ProcessType, Material, Machine, QuoteItemSelections } from '@cotiza/shared';
+import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@cotiza/pricing-engine';
 import { Decimal } from 'decimal.js';
 
 interface GeometryMetrics {

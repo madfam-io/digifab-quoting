@@ -1,4 +1,4 @@
-# MADFAM Quoting MVP - Local Setup & Deployment Guide
+# Cotiza Studio MVP - Local Setup & Deployment Guide
 
 ## Local Development Setup
 
@@ -123,7 +123,7 @@ python -m uvicorn main:app --reload
 
 ### Default Login Credentials
 
-- **Admin**: admin@madfam.io / admin123
+- **Admin**: admin@cotiza.studio / admin123
 - **Customer**: test@example.com / test123
 
 ## Common Issues & Solutions
@@ -274,7 +274,7 @@ curl http://localhost:4000/health
 # Login
 curl -X POST http://localhost:4000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@madfam.io","password":"admin123"}'
+  -d '{"email":"admin@cotiza.studio","password":"admin123"}'
 ```
 
 ### 3. Test Quote Creation Flow

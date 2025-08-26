@@ -21,7 +21,7 @@ RUN npx prisma generate
 WORKDIR /app
 
 # Build the application
-RUN npm run build -- --filter=@madfam/api...
+RUN npm run build -- --filter=@cotiza/api...
 
 # Production image
 FROM node:20-alpine AS runner

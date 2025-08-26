@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../redis/cache.service';
-import { USER_ROLES } from '@madfam/shared';
+import { USER_ROLES } from '@cotiza/shared';
 
 // Mock bcrypt module
 jest.mock('bcryptjs', () => ({

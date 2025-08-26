@@ -50,7 +50,7 @@ cat > apps/api/tsconfig.json << 'EOF'
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@madfam/shared": ["../../packages/shared/src"]
+      "@cotiza/shared": ["../../packages/shared/src"]
     }
   },
   "include": ["src"],
@@ -148,7 +148,7 @@ npm run lint -- --fix || true
 
 # 10. Build to check for errors
 echo "🏗️ Building API to check for errors..."
-npm run build -- --filter=@madfam/api || true
+npm run build -- --filter=@cotiza/api || true
 
 echo "✨ Critical issues fixed!"
 echo ""

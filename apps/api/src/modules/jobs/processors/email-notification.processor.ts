@@ -41,7 +41,7 @@ export class EmailNotificationProcessor {
 
     this.defaultFrom = this.configService.get(
       'email.defaultFrom',
-      'MADFAM Quoting <noreply@madfam.com>',
+      'Cotiza Studio Quoting <noreply@cotiza.studio>',
     );
 
     // Load email templates
@@ -72,8 +72,8 @@ export class EmailNotificationProcessor {
       const enrichedData = {
         recipientName: recipientName || 'Customer',
         year: new Date().getFullYear(),
-        supportEmail: this.configService.get('email.supportEmail', 'support@madfam.com'),
-        websiteUrl: this.configService.get('app.url', 'https://app.madfam.com'),
+        supportEmail: this.configService.get('email.supportEmail', 'support@cotiza.studio'),
+        websiteUrl: this.configService.get('app.url', 'https://app.cotiza.studio'),
         ...templateData,
       };
 
@@ -196,10 +196,10 @@ export class EmailNotificationProcessor {
                 <a href="{{quoteUrl}}" class="button">View Quote</a>
               </p>
               <p>If you have any questions, feel free to contact us at {{supportEmail}}.</p>
-              <p>Best regards,<br>The MADFAM Team</p>
+              <p>Best regards,<br>The Cotiza Studio Team</p>
             </div>
             <div class="footer">
-              <p>&copy; {{year}} MADFAM. All rights reserved.</p>
+              <p>&copy; {{year}} Cotiza Studio. All rights reserved.</p>
               <p>This email was sent to {{recipientEmail}}</p>
             </div>
           </div>
@@ -248,11 +248,11 @@ export class EmailNotificationProcessor {
               </div>
               <p>We'll send you another email when your order ships with tracking information.</p>
               <p>If you have any questions about your order, please contact us at {{supportEmail}}.</p>
-              <p>Thank you for choosing MADFAM!</p>
-              <p>Best regards,<br>The MADFAM Team</p>
+              <p>Thank you for choosing Cotiza Studio!</p>
+              <p>Best regards,<br>The Cotiza Studio Team</p>
             </div>
             <div class="footer">
-              <p>&copy; {{year}} MADFAM. All rights reserved.</p>
+              <p>&copy; {{year}} Cotiza Studio. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -298,10 +298,10 @@ export class EmailNotificationProcessor {
                 <a href="{{newQuoteUrl}}" class="button">Request New Quote</a>
               </p>
               <p>If you need assistance or have questions, please contact us at {{supportEmail}}.</p>
-              <p>Best regards,<br>The MADFAM Team</p>
+              <p>Best regards,<br>The Cotiza Studio Team</p>
             </div>
             <div class="footer">
-              <p>&copy; {{year}} MADFAM. All rights reserved.</p>
+              <p>&copy; {{year}} Cotiza Studio. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -359,10 +359,10 @@ export class EmailNotificationProcessor {
               </p>
               <p>If you have any questions about your shipment, please contact us at {{supportEmail}}.</p>
               <p>Thank you for your business!</p>
-              <p>Best regards,<br>The MADFAM Team</p>
+              <p>Best regards,<br>The Cotiza Studio Team</p>
             </div>
             <div class="footer">
-              <p>&copy; {{year}} MADFAM. All rights reserved.</p>
+              <p>&copy; {{year}} Cotiza Studio. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -383,7 +383,7 @@ export class EmailNotificationProcessor {
       'order-shipped': `Your Order #${data.orderNumber} Has Shipped!`,
     };
 
-    return subjects[type] || 'MADFAM Notification';
+    return subjects[type] || 'Cotiza Studio Notification';
   }
 
   private async prepareAttachments(

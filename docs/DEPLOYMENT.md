@@ -1,8 +1,8 @@
-# MADFAM Quoting Deployment Guide
+# Cotiza Studio Deployment Guide
 
 ## Overview
 
-This guide covers deploying the MADFAM Quoting system to AWS using Docker containers, ECS Fargate, and supporting AWS services. The deployment is fully automated using Terraform and GitHub Actions.
+This guide covers deploying the Cotiza Studio system to AWS using Docker containers, ECS Fargate, and supporting AWS services. The deployment is fully automated using Terraform and GitHub Actions.
 
 ## Architecture Overview
 
@@ -122,7 +122,7 @@ region = "us-east-1"
 availability_zones = ["us-east-1a", "us-east-1b"]
 
 # Domain
-domain_name = "madfam.io"
+domain_name = "cotiza.studio"
 subdomain = "app"
 
 # Database
@@ -409,7 +409,7 @@ aws secretsmanager create-secret \
 NODE_ENV=production
 PORT=4000
 API_PREFIX=api/v1
-CORS_ORIGINS=https://app.madfam.io
+CORS_ORIGINS=https://app.cotiza.studio
 
 # Database
 DATABASE_URL=<from-secrets>

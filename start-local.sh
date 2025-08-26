@@ -29,7 +29,7 @@ echo -e "${GREEN}✅ Docker services are ready${NC}"
 
 # Check database connection
 echo -e "${BLUE}🔍 Checking database...${NC}"
-if PGPASSWORD=postgres psql -h localhost -U postgres -d madfam_quoting -c '\dt' > /dev/null 2>&1; then
+if PGPASSWORD=postgres psql -h localhost -U postgres -d cotiza_quoting -c '\dt' > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Database is accessible${NC}"
 else
     echo -e "${YELLOW}Database not found or empty. Setting up...${NC}"
@@ -53,7 +53,7 @@ echo -e "  ${BLUE}API:${NC} http://localhost:4000"
 echo -e "  ${BLUE}API Docs:${NC} http://localhost:4000/api/docs"
 echo ""
 echo -e "${YELLOW}Default credentials:${NC}"
-echo -e "  ${BLUE}Admin:${NC} admin@madfam.io / admin123"
+echo -e "  ${BLUE}Admin:${NC} admin@cotiza.io / admin123"
 echo -e "  ${BLUE}Customer:${NC} test@example.com / test123"
 echo ""
 echo -e "${GREEN}Press Ctrl+C to stop all services${NC}"

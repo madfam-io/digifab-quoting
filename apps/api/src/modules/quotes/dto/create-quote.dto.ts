@@ -1,7 +1,7 @@
 import { IsEnum, IsObject, IsOptional, ValidateNested, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency } from '@madfam/shared';
+import { Currency } from '@cotiza/shared';
 
 export class QuoteObjectiveDto implements Record<string, number> {
   @ApiProperty({

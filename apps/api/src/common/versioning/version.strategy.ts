@@ -24,7 +24,7 @@ export const URI_VERSION_CONFIG: ApiVersionConfig = {
 export const MEDIA_TYPE_VERSION_CONFIG: ApiVersionConfig = {
   type: VersioningType.MEDIA_TYPE,
   defaultVersion: '1',
-  // Uses Accept header: application/vnd.madfam.v1+json
+  // Uses Accept header: application/vnd.cotiza.v1+json
 };
 
 export const CUSTOM_VERSION_CONFIG: ApiVersionConfig = {
@@ -44,7 +44,7 @@ export const DEPRECATED_VERSIONS = {
     deprecated: true,
     sunset: new Date('2024-12-31'),
     message: 'API v1 is deprecated. Please upgrade to v2.',
-    migrationGuide: 'https://docs.madfam.com/api/migration-v1-to-v2',
+    migrationGuide: 'https://docs.cotiza.studio/api/migration-v1-to-v2',
   },
 };
 

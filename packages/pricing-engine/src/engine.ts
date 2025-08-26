@@ -1,4 +1,4 @@
-import { ProcessType } from '@madfam/shared';
+import { ProcessType } from '@cotiza/shared';
 import { Decimal } from 'decimal.js';
 import { PricingInput, PricingResult } from './types';
 import {

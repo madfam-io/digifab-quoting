@@ -1,6 +1,6 @@
-# MADFAM Development Scripts
+# Cotiza Studio Development Scripts
 
-This directory contains orchestration scripts for managing the MADFAM development environment.
+This directory contains orchestration scripts for managing the Cotiza Studio development environment.
 
 ## Scripts
 

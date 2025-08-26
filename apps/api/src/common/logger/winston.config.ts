@@ -16,7 +16,7 @@ const consoleFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.ms(),
   winston.format.errors({ stack: true }),
-  nestWinstonModuleUtilities.format.nestLike('MADFAM', {
+  nestWinstonModuleUtilities.format.nestLike('Cotiza Studio', {
     prettyPrint: true,
     colors: true,
   }),

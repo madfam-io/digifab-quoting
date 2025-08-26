@@ -4,7 +4,7 @@ import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantContext } from '../../common/decorators/tenant.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderStatus, PaymentStatus } from '@madfam/shared';
+import { OrderStatus, PaymentStatus } from '@cotiza/shared';
 
 @ApiTags('orders')
 @Controller('orders')

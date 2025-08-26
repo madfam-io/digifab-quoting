@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { BasePricingCalculator } from './base.calculator';
 import { PricingResult, ProcessingTime, MaterialUsage } from '../types';
-import { GeometryMetrics, QuoteItemSelections } from '@madfam/shared';
+import { GeometryMetrics, QuoteItemSelections } from '@cotiza/shared';
 
 export class CNCPricingCalculator extends BasePricingCalculator {
   private readonly MRR_RATES: Record<string, number> = {

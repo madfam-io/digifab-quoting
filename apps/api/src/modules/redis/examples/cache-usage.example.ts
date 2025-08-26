@@ -1,5 +1,5 @@
 /**
- * Example usage of Redis caching in MADFAM Quoting MVP
+ * Example usage of Redis caching in Cotiza Studio Quoting MVP
  *
  * This file demonstrates various caching patterns and best practices
  */

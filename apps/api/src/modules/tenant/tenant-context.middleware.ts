@@ -42,7 +42,7 @@ export class TenantContextMiddleware implements NestMiddleware {
         tenantCode = req.headers['x-tenant-code'] as string;
       }
 
-      // 3. Extract from subdomain (e.g., tenant1.madfam.com)
+      // 3. Extract from subdomain (e.g., tenant1.cotiza.studio)
       const host = req.headers.host || '';
       const subdomain = host.split('.')[0];
       if (subdomain && subdomain !== 'www' && subdomain !== 'api') {

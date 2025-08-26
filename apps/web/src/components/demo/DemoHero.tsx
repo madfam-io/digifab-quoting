@@ -135,7 +135,7 @@ export function DemoHero() {
 
                     {/* Optimized Cost */}
                     <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg border border-green-400/30">
-                      <span>MADFAM Optimized:</span>
+                      <span>Cotiza Studio Optimized:</span>
                       <motion.span 
                         className="text-3xl font-bold text-green-300"
                         animate={{ scale: isAnimating ? [1, 1.1, 1] : 1 }}

@@ -470,7 +470,7 @@ async function startServices() {
 // Main orchestration function
 async function main() {
   console.log(
-    `\n${colors.bright}${colors.blue}MADFAM Development Environment Orchestrator${colors.reset}\n`,
+    `\n${colors.bright}${colors.blue}Cotiza Studio Development Environment Orchestrator${colors.reset}\n`,
   );
 
   try {

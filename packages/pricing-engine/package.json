@@ -1,5 +1,5 @@
 {
-  "name": "@madfam/pricing-engine",
+  "name": "@cotiza/pricing-engine",
   "version": "0.0.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -20,7 +20,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@madfam/shared": "*",
+    "@cotiza/shared": "*",
     "decimal.js": "^10.4.3",
     "mathjs": "^12.4.0"
   },

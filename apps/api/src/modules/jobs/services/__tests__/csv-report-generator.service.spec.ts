@@ -140,7 +140,7 @@ describe('CsvReportGeneratorService', () => {
         total: 1100,
         totalPaid: 1100,
         tenant: {
-          name: 'MADFAM Inc.',
+          name: 'Cotiza Studio Inc.',
           taxId: 'TAX123456',
         },
         customer: {

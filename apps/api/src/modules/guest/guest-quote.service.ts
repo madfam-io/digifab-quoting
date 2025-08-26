@@ -9,7 +9,7 @@ import {
   UpdateGuestQuoteItem,
   ProcessType,
   Currency 
-} from '@madfam/shared';
+} from '@cotiza/shared';
 
 @Injectable()
 export class GuestQuoteService {
