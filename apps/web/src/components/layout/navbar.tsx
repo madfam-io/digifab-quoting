@@ -12,9 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings, FileText } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function Navbar() {
   const { data: session } = useSession();
+  const { t } = useTranslation('common');
 
   return (
     <nav className="border-b bg-white">
@@ -27,10 +30,10 @@ export function Navbar() {
 
             <div className="hidden md:flex items-center gap-6">
               <Link
-                href="/demo"
+                href="/try"
                 className="text-sm font-medium text-blue-600 hover:text-blue-800 font-semibold"
               >
-                Interactive Demo
+                {t('nav.try')}
               </Link>
               {session ? (
                 <>
@@ -38,13 +41,13 @@ export function Navbar() {
                     href="/dashboard"
                     className="text-sm font-medium text-gray-600 hover:text-gray-900"
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                   <Link
                     href="/quote/new"
                     className="text-sm font-medium text-gray-600 hover:text-gray-900"
                   >
-                    New Quote
+                    {t('nav.newQuote')}
                   </Link>
                 </>
               ) : (
@@ -53,13 +56,13 @@ export function Navbar() {
                     href="/pricing"
                     className="text-sm font-medium text-gray-600 hover:text-gray-900"
                   >
-                    Pricing
+                    {t('nav.pricing')}
                   </Link>
                   <Link
                     href="/features"
                     className="text-sm font-medium text-gray-600 hover:text-gray-900"
                   >
-                    Features
+                    {t('nav.features')}
                   </Link>
                 </>
               )}
@@ -67,6 +70,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -89,13 +93,13 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">
                       <FileText className="mr-2 h-4 w-4" />
-                      Dashboard
+                      {t('nav.dashboard')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -104,18 +108,18 @@ export function Navbar() {
                     className="text-red-600"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    {t('nav.signOut')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost">Sign in</Button>
+                  <Button variant="ghost">{t('nav.signIn')}</Button>
                 </Link>
-                <Link href="/demo">
+                <Link href="/try">
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                    Try Demo Free
+                    {t('nav.try')}
                   </Button>
                 </Link>
               </div>

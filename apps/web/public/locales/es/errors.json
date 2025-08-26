@@ -1,0 +1,58 @@
+{
+  "404": {
+    "title": "Página No Encontrada",
+    "description": "Lo sentimos, la página que buscas no existe.",
+    "button": "Volver al Inicio"
+  },
+  "500": {
+    "title": "Error del Servidor",
+    "description": "Algo salió mal. Por favor, intenta nuevamente más tarde.",
+    "button": "Reintentar"
+  },
+  "auth": {
+    "invalidCredentials": "Credenciales inválidas",
+    "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+    "unauthorized": "No tienes permiso para acceder a esta página.",
+    "emailAlreadyExists": "Este correo electrónico ya está registrado",
+    "weakPassword": "La contraseña debe tener al menos 8 caracteres",
+    "invalidEmail": "Por favor, ingresa un correo electrónico válido"
+  },
+  "validation": {
+    "required": "Este campo es requerido",
+    "minLength": "Debe tener al menos {{min}} caracteres",
+    "maxLength": "No puede exceder {{max}} caracteres",
+    "email": "Ingresa un correo electrónico válido",
+    "number": "Debe ser un número válido",
+    "positive": "Debe ser un número positivo",
+    "fileSize": "El archivo no debe exceder {{size}}MB",
+    "fileType": "Tipo de archivo no soportado"
+  },
+  "upload": {
+    "failed": "Error al subir el archivo",
+    "tooLarge": "El archivo es demasiado grande",
+    "unsupportedFormat": "Formato de archivo no soportado",
+    "processing": "Error al procesar el archivo",
+    "noFile": "Por favor selecciona un archivo"
+  },
+  "quote": {
+    "failed": "Error al generar la cotización",
+    "invalidFile": "Archivo de diseño inválido",
+    "processingError": "Error al procesar tu diseño",
+    "materialUnavailable": "Material no disponible",
+    "outOfBounds": "Las dimensiones exceden nuestras capacidades"
+  },
+  "payment": {
+    "failed": "El pago no pudo ser procesado",
+    "cardDeclined": "Tarjeta rechazada",
+    "insufficientFunds": "Fondos insuficientes",
+    "invalidCard": "Información de tarjeta inválida",
+    "expired": "La tarjeta ha expirado"
+  },
+  "general": {
+    "somethingWrong": "Algo salió mal",
+    "tryAgain": "Por favor, intenta nuevamente",
+    "contactSupport": "Si el problema persiste, contacta soporte",
+    "networkError": "Error de conexión. Verifica tu internet.",
+    "timeout": "La operación tardó demasiado tiempo"
+  }
+}

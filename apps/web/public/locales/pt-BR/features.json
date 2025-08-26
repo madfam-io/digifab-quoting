@@ -1,0 +1,113 @@
+{
+  "processes": {
+    "title": "Nossos Processos de Manufatura",
+    "fff": {
+      "name": "Impressão 3D FFF",
+      "description": "Ideal para protótipos e peças funcionais",
+      "features": [
+        "Materiais: PLA, PETG, ABS, TPU",
+        "Resolução desde 0.1mm",
+        "Volume até 300x300x400mm",
+        "Prazo de entrega: 1-3 dias"
+      ]
+    },
+    "sla": {
+      "name": "Impressão 3D SLA",
+      "description": "Alta precisão para detalhes finos",
+      "features": [
+        "Resinas padrão e especiais",
+        "Resolução 0.025mm",
+        "Acabamentos suaves",
+        "Ideal para joalheria e odontologia"
+      ]
+    },
+    "cnc": {
+      "name": "CNC 3 Eixos",
+      "description": "Usinagem de precisão em metais e plásticos",
+      "features": [
+        "Alumínio, Aço, Plásticos técnicos",
+        "Tolerâncias ±0.05mm",
+        "Acabamentos profissionais",
+        "Produção em série disponível"
+      ]
+    },
+    "laser": {
+      "name": "Corte a Laser",
+      "description": "Corte preciso em materiais planos",
+      "features": [
+        "Acrílico, MDF, Madeira, Papelão",
+        "Espessuras até 20mm",
+        "Gravação disponível",
+        "Cortes complexos sem custo extra"
+      ]
+    }
+  },
+  "capabilities": {
+    "title": "Capacidades Avançadas",
+    "instantQuote": {
+      "title": "Orçamento Instantâneo",
+      "description": "Envie seu arquivo e obtenha o preço instantaneamente"
+    },
+    "dfmAnalysis": {
+      "title": "Análise DFM",
+      "description": "Otimização automática de design para manufatura"
+    },
+    "materialOptimization": {
+      "title": "Otimização de Material",
+      "description": "Sugestões inteligentes para reduzir custos"
+    },
+    "bulkPricing": {
+      "title": "Preços por Volume",
+      "description": "Descontos automáticos para pedidos grandes"
+    },
+    "qualityAssurance": {
+      "title": "Garantia de Qualidade",
+      "description": "100% de inspeção e garantia de satisfação"
+    },
+    "expressDelivery": {
+      "title": "Entrega Express",
+      "description": "Opções de entrega em 24-48 horas"
+    }
+  },
+  "benefits": {
+    "title": "Por Que Nos Escolher",
+    "saveMoney": {
+      "title": "Economize Dinheiro",
+      "description": "Preços até 63% mais baixos que tradicionais"
+    },
+    "saveTime": {
+      "title": "Economize Tempo",
+      "description": "Orçamentos em segundos, não dias"
+    },
+    "transparency": {
+      "title": "Transparência Total",
+      "description": "Detalhamento completo de todos os custos"
+    },
+    "expertise": {
+      "title": "Experiência Comprovada",
+      "description": "Milhares de projetos concluídos com sucesso"
+    },
+    "support": {
+      "title": "Suporte Especializado",
+      "description": "Engenheiros disponíveis para ajudá-lo"
+    },
+    "sustainability": {
+      "title": "Sustentabilidade",
+      "description": "Métricas de impacto ambiental em cada orçamento"
+    }
+  },
+  "diy": {
+    "title": "Calculadora DIY vs Profissional",
+    "subtitle": "Você deveria fazer você mesmo ou usar nosso serviço?",
+    "yourTime": "Seu tempo vale",
+    "hourlyRate": "Taxa por hora",
+    "projectTime": "Tempo do projeto",
+    "materialCost": "Custo de materiais",
+    "toolCost": "Custo de ferramentas",
+    "learningCurve": "Curva de aprendizado",
+    "qualityRisk": "Risco de qualidade",
+    "professionalCost": "Custo profissional",
+    "savings": "Economia",
+    "recommendation": "Recomendação"
+  }
+}

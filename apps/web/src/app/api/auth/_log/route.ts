@@ -4,17 +4,12 @@ export async function POST(request: NextRequest) {
   try {
     await request.json(); // Consume the body to prevent errors
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      // NextAuth logs captured here
-      // console.log('[NextAuth Log]', body);
-    }
-
-    // You can forward these logs to your backend API if needed
-    // For now, just return success
+    // NextAuth logging endpoint - silently accept logs
+    // These can be forwarded to backend logging service if needed
+    
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error('[NextAuth Log Error]', error);
+  } catch {
+    // Silently handle errors to prevent client-side noise
     return new NextResponse(null, { status: 204 });
   }
 }

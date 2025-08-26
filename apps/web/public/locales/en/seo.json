@@ -1,0 +1,30 @@
+{
+  "seo": {
+    "defaultTitle": "Cotiza Studio - Digital Manufacturing Quoting Platform",
+    "defaultDescription": "Get instant quotes for 3D printing, CNC machining, and laser cutting. Compare prices, optimize designs, and save up to 60% on production costs.",
+    "home": {
+      "title": "Instant Quotes for Digital Manufacturing",
+      "description": "Cotiza Studio provides instant pricing for 3D printing, CNC machining, and laser cutting. Upload your file and get your quote in seconds."
+    },
+    "quote": {
+      "title": "Create New Quote",
+      "description": "Upload your CAD files and get instant quotes with DFM analysis, process comparison, and cost optimization."
+    },
+    "try": {
+      "title": "Try Our Quoting Tools",
+      "description": "Explore our interactive tools: DIY vs professional calculator, link-based quoting, and persona selection."
+    },
+    "login": {
+      "title": "Sign In",
+      "description": "Access your Cotiza Studio account to manage quotes, orders, and settings."
+    },
+    "register": {
+      "title": "Create Free Account",
+      "description": "Sign up for Cotiza Studio and start saving on your digital manufacturing projects."
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Manage your quotes, orders, and manufacturing projects from one place."
+    }
+  }
+}

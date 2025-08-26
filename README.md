@@ -1,10 +1,11 @@
-# Cotiza Studio Digital Fabrication Quoting System
+# Cotiza Studio - Digital Manufacturing Quoting Platform
 
-[![Build Status](https://github.com/madfam/digifab-quoting/workflows/CI/badge.svg)](https://github.com/madfam/digifab-quoting/actions)
+[![Build Status](https://github.com/madfam-io/digifab-quoting/workflows/CI/badge.svg)](https://github.com/madfam-io/digifab-quoting/actions)
 [![Security Score](https://img.shields.io/badge/Security-A-green)](docs/SECURITY.md)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-blue.svg)](LICENSE)
+[![Website](https://img.shields.io/badge/Website-cotiza.studio-purple)](https://www.cotiza.studio)
 
-> Enterprise-grade multi-tenant quoting system for digital fabrication services including 3D printing, CNC machining, and laser cutting with advanced link-to-quote capabilities.
+> 🚀 Enterprise-grade multi-tenant quoting system for digital fabrication services. Get instant quotes for 3D printing, CNC machining, and laser cutting with AI-powered optimization and multilingual support.
 
 ## 🚀 Quick Start
 
@@ -17,27 +18,37 @@ docker-compose up -d
 npm run dev
 
 # Access applications
+# Frontend: http://localhost:3002
 # API: http://localhost:4000
-# Web: http://localhost:3002
 # API Docs: http://localhost:4000/api/docs
+# Admin Panel: http://localhost:3002/admin
 ```
 
-## ✨ Features
+## ✨ Key Features
+
+### 🌍 Multilingual Platform
+- **Full Localization**: Spanish (default), English, and Portuguese (Brazil)
+- **Smart Detection**: Automatic language detection from browser/user preferences
+- **Localized Content**: All UI, emails, and PDFs in user's preferred language
+- **SEO Optimized**: Multilingual meta tags and structured data
 
 ### 🏢 Multi-Tenant Architecture
 - **Tenant Isolation**: Complete data separation between organizations
-- **Custom Branding**: Tenant-specific UI themes and branding
+- **Custom Branding**: White-label support with custom domains
 - **Flexible Pricing**: Per-tenant pricing rules and margins
+- **Usage Tracking**: Comprehensive billing and metering
 
 ### 🔧 Manufacturing Processes
-- **3D Printing**: FFF and SLA with material optimization
-- **CNC Machining**: 3-axis milling for aluminum, steel, and plastics
-- **Laser Cutting**: 2D cutting with material and thickness optimization
+- **3D Printing**: FFF and SLA with DFM analysis
+- **CNC Machining**: 3-axis milling for metals and plastics
+- **Laser Cutting**: 2D cutting with nesting optimization
+- **Real-time Pricing**: Instant quotes with cost breakdown
 
-### 🤖 Link-to-Quote System
-- **Platform Support**: Instructables, Thingiverse, GitHub, Hackster.io
-- **Intelligent BOM Parsing**: AI-powered bill of materials extraction
-- **Persona-Based Quotes**: Customized pricing for different user types
+### 🤖 Advanced Features
+- **Link-to-Quote**: Import projects from Thingiverse, GitHub, etc.
+- **Guest Quotes**: No registration required for quick quotes
+- **DIY Calculator**: Compare DIY vs professional service costs
+- **Persona Selector**: Tailored experiences for makers, businesses, designers
 
 ### 📊 Advanced Analytics
 - **Real-time Metrics**: Business KPIs and performance monitoring
@@ -111,30 +122,31 @@ cp apps/web/.env.example apps/web/.env
 
 ```env
 # Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/madfam_quoting
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/cotiza_studio
 
 # Redis
 REDIS_URL=redis://localhost:6379
 
-# AWS
-S3_BUCKET=madfam-quoting-dev
+# AWS (Optional for local dev)
+S3_BUCKET=cotiza-studio-dev
 S3_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your-key
 AWS_SECRET_ACCESS_KEY=your-secret
 
 # Auth
-JWT_SECRET=your-secret-key
-NEXTAUTH_SECRET=your-nextauth-secret
+JWT_SECRET=your-secret-key-min-32-chars
+NEXTAUTH_SECRET=your-nextauth-secret-min-32-chars
 NEXTAUTH_URL=http://localhost:3002
 
-# Stripe
+# Stripe (Optional for payments)
 STRIPE_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Locale
-DEFAULT_CURRENCY=MXN
-SUPPORTED_CURRENCIES=MXN,USD
+# Localization
 DEFAULT_LOCALE=es
+SUPPORTED_LOCALES=es,en,pt-BR
+DEFAULT_CURRENCY=MXN
+SUPPORTED_CURRENCIES=MXN,USD,BRL
 ```
 
 4. **Database setup**:
@@ -157,8 +169,8 @@ npm run db:seed
 npm run dev
 
 # Run specific app
-npm run dev -- --filter=@madfam/api
-npm run dev -- --filter=@madfam/web
+npm run dev -- --filter=@cotiza/api
+npm run dev -- --filter=@cotiza/web
 
 # Database operations
 npm run db:generate    # Generate Prisma client
@@ -207,7 +219,7 @@ src/
 npm test
 
 # Test specific package
-npm test -- --filter=@madfam/pricing-engine
+npm test -- --filter=@cotiza/pricing-engine
 
 # Coverage report
 npm test -- --coverage
@@ -377,9 +389,9 @@ curl -H "Authorization: Bearer <token>" \
 
 ```bash
 # Build all images
-docker build -t madfam-api -f apps/api/Dockerfile .
-docker build -t madfam-web -f apps/web/Dockerfile .
-docker build -t madfam-worker -f apps/worker/Dockerfile .
+docker build -t cotiza-api -f apps/api/Dockerfile .
+docker build -t cotiza-web -f apps/web/Dockerfile .
+docker build -t cotiza-worker -f apps/worker/Dockerfile .
 
 # Run with docker-compose
 docker-compose -f docker-compose.prod.yml up -d

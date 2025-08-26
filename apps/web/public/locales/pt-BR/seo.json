@@ -1,0 +1,30 @@
+{
+  "seo": {
+    "defaultTitle": "Cotiza Studio - Plataforma de Cotação para Fabricação Digital",
+    "defaultDescription": "Obtenha orçamentos instantâneos para impressão 3D, usinagem CNC e corte a laser. Compare preços, otimize designs e economize até 60% nos custos de produção.",
+    "home": {
+      "title": "Cotações Instantâneas para Fabricação Digital",
+      "description": "O Cotiza Studio permite obter preços instantâneos para impressão 3D, usinagem CNC e corte a laser. Envie seu arquivo e receba sua cotação em segundos."
+    },
+    "quote": {
+      "title": "Criar Nova Cotação",
+      "description": "Envie seus arquivos CAD e obtenha cotações instantâneas com análise DFM, comparação de processos e otimização de custos."
+    },
+    "try": {
+      "title": "Experimente Nossas Ferramentas de Cotação",
+      "description": "Explore nossas ferramentas interativas: calculadora DIY vs profissional, cotação por links e seleção de personas."
+    },
+    "login": {
+      "title": "Fazer Login",
+      "description": "Acesse sua conta Cotiza Studio para gerenciar cotações, pedidos e configurações."
+    },
+    "register": {
+      "title": "Criar Conta Gratuita",
+      "description": "Cadastre-se no Cotiza Studio e comece a economizar em seus projetos de fabricação digital."
+    },
+    "dashboard": {
+      "title": "Painel de Controle",
+      "description": "Gerencie suas cotações, pedidos e projetos de fabricação em um só lugar."
+    }
+  }
+}

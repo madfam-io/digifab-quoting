@@ -1,0 +1,58 @@
+{
+  "404": {
+    "title": "Página Não Encontrada",
+    "description": "Desculpe, a página que você está procurando não existe.",
+    "button": "Voltar ao Início"
+  },
+  "500": {
+    "title": "Erro do Servidor",
+    "description": "Algo deu errado. Por favor, tente novamente mais tarde.",
+    "button": "Tentar Novamente"
+  },
+  "auth": {
+    "invalidCredentials": "Credenciais inválidas",
+    "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
+    "unauthorized": "Você não tem permissão para acessar esta página.",
+    "emailAlreadyExists": "Este email já está registrado",
+    "weakPassword": "A senha deve ter pelo menos 8 caracteres",
+    "invalidEmail": "Por favor, insira um endereço de email válido"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "minLength": "Deve ter pelo menos {{min}} caracteres",
+    "maxLength": "Não pode exceder {{max}} caracteres",
+    "email": "Insira um email válido",
+    "number": "Deve ser um número válido",
+    "positive": "Deve ser um número positivo",
+    "fileSize": "O arquivo não deve exceder {{size}}MB",
+    "fileType": "Tipo de arquivo não suportado"
+  },
+  "upload": {
+    "failed": "Falha ao enviar arquivo",
+    "tooLarge": "Arquivo muito grande",
+    "unsupportedFormat": "Formato de arquivo não suportado",
+    "processing": "Erro ao processar arquivo",
+    "noFile": "Por favor, selecione um arquivo"
+  },
+  "quote": {
+    "failed": "Falha ao gerar orçamento",
+    "invalidFile": "Arquivo de design inválido",
+    "processingError": "Erro ao processar seu design",
+    "materialUnavailable": "Material não disponível",
+    "outOfBounds": "As dimensões excedem nossas capacidades"
+  },
+  "payment": {
+    "failed": "O pagamento não pôde ser processado",
+    "cardDeclined": "Cartão recusado",
+    "insufficientFunds": "Fundos insuficientes",
+    "invalidCard": "Informações do cartão inválidas",
+    "expired": "O cartão expirou"
+  },
+  "general": {
+    "somethingWrong": "Algo deu errado",
+    "tryAgain": "Por favor, tente novamente",
+    "contactSupport": "Se o problema persistir, entre em contato com o suporte",
+    "networkError": "Erro de conexão. Verifique sua internet.",
+    "timeout": "A operação demorou muito"
+  }
+}

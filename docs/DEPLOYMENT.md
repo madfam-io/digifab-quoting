@@ -2,7 +2,11 @@
 
 ## Overview
 
-This guide covers deploying the Cotiza Studio system to AWS using Docker containers, ECS Fargate, and supporting AWS services. The deployment is fully automated using Terraform and GitHub Actions.
+This guide covers deploying the Cotiza Studio platform to production environments using Docker containers, AWS ECS Fargate, and supporting cloud services. The deployment supports multiple environments (dev, staging, production) with full automation through Terraform and CI/CD pipelines.
+
+**Production URL**: https://www.cotiza.studio  
+**API Endpoint**: https://api.cotiza.studio/v1  
+**Admin Panel**: https://admin.cotiza.studio
 
 ## Architecture Overview
 
@@ -182,19 +186,19 @@ aws ecr get-login-password --region $AWS_REGION | \
   docker login --username AWS --password-stdin $ECR_REGISTRY
 
 # Build images
-docker build -t madfam-api -f apps/api/Dockerfile .
-docker build -t madfam-web -f apps/web/Dockerfile .
-docker build -t madfam-worker -f apps/worker/Dockerfile .
+docker build -t cotiza-api -f apps/api/Dockerfile .
+docker build -t cotiza-web -f apps/web/Dockerfile .
+docker build -t cotiza-worker -f apps/worker/Dockerfile .
 
 # Tag images
-docker tag madfam-api:latest $ECR_REGISTRY/madfam-api:latest
-docker tag madfam-web:latest $ECR_REGISTRY/madfam-web:latest
-docker tag madfam-worker:latest $ECR_REGISTRY/madfam-worker:latest
+docker tag cotiza-api:latest $ECR_REGISTRY/cotiza-api:latest
+docker tag cotiza-web:latest $ECR_REGISTRY/cotiza-web:latest
+docker tag cotiza-worker:latest $ECR_REGISTRY/cotiza-worker:latest
 
 # Push images
-docker push $ECR_REGISTRY/madfam-api:latest
-docker push $ECR_REGISTRY/madfam-web:latest
-docker push $ECR_REGISTRY/madfam-worker:latest
+docker push $ECR_REGISTRY/cotiza-api:latest
+docker push $ECR_REGISTRY/cotiza-web:latest
+docker push $ECR_REGISTRY/cotiza-worker:latest
 ```
 
 ### 2. Database Setup
@@ -204,11 +208,11 @@ docker push $ECR_REGISTRY/madfam-worker:latest
 export DB_HOST=$(terraform output -raw rds_endpoint)
 
 # Run migrations
-DATABASE_URL="postgresql://madfam:$DB_PASSWORD@$DB_HOST/madfam_quoting" \
+DATABASE_URL="postgresql://cotiza:$DB_PASSWORD@$DB_HOST/cotiza_studio" \
   npm run db:migrate:deploy
 
 # Seed production data (optional)
-DATABASE_URL="postgresql://madfam:$DB_PASSWORD@$DB_HOST/madfam_quoting" \
+DATABASE_URL="postgresql://cotiza:$DB_PASSWORD@$DB_HOST/cotiza_studio" \
   npm run db:seed:prod
 ```
 
@@ -224,13 +228,13 @@ aws ecs register-task-definition \
 
 # Update services
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
+  --cluster cotiza-prod \
+  --service cotiza-api \
   --force-new-deployment
 
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-worker \
+  --cluster cotiza-prod \
+  --service cotiza-worker \
   --force-new-deployment
 ```
 
@@ -242,14 +246,14 @@ cd apps/web
 npm run build
 
 # Sync to S3
-aws s3 sync out/ s3://madfam-web-prod/ \
+aws s3 sync out/ s3://cotiza-web-prod/ \
   --delete \
   --cache-control "public, max-age=31536000, immutable" \
   --exclude "*.html" \
   --exclude "_next/static/chunks/pages/*"
 
 # Upload HTML files with different cache
-aws s3 sync out/ s3://madfam-web-prod/ \
+aws s3 sync out/ s3://cotiza-web-prod/ \
   --exclude "*" \
   --include "*.html" \
   --include "_next/static/chunks/pages/*" \
@@ -323,12 +327,12 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/madfam-${{ matrix.service }}:$IMAGE_TAG \
+          docker build -t $ECR_REGISTRY/cotiza-${{ matrix.service }}:$IMAGE_TAG \
             -f apps/${{ matrix.service }}/Dockerfile .
-          docker push $ECR_REGISTRY/madfam-${{ matrix.service }}:$IMAGE_TAG
-          docker tag $ECR_REGISTRY/madfam-${{ matrix.service }}:$IMAGE_TAG \
-            $ECR_REGISTRY/madfam-${{ matrix.service }}:latest
-          docker push $ECR_REGISTRY/madfam-${{ matrix.service }}:latest
+          docker push $ECR_REGISTRY/cotiza-${{ matrix.service }}:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/cotiza-${{ matrix.service }}:$IMAGE_TAG \
+            $ECR_REGISTRY/cotiza-${{ matrix.service }}:latest
+          docker push $ECR_REGISTRY/cotiza-${{ matrix.service }}:latest
 
   deploy:
     needs: build-and-push
@@ -348,14 +352,14 @@ jobs:
         run: |
           # Update API service
           aws ecs update-service \
-            --cluster madfam-prod \
-            --service madfam-api \
+            --cluster cotiza-prod \
+            --service cotiza-api \
             --force-new-deployment
 
           # Update Worker service
           aws ecs update-service \
-            --cluster madfam-prod \
-            --service madfam-worker \
+            --cluster cotiza-prod \
+            --service cotiza-worker \
             --force-new-deployment
 
       - name: Deploy Frontend
@@ -365,7 +369,7 @@ jobs:
           npm run build
 
           # Sync to S3
-          aws s3 sync out/ s3://madfam-web-prod/ --delete
+          aws s3 sync out/ s3://cotiza-web-prod/ --delete
 
           # Invalidate CloudFront
           aws cloudfront create-invalidation \
@@ -382,7 +386,7 @@ Store in AWS Secrets Manager:
 ```bash
 # Create secrets
 aws secretsmanager create-secret \
-  --name madfam/prod/api \
+  --name cotiza/prod/api \
   --secret-string '{
     "DATABASE_URL": "postgresql://...",
     "JWT_SECRET": "...",
@@ -396,7 +400,7 @@ aws secretsmanager create-secret \
   "secrets": [
     {
       "name": "DATABASE_URL",
-      "valueFrom": "arn:aws:secretsmanager:region:account:secret:madfam/prod/api:DATABASE_URL::"
+      "valueFrom": "arn:aws:secretsmanager:region:account:secret:cotiza/prod/api:DATABASE_URL::"
     }
   ]
 }
@@ -417,13 +421,13 @@ DB_POOL_MIN=2
 DB_POOL_MAX=10
 
 # Redis
-REDIS_URL=redis://madfam-redis.cache.amazonaws.com:6379
+REDIS_URL=redis://cotiza-redis.cache.amazonaws.com:6379
 REDIS_TTL=300
 
 # AWS
 AWS_REGION=us-east-1
-S3_BUCKET=madfam-files-prod
-SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/.../madfam-jobs
+S3_BUCKET=cotiza-files-prod
+SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/.../cotiza-jobs
 
 # Monitoring
 SENTRY_DSN=https://...@sentry.io/...
@@ -438,7 +442,7 @@ LOG_LEVEL=info
 ```bash
 # Create dashboard
 aws cloudwatch put-dashboard \
-  --dashboard-name madfam-prod \
+  --dashboard-name cotiza-prod \
   --dashboard-body file://infrastructure/monitoring/dashboard.json
 ```
 
@@ -447,7 +451,7 @@ aws cloudwatch put-dashboard \
 ```bash
 # API high error rate
 aws cloudwatch put-metric-alarm \
-  --alarm-name madfam-api-error-rate \
+  --alarm-name cotiza-api-error-rate \
   --alarm-description "API error rate > 1%" \
   --metric-name 4XXError \
   --namespace AWS/ApplicationELB \
@@ -459,7 +463,7 @@ aws cloudwatch put-metric-alarm \
 
 # Database CPU
 aws cloudwatch put-metric-alarm \
-  --alarm-name madfam-rds-cpu \
+  --alarm-name cotiza-rds-cpu \
   --alarm-description "RDS CPU > 80%" \
   --metric-name CPUUtilization \
   --namespace AWS/RDS \
@@ -471,7 +475,7 @@ aws cloudwatch put-metric-alarm \
 
 # Queue depth
 aws cloudwatch put-metric-alarm \
-  --alarm-name madfam-queue-depth \
+  --alarm-name cotiza-queue-depth \
   --alarm-description "Queue depth > 1000" \
   --metric-name ApproximateNumberOfMessagesVisible \
   --namespace AWS/SQS \
@@ -486,12 +490,12 @@ aws cloudwatch put-metric-alarm \
 
 ```bash
 # Create log groups
-aws logs create-log-group --log-group-name /ecs/madfam-api
-aws logs create-log-group --log-group-name /ecs/madfam-worker
+aws logs create-log-group --log-group-name /ecs/cotiza-api
+aws logs create-log-group --log-group-name /ecs/cotiza-worker
 
 # Set retention
 aws logs put-retention-policy \
-  --log-group-name /ecs/madfam-api \
+  --log-group-name /ecs/cotiza-api \
   --retention-in-days 30
 ```
 
@@ -510,9 +514,9 @@ aws ecs register-task-definition \
 
 ```bash
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
-  --task-definition madfam-api:new-version \
+  --cluster cotiza-prod \
+  --service cotiza-api \
+  --task-definition cotiza-api:new-version \
   --deployment-configuration "maximumPercent=200,minimumHealthyPercent=100"
 ```
 
@@ -520,8 +524,8 @@ aws ecs update-service \
 
 ```bash
 aws ecs describe-services \
-  --cluster madfam-prod \
-  --services madfam-api \
+  --cluster cotiza-prod \
+  --services cotiza-api \
   --query "services[0].deployments"
 ```
 
@@ -529,9 +533,9 @@ aws ecs describe-services \
 
 ```bash
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
-  --task-definition madfam-api:previous-version
+  --cluster cotiza-prod \
+  --service cotiza-api \
+  --task-definition cotiza-api:previous-version
 ```
 
 ### Database Migrations
@@ -539,8 +543,8 @@ aws ecs update-service \
 ```bash
 # 1. Create backup
 aws rds create-db-snapshot \
-  --db-instance-identifier madfam-prod \
-  --db-snapshot-identifier madfam-prod-$(date +%Y%m%d-%H%M%S)
+  --db-instance-identifier cotiza-prod \
+  --db-snapshot-identifier cotiza-prod-$(date +%Y%m%d-%H%M%S)
 
 # 2. Run migration in transaction
 DATABASE_URL=$PROD_DATABASE_URL npm run db:migrate:deploy
@@ -598,19 +602,19 @@ git push origin develop
 ```bash
 # Scale API service
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
+  --cluster cotiza-prod \
+  --service cotiza-api \
   --desired-count 5
 
 # Scale worker service
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-worker \
+  --cluster cotiza-prod \
+  --service cotiza-worker \
   --desired-count 3
 
 # Scale RDS (requires downtime)
 aws rds modify-db-instance \
-  --db-instance-identifier madfam-prod \
+  --db-instance-identifier cotiza-prod \
   --db-instance-class db.t3.large \
   --apply-immediately
 ```
@@ -627,7 +631,7 @@ aws rds modify-db-instance \
 
 # S3 lifecycle for file archival
 aws s3api put-bucket-lifecycle-configuration \
-  --bucket madfam-files-prod \
+  --bucket cotiza-files-prod \
   --lifecycle-configuration file://s3-lifecycle.json
 ```
 
@@ -636,11 +640,11 @@ aws s3api put-bucket-lifecycle-configuration \
 ```bash
 # Database backup
 aws rds create-db-snapshot \
-  --db-instance-identifier madfam-prod \
-  --db-snapshot-identifier madfam-prod-manual-$(date +%Y%m%d)
+  --db-instance-identifier cotiza-prod \
+  --db-snapshot-identifier cotiza-prod-manual-$(date +%Y%m%d)
 
 # Application state backup
-aws s3 sync s3://madfam-files-prod s3://madfam-backup-$(date +%Y%m%d)/ \
+aws s3 sync s3://cotiza-files-prod s3://cotiza-backup-$(date +%Y%m%d)/ \
   --storage-class GLACIER
 ```
 
@@ -649,17 +653,17 @@ aws s3 sync s3://madfam-files-prod s3://madfam-backup-$(date +%Y%m%d)/ \
 ```bash
 # 1. Restore database from snapshot
 aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier madfam-prod-restored \
-  --db-snapshot-identifier madfam-prod-snapshot-id
+  --db-instance-identifier cotiza-prod-restored \
+  --db-snapshot-identifier cotiza-prod-snapshot-id
 
 # 2. Update connection strings
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
-  --task-definition madfam-api:dr-config
+  --cluster cotiza-prod \
+  --service cotiza-api \
+  --task-definition cotiza-api:dr-config
 
 # 3. Restore S3 files
-aws s3 sync s3://madfam-backup-20240120/ s3://madfam-files-prod/ \
+aws s3 sync s3://cotiza-backup-20240120/ s3://cotiza-files-prod/ \
   --storage-class STANDARD
 ```
 
@@ -689,7 +693,7 @@ aws ec2 create-flow-logs \
 ```bash
 # Enable automatic rotation
 aws secretsmanager rotate-secret \
-  --secret-id madfam/prod/api \
+  --secret-id cotiza/prod/api \
   --rotation-lambda-arn arn:aws:lambda:region:account:function:SecretsManagerRotation
 ```
 
@@ -713,14 +717,14 @@ aws elbv2 modify-listener \
 ```bash
 # Check task stopped reason
 aws ecs describe-tasks \
-  --cluster madfam-prod \
+  --cluster cotiza-prod \
   --tasks arn:aws:ecs:... \
   --query "tasks[0].stoppedReason"
 
 # View container logs
 aws logs get-log-events \
-  --log-group-name /ecs/madfam-api \
-  --log-stream-name ecs/madfam-api/task-id
+  --log-group-name /ecs/cotiza-api \
+  --log-stream-name ecs/cotiza-api/task-id
 ```
 
 #### Database Connection Issues
@@ -728,7 +732,7 @@ aws logs get-log-events \
 ```bash
 # Test connectivity
 aws rds describe-db-instances \
-  --db-instance-identifier madfam-prod \
+  --db-instance-identifier cotiza-prod \
   --query "DBInstances[0].Endpoint"
 
 # Check security groups
@@ -744,7 +748,7 @@ aws ec2 describe-security-groups \
 aws cloudwatch get-metric-statistics \
   --namespace ECS/ContainerInsights \
   --metric-name MemoryUtilized \
-  --dimensions Name=ServiceName,Value=madfam-api \
+  --dimensions Name=ServiceName,Value=cotiza-api \
   --start-time 2024-01-20T00:00:00Z \
   --end-time 2024-01-20T23:59:59Z \
   --period 300 \
@@ -758,8 +762,8 @@ aws cloudwatch get-metric-statistics \
 ```bash
 # Restart all tasks
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
+  --cluster cotiza-prod \
+  --service cotiza-api \
   --force-new-deployment
 ```
 
@@ -768,12 +772,12 @@ aws ecs update-service \
 ```bash
 # Reduce costs during incident
 aws ecs update-service \
-  --cluster madfam-prod \
-  --service madfam-api \
+  --cluster cotiza-prod \
+  --service cotiza-api \
   --desired-count 1
 
 aws rds modify-db-instance \
-  --db-instance-identifier madfam-prod \
+  --db-instance-identifier cotiza-prod \
   --db-instance-class db.t3.micro \
   --apply-immediately
 ```

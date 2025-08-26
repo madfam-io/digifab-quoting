@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "home": "Home",
+    "try": "Try It Free",
+    "pricing": "Pricing",
+    "features": "Features",
+    "dashboard": "Dashboard",
+    "newQuote": "New Quote",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "settings": "Settings"
+  },
+  "hero": {
+    "title": "Manufacturing Costs",
+    "subtitle": "Solved in Seconds",
+    "description": "Get instant quotes for 3D printing, CNC machining, and laser cutting. Compare materials, optimize costs, and make informed decisions.",
+    "cta": "Try Interactive Demo",
+    "ctaSecondary": "No signup required • Results in seconds • Free forever"
+  },
+  "stats": {
+    "users": "Happy Makers",
+    "quoteTime": "Quote Time",
+    "savings": "Average Savings",
+    "uptime": "Uptime"
+  },
+  "persona": {
+    "title": "Choose Your Manufacturing Journey",
+    "description": "Whether you're a DIY maker deciding if you should build it yourself, or a shop owner needing professional quoting tools - we've got you covered",
+    "diyMaker": {
+      "title": "DIY Maker & Hobbyist",
+      "description": "Should I make this myself or pay someone else?"
+    },
+    "shopOwner": {
+      "title": "Shop & Makerspace Owner",
+      "description": "I need professional quoting tools for my business"
+    },
+    "designer": {
+      "title": "Product Designer & Engineer",
+      "description": "I need design-for-manufacturing insights"
+    },
+    "procurement": {
+      "title": "Procurement Specialist",
+      "description": "I need competitive pricing & supplier intelligence"
+    },
+    "educator": {
+      "title": "Educator & Student",
+      "description": "I need real manufacturing cost data for learning"
+    }
+  },
+  "linkQuote": {
+    "title": "Turn Any Maker Project Into an Instant Quote",
+    "description": "Just paste a link from Instructables, Thingiverse, GitHub, or any maker platform. Our AI extracts the bill of materials and generates personalized quotes in seconds."
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Choose the perfect plan for your needs. Start free, upgrade anytime, cancel whenever.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save": "Save",
+    "free": {
+      "name": "Maker",
+      "description": "Perfect for hobbyists and DIY projects"
+    },
+    "pro": {
+      "name": "Creator Pro",
+      "description": "For serious makers and small businesses"
+    },
+    "business": {
+      "name": "Business",
+      "description": "For shops, makerspaces, and growing businesses"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "For large operations with custom needs"
+    }
+  },
+  "cta": {
+    "ready": "Ready to Save on Your Next Project?",
+    "description": "You've seen the savings. You've compared the options. Now let's make it happen with your actual projects.",
+    "startTrial": "Start Free 14-Day Trial",
+    "continueGuest": "or continue as guest",
+    "noCreditCard": "No Credit Card",
+    "unlimitedQuotes": "Unlimited Quotes",
+    "cancelAnytime": "Cancel Anytime"
+  },
+  "footer": {
+    "tagline": "Technology previously only available to Fortune 500 companies.",
+    "joinCommunity": "Join 10,000+ Makers Saving Money Every Day"
+  }
+}

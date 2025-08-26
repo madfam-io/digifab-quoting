@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
-const { i18n } = require('./next-i18next.config');
 
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@cotiza/shared', '@cotiza/ui'],
-  // i18n, // Disabled for now as it's not being used
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'en', 'pt-BR'],
+    localeDetection: false,
+  },
   images: {
     domains: ['localhost', 's3.amazonaws.com'],
   },

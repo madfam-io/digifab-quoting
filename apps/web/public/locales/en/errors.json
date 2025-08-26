@@ -1,0 +1,58 @@
+{
+  "404": {
+    "title": "Page Not Found",
+    "description": "Sorry, the page you're looking for doesn't exist.",
+    "button": "Go Home"
+  },
+  "500": {
+    "title": "Server Error",
+    "description": "Something went wrong. Please try again later.",
+    "button": "Retry"
+  },
+  "auth": {
+    "invalidCredentials": "Invalid credentials",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "unauthorized": "You don't have permission to access this page.",
+    "emailAlreadyExists": "This email is already registered",
+    "weakPassword": "Password must be at least 8 characters",
+    "invalidEmail": "Please enter a valid email address"
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Cannot exceed {{max}} characters",
+    "email": "Enter a valid email address",
+    "number": "Must be a valid number",
+    "positive": "Must be a positive number",
+    "fileSize": "File must not exceed {{size}}MB",
+    "fileType": "File type not supported"
+  },
+  "upload": {
+    "failed": "Failed to upload file",
+    "tooLarge": "File is too large",
+    "unsupportedFormat": "File format not supported",
+    "processing": "Error processing file",
+    "noFile": "Please select a file"
+  },
+  "quote": {
+    "failed": "Failed to generate quote",
+    "invalidFile": "Invalid design file",
+    "processingError": "Error processing your design",
+    "materialUnavailable": "Material not available",
+    "outOfBounds": "Dimensions exceed our capabilities"
+  },
+  "payment": {
+    "failed": "Payment could not be processed",
+    "cardDeclined": "Card declined",
+    "insufficientFunds": "Insufficient funds",
+    "invalidCard": "Invalid card information",
+    "expired": "Card has expired"
+  },
+  "general": {
+    "somethingWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "contactSupport": "If the problem persists, contact support",
+    "networkError": "Connection error. Check your internet.",
+    "timeout": "The operation took too long"
+  }
+}

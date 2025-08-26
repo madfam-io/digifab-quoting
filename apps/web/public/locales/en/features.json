@@ -1,0 +1,113 @@
+{
+  "processes": {
+    "title": "Our Manufacturing Processes",
+    "fff": {
+      "name": "FFF 3D Printing",
+      "description": "Ideal for prototypes and functional parts",
+      "features": [
+        "Materials: PLA, PETG, ABS, TPU",
+        "Resolution from 0.1mm",
+        "Volume up to 300x300x400mm",
+        "Lead time: 1-3 days"
+      ]
+    },
+    "sla": {
+      "name": "SLA 3D Printing",
+      "description": "High precision for fine details",
+      "features": [
+        "Standard and specialty resins",
+        "Resolution 0.025mm",
+        "Smooth finishes",
+        "Ideal for jewelry and dental"
+      ]
+    },
+    "cnc": {
+      "name": "3-Axis CNC",
+      "description": "Precision machining in metals and plastics",
+      "features": [
+        "Aluminum, Steel, Technical plastics",
+        "Tolerances ±0.05mm",
+        "Professional finishes",
+        "Series production available"
+      ]
+    },
+    "laser": {
+      "name": "Laser Cutting",
+      "description": "Precise cutting in flat materials",
+      "features": [
+        "Acrylic, MDF, Wood, Cardboard",
+        "Thickness up to 20mm",
+        "Engraving available",
+        "Complex cuts at no extra cost"
+      ]
+    }
+  },
+  "capabilities": {
+    "title": "Advanced Capabilities",
+    "instantQuote": {
+      "title": "Instant Quote",
+      "description": "Upload your file and get price instantly"
+    },
+    "dfmAnalysis": {
+      "title": "DFM Analysis",
+      "description": "Automatic design for manufacturing optimization"
+    },
+    "materialOptimization": {
+      "title": "Material Optimization",
+      "description": "Smart suggestions to reduce costs"
+    },
+    "bulkPricing": {
+      "title": "Volume Pricing",
+      "description": "Automatic discounts for large orders"
+    },
+    "qualityAssurance": {
+      "title": "Quality Assurance",
+      "description": "100% inspection and satisfaction guarantee"
+    },
+    "expressDelivery": {
+      "title": "Express Delivery",
+      "description": "24-48 hour delivery options"
+    }
+  },
+  "benefits": {
+    "title": "Why Choose Us",
+    "saveMoney": {
+      "title": "Save Money",
+      "description": "Prices up to 63% lower than traditional"
+    },
+    "saveTime": {
+      "title": "Save Time",
+      "description": "Quotes in seconds, not days"
+    },
+    "transparency": {
+      "title": "Total Transparency",
+      "description": "Detailed breakdown of all costs"
+    },
+    "expertise": {
+      "title": "Proven Expertise",
+      "description": "Thousands of projects completed successfully"
+    },
+    "support": {
+      "title": "Expert Support",
+      "description": "Engineers available to help you"
+    },
+    "sustainability": {
+      "title": "Sustainability",
+      "description": "Environmental impact metrics on every quote"
+    }
+  },
+  "diy": {
+    "title": "DIY vs Professional Calculator",
+    "subtitle": "Should you do it yourself or use our service?",
+    "yourTime": "Your time is worth",
+    "hourlyRate": "Hourly rate",
+    "projectTime": "Project time",
+    "materialCost": "Material cost",
+    "toolCost": "Tool cost",
+    "learningCurve": "Learning curve",
+    "qualityRisk": "Quality risk",
+    "professionalCost": "Professional cost",
+    "savings": "Savings",
+    "recommendation": "Recommendation"
+  }
+}

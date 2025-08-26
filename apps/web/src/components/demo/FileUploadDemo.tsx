@@ -379,9 +379,11 @@ export function FileUploadDemo() {
               const sampleFiles: File[] = [];
               if (typeof File !== 'undefined') {
                 try {
+                  // Use type assertion for File constructor compatibility
+                  const FileConstructor = File as unknown as new (bits: BlobPart[], filename: string, options?: FilePropertyBag) => File;
                   sampleFiles.push(
-                    new (File as any)([new Blob()], 'sample-bracket.stl', { type: 'application/octet-stream' }),
-                    new (File as any)([new Blob()], 'custom-enclosure.step', { type: 'application/step' })
+                    new FileConstructor([new Blob()], 'sample-bracket.stl', { type: 'application/octet-stream' }),
+                    new FileConstructor([new Blob()], 'custom-enclosure.step', { type: 'application/step' })
                   );
                 } catch (error) {
                   console.warn('File constructor not available, using mock files');

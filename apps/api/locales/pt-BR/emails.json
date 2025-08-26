@@ -1,0 +1,58 @@
+{
+  "email": {
+    "header": "{{companyName}} - Sua Plataforma de Cotação Digital",
+    "footer": "© {{year}} {{companyName}}. Todos os direitos reservados. <a href='{{unsubscribeUrl}}'>Cancelar inscrição</a>"
+  },
+  "quote": {
+    "created": {
+      "subject": "Sua Cotação #{{quoteNumber}} está Pronta",
+      "body": "<h2>Sua cotação está pronta!</h2><p>Preparamos sua cotação #{{quoteNumber}} com {{itemCount}} itens.</p><p><strong>Total: {{total}}</strong></p><p>Esta cotação é válida até: {{validUntil}}</p><p><a href='{{viewUrl}}' class='button'>Ver Cotação</a></p>"
+    },
+    "accepted": {
+      "subject": "Cotação #{{quoteNumber}} Aceita - Pedido #{{orderNumber}}",
+      "body": "<h2>Obrigado pelo seu pedido!</h2><p>Recebemos seu pagamento para a cotação #{{quoteNumber}}.</p><p>Seu pedido #{{orderNumber}} está sendo processado.</p><p><strong>Total pago: {{total}}</strong></p><p><a href='{{trackingUrl}}' class='button'>Rastrear Pedido</a></p>"
+    },
+    "expiring": {
+      "subject": "Sua Cotação #{{quoteNumber}} Expira em Breve",
+      "body": "<h2>Sua cotação está expirando</h2><p>A cotação #{{quoteNumber}} expirará em {{daysLeft}} dias.</p><p>Não perca esta oportunidade de economizar {{savings}}.</p><p><a href='{{viewUrl}}' class='button'>Ver Cotação</a></p>"
+    }
+  },
+  "auth": {
+    "welcome": {
+      "subject": "Bem-vindo ao Cotiza Studio, {{userName}}",
+      "body": "<h2>Bem-vindo ao Cotiza Studio!</h2><p>Olá {{userName}},</p><p>Sua conta foi criada com sucesso. Agora você pode:</p><ul><li>Obter cotações instantâneas</li><li>Comparar processos de fabricação</li><li>Otimizar seus custos de produção</li></ul><p><a href='{{loginUrl}}' class='button'>Fazer Login</a></p><p>Precisa de ajuda? Visite nossa <a href='{{helpUrl}}'>central de ajuda</a>.</p>"
+    },
+    "passwordReset": {
+      "subject": "Redefinir sua Senha",
+      "body": "<h2>Solicitação de Redefinição de Senha</h2><p>Recebemos uma solicitação para redefinir sua senha.</p><p>Clique no link abaixo para criar uma nova senha:</p><p><a href='{{resetUrl}}' class='button'>Redefinir Senha</a></p><p>Este link expirará em {{expiresIn}} hora(s).</p><p>Se você não solicitou esta mudança, pode ignorar este e-mail.</p>"
+    },
+    "emailVerification": {
+      "subject": "Verifique seu Endereço de E-mail",
+      "body": "<h2>Verifique seu E-mail</h2><p>Para completar seu cadastro, por favor verifique seu endereço de e-mail.</p><p><a href='{{verifyUrl}}' class='button'>Verificar E-mail</a></p><p>Este link expirará em 24 horas.</p>"
+    }
+  },
+  "order": {
+    "statusUpdate": {
+      "subject": "Atualização do seu Pedido #{{orderNumber}}",
+      "body": "<h2>Status do Pedido Atualizado</h2><p>Seu pedido #{{orderNumber}} mudou para: <strong>{{status}}</strong></p><p><a href='{{trackingUrl}}' class='button'>Ver Detalhes</a></p>"
+    },
+    "shipped": {
+      "subject": "Seu Pedido #{{orderNumber}} Foi Enviado",
+      "body": "<h2>Seu pedido está a caminho!</h2><p>Seu pedido #{{orderNumber}} foi enviado.</p><p>Número de rastreamento: {{trackingNumber}}</p><p>Entrega estimada: {{estimatedDelivery}}</p><p><a href='{{trackingUrl}}' class='button'>Rastrear Envio</a></p>"
+    },
+    "delivered": {
+      "subject": "Seu Pedido #{{orderNumber}} Foi Entregue",
+      "body": "<h2>Seu pedido foi entregue!</h2><p>Seu pedido #{{orderNumber}} foi entregue com sucesso.</p><p>Esperamos que esteja satisfeito com sua compra.</p><p><a href='{{reviewUrl}}' class='button'>Deixar uma Avaliação</a></p>"
+    }
+  },
+  "notification": {
+    "priceAlert": {
+      "subject": "Alerta de Preço: {{material}} Baixou de Preço",
+      "body": "<h2>Boas notícias!</h2><p>O material {{material}} que você tem interesse caiu {{percentage}}%.</p><p>Novo preço: {{newPrice}} por {{unit}}</p><p><a href='{{quoteUrl}}' class='button'>Criar Cotação</a></p>"
+    },
+    "newFeature": {
+      "subject": "Nova Funcionalidade no Cotiza Studio",
+      "body": "<h2>{{featureName}} já está Disponível</h2><p>{{description}}</p><p><a href='{{learnMoreUrl}}' class='button'>Saiba Mais</a></p>"
+    }
+  }
+}

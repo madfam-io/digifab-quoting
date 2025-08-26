@@ -108,7 +108,7 @@ export class LinkProcessingService {
     // Note: This is a simplified implementation. In production, consider using a proper search index
     const keys: string[] = [];
     
-    let analyses: LinkAnalysis[] = [];
+    const analyses: LinkAnalysis[] = [];
     for (const key of keys) {
       const analysis = await this.redis.get(key);
       if (analysis && typeof analysis === 'string') {

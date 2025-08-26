@@ -1,0 +1,58 @@
+{
+  "email": {
+    "header": "{{companyName}} - Tu plataforma de cotización digital",
+    "footer": "© {{year}} {{companyName}}. Todos los derechos reservados. <a href='{{unsubscribeUrl}}'>Cancelar suscripción</a>"
+  },
+  "quote": {
+    "created": {
+      "subject": "Tu cotización #{{quoteNumber}} está lista",
+      "body": "<h2>¡Tu cotización está lista!</h2><p>Hemos preparado tu cotización #{{quoteNumber}} con {{itemCount}} artículos.</p><p><strong>Total: {{total}}</strong></p><p>Esta cotización es válida hasta: {{validUntil}}</p><p><a href='{{viewUrl}}' class='button'>Ver Cotización</a></p>"
+    },
+    "accepted": {
+      "subject": "Cotización #{{quoteNumber}} aceptada - Orden #{{orderNumber}}",
+      "body": "<h2>¡Gracias por tu pedido!</h2><p>Hemos recibido tu pago para la cotización #{{quoteNumber}}.</p><p>Tu orden #{{orderNumber}} está siendo procesada.</p><p><strong>Total pagado: {{total}}</strong></p><p><a href='{{trackingUrl}}' class='button'>Seguir Pedido</a></p>"
+    },
+    "expiring": {
+      "subject": "Tu cotización #{{quoteNumber}} expira pronto",
+      "body": "<h2>Tu cotización está por expirar</h2><p>La cotización #{{quoteNumber}} expirará en {{daysLeft}} días.</p><p>No pierdas esta oportunidad de ahorrar {{savings}}.</p><p><a href='{{viewUrl}}' class='button'>Ver Cotización</a></p>"
+    }
+  },
+  "auth": {
+    "welcome": {
+      "subject": "Bienvenido a Cotiza Studio, {{userName}}",
+      "body": "<h2>¡Bienvenido a Cotiza Studio!</h2><p>Hola {{userName}},</p><p>Tu cuenta ha sido creada exitosamente. Ahora puedes:</p><ul><li>Obtener cotizaciones instantáneas</li><li>Comparar procesos de fabricación</li><li>Optimizar tus costos de producción</li></ul><p><a href='{{loginUrl}}' class='button'>Iniciar Sesión</a></p><p>¿Necesitas ayuda? Visita nuestro <a href='{{helpUrl}}'>centro de ayuda</a>.</p>"
+    },
+    "passwordReset": {
+      "subject": "Restablecer tu contraseña",
+      "body": "<h2>Solicitud de restablecimiento de contraseña</h2><p>Hemos recibido una solicitud para restablecer tu contraseña.</p><p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p><p><a href='{{resetUrl}}' class='button'>Restablecer Contraseña</a></p><p>Este enlace expirará en {{expiresIn}} hora(s).</p><p>Si no solicitaste este cambio, puedes ignorar este correo.</p>"
+    },
+    "emailVerification": {
+      "subject": "Verifica tu correo electrónico",
+      "body": "<h2>Verifica tu correo electrónico</h2><p>Para completar tu registro, por favor verifica tu dirección de correo electrónico.</p><p><a href='{{verifyUrl}}' class='button'>Verificar Email</a></p><p>Este enlace expirará en 24 horas.</p>"
+    }
+  },
+  "order": {
+    "statusUpdate": {
+      "subject": "Actualización de tu orden #{{orderNumber}}",
+      "body": "<h2>Estado de tu orden actualizado</h2><p>Tu orden #{{orderNumber}} ha cambiado a: <strong>{{status}}</strong></p><p><a href='{{trackingUrl}}' class='button'>Ver Detalles</a></p>"
+    },
+    "shipped": {
+      "subject": "Tu orden #{{orderNumber}} ha sido enviada",
+      "body": "<h2>¡Tu pedido está en camino!</h2><p>Tu orden #{{orderNumber}} ha sido enviada.</p><p>Número de seguimiento: {{trackingNumber}}</p><p>Fecha estimada de entrega: {{estimatedDelivery}}</p><p><a href='{{trackingUrl}}' class='button'>Rastrear Envío</a></p>"
+    },
+    "delivered": {
+      "subject": "Tu orden #{{orderNumber}} ha sido entregada",
+      "body": "<h2>¡Tu pedido ha sido entregado!</h2><p>Tu orden #{{orderNumber}} ha sido entregada exitosamente.</p><p>Esperamos que estés satisfecho con tu compra.</p><p><a href='{{reviewUrl}}' class='button'>Dejar una Reseña</a></p>"
+    }
+  },
+  "notification": {
+    "priceAlert": {
+      "subject": "Alerta de precio: {{material}} ha bajado de precio",
+      "body": "<h2>¡Buenas noticias!</h2><p>El material {{material}} que te interesa ha bajado un {{percentage}}%.</p><p>Nuevo precio: {{newPrice}} por {{unit}}</p><p><a href='{{quoteUrl}}' class='button'>Crear Cotización</a></p>"
+    },
+    "newFeature": {
+      "subject": "Nueva funcionalidad en Cotiza Studio",
+      "body": "<h2>{{featureName}} ya está disponible</h2><p>{{description}}</p><p><a href='{{learnMoreUrl}}' class='button'>Aprender Más</a></p>"
+    }
+  }
+}

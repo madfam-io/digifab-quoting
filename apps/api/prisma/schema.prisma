@@ -73,21 +73,22 @@ model TenantSettings {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  tenantId      String
-  email         String    @unique
-  passwordHash  String?
-  firstName     String?
-  lastName      String?
-  name          String?
-  phone         String?
-  role          String    @default("customer")
-  roles         String[]  @default(["customer"])
-  active        Boolean   @default(true)
-  emailVerified Boolean   @default(false)
-  lastLogin     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  tenantId        String
+  email           String    @unique
+  passwordHash    String?
+  firstName       String?
+  lastName        String?
+  name            String?
+  phone           String?
+  role            String    @default("customer")
+  roles           String[]  @default(["customer"])
+  active          Boolean   @default(true)
+  emailVerified   Boolean   @default(false)
+  preferredLocale String    @default("es")
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
   tenant               Tenant            @relation(fields: [tenantId], references: [id])
@@ -955,4 +956,23 @@ model SupportTicketMessage {
   @@index([userId])
   @@index([createdAt])
   @@map("support_ticket_messages")
+}
+
+// ==================== LOCALIZATION MODELS ====================
+
+model Translation {
+  id        String   @id @default(cuid())
+  key       String   // e.g., "errors.validation.required"
+  locale    String   // e.g., "es", "en", "pt-BR"
+  value     String   // The translated text
+  namespace String   @default("common") // Group translations
+  metadata  Json     @default("{}") // Additional context
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+  @@index([locale])
+  @@index([namespace])
+  @@index([key])
+  @@map("translations")
 }

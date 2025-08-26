@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "home": "Início",
+    "try": "Experimente Grátis",
+    "pricing": "Preços",
+    "features": "Recursos",
+    "dashboard": "Painel",
+    "newQuote": "Nova Cotação",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "settings": "Configurações"
+  },
+  "hero": {
+    "title": "Custos de Manufatura",
+    "subtitle": "Resolvidos em Segundos",
+    "description": "Obtenha orçamentos instantâneos para impressão 3D, usinagem CNC e corte a laser. Compare materiais, otimize custos e tome decisões informadas.",
+    "cta": "Experimente a Demo Interativa",
+    "ctaSecondary": "Sem cadastro • Resultados em segundos • Grátis para sempre"
+  },
+  "stats": {
+    "users": "Makers Felizes",
+    "quoteTime": "Tempo de Cotação",
+    "savings": "Economia Média",
+    "uptime": "Disponibilidade"
+  },
+  "persona": {
+    "title": "Escolha Sua Jornada de Manufatura",
+    "description": "Seja você um maker DIY decidindo se deve fazer você mesmo, ou um dono de oficina precisando de ferramentas profissionais de cotação - nós temos a solução",
+    "diyMaker": {
+      "title": "Maker DIY e Hobbyista",
+      "description": "Devo fazer isso eu mesmo ou pagar alguém?"
+    },
+    "shopOwner": {
+      "title": "Dono de Oficina e Makerspace",
+      "description": "Preciso de ferramentas profissionais de cotação para meu negócio"
+    },
+    "designer": {
+      "title": "Designer de Produto e Engenheiro",
+      "description": "Preciso de insights de design para manufatura"
+    },
+    "procurement": {
+      "title": "Especialista em Compras",
+      "description": "Preciso de preços competitivos e inteligência de fornecedores"
+    },
+    "educator": {
+      "title": "Educador e Estudante",
+      "description": "Preciso de dados reais de custos de manufatura para aprendizado"
+    }
+  },
+  "linkQuote": {
+    "title": "Transforme Qualquer Projeto Maker em uma Cotação Instantânea",
+    "description": "Apenas cole um link do Instructables, Thingiverse, GitHub ou qualquer plataforma maker. Nossa IA extrai a lista de materiais e gera cotações personalizadas em segundos."
+  },
+  "pricing": {
+    "title": "Preços Simples e Transparentes",
+    "subtitle": "Escolha o plano perfeito para suas necessidades. Comece grátis, atualize quando quiser, cancele quando desejar.",
+    "monthly": "Mensal",
+    "yearly": "Anual",
+    "save": "Economize",
+    "free": {
+      "name": "Maker",
+      "description": "Perfeito para hobbyistas e projetos DIY"
+    },
+    "pro": {
+      "name": "Creator Pro",
+      "description": "Para makers sérios e pequenos negócios"
+    },
+    "business": {
+      "name": "Negócio",
+      "description": "Para oficinas, makerspaces e negócios em crescimento"
+    },
+    "enterprise": {
+      "name": "Empresa",
+      "description": "Para grandes operações com necessidades personalizadas"
+    }
+  },
+  "cta": {
+    "ready": "Pronto para Economizar em Seu Próximo Projeto?",
+    "description": "Você viu as economias. Você comparou as opções. Agora vamos fazer acontecer com seus projetos reais.",
+    "startTrial": "Iniciar Teste Grátis de 14 Dias",
+    "continueGuest": "ou continuar como convidado",
+    "noCreditCard": "Sem Cartão de Crédito",
+    "unlimitedQuotes": "Cotações Ilimitadas",
+    "cancelAnytime": "Cancele Quando Quiser"
+  },
+  "footer": {
+    "tagline": "Tecnologia anteriormente disponível apenas para empresas Fortune 500.",
+    "joinCommunity": "Junte-se a mais de 10.000 Makers Economizando Dinheiro Todos os Dias"
+  }
+}

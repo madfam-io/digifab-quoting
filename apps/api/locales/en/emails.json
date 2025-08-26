@@ -1,0 +1,58 @@
+{
+  "email": {
+    "header": "{{companyName}} - Your Digital Quoting Platform",
+    "footer": "© {{year}} {{companyName}}. All rights reserved. <a href='{{unsubscribeUrl}}'>Unsubscribe</a>"
+  },
+  "quote": {
+    "created": {
+      "subject": "Your Quote #{{quoteNumber}} is Ready",
+      "body": "<h2>Your quote is ready!</h2><p>We've prepared your quote #{{quoteNumber}} with {{itemCount}} items.</p><p><strong>Total: {{total}}</strong></p><p>This quote is valid until: {{validUntil}}</p><p><a href='{{viewUrl}}' class='button'>View Quote</a></p>"
+    },
+    "accepted": {
+      "subject": "Quote #{{quoteNumber}} Accepted - Order #{{orderNumber}}",
+      "body": "<h2>Thank you for your order!</h2><p>We've received your payment for quote #{{quoteNumber}}.</p><p>Your order #{{orderNumber}} is being processed.</p><p><strong>Total paid: {{total}}</strong></p><p><a href='{{trackingUrl}}' class='button'>Track Order</a></p>"
+    },
+    "expiring": {
+      "subject": "Your Quote #{{quoteNumber}} Expires Soon",
+      "body": "<h2>Your quote is expiring soon</h2><p>Quote #{{quoteNumber}} will expire in {{daysLeft}} days.</p><p>Don't miss this opportunity to save {{savings}}.</p><p><a href='{{viewUrl}}' class='button'>View Quote</a></p>"
+    }
+  },
+  "auth": {
+    "welcome": {
+      "subject": "Welcome to Cotiza Studio, {{userName}}",
+      "body": "<h2>Welcome to Cotiza Studio!</h2><p>Hi {{userName}},</p><p>Your account has been successfully created. You can now:</p><ul><li>Get instant quotes</li><li>Compare manufacturing processes</li><li>Optimize your production costs</li></ul><p><a href='{{loginUrl}}' class='button'>Sign In</a></p><p>Need help? Visit our <a href='{{helpUrl}}'>help center</a>.</p>"
+    },
+    "passwordReset": {
+      "subject": "Reset Your Password",
+      "body": "<h2>Password Reset Request</h2><p>We received a request to reset your password.</p><p>Click the link below to create a new password:</p><p><a href='{{resetUrl}}' class='button'>Reset Password</a></p><p>This link will expire in {{expiresIn}} hour(s).</p><p>If you didn't request this change, you can ignore this email.</p>"
+    },
+    "emailVerification": {
+      "subject": "Verify Your Email Address",
+      "body": "<h2>Verify Your Email</h2><p>To complete your registration, please verify your email address.</p><p><a href='{{verifyUrl}}' class='button'>Verify Email</a></p><p>This link will expire in 24 hours.</p>"
+    }
+  },
+  "order": {
+    "statusUpdate": {
+      "subject": "Update on Your Order #{{orderNumber}}",
+      "body": "<h2>Order Status Updated</h2><p>Your order #{{orderNumber}} has changed to: <strong>{{status}}</strong></p><p><a href='{{trackingUrl}}' class='button'>View Details</a></p>"
+    },
+    "shipped": {
+      "subject": "Your Order #{{orderNumber}} Has Been Shipped",
+      "body": "<h2>Your order is on its way!</h2><p>Your order #{{orderNumber}} has been shipped.</p><p>Tracking number: {{trackingNumber}}</p><p>Estimated delivery: {{estimatedDelivery}}</p><p><a href='{{trackingUrl}}' class='button'>Track Shipment</a></p>"
+    },
+    "delivered": {
+      "subject": "Your Order #{{orderNumber}} Has Been Delivered",
+      "body": "<h2>Your order has been delivered!</h2><p>Your order #{{orderNumber}} has been successfully delivered.</p><p>We hope you're satisfied with your purchase.</p><p><a href='{{reviewUrl}}' class='button'>Leave a Review</a></p>"
+    }
+  },
+  "notification": {
+    "priceAlert": {
+      "subject": "Price Alert: {{material}} Price Drop",
+      "body": "<h2>Good news!</h2><p>The {{material}} material you're interested in has dropped {{percentage}}%.</p><p>New price: {{newPrice}} per {{unit}}</p><p><a href='{{quoteUrl}}' class='button'>Create Quote</a></p>"
+    },
+    "newFeature": {
+      "subject": "New Feature in Cotiza Studio",
+      "body": "<h2>{{featureName}} is Now Available</h2><p>{{description}}</p><p><a href='{{learnMoreUrl}}' class='button'>Learn More</a></p>"
+    }
+  }
+}
