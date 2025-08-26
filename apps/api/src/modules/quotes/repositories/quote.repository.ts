@@ -21,8 +21,8 @@ interface QuoteItemWithRelations {
   process: string;
   material: string;
   quantity: number;
-  unitPrice?: import('@prisma/client').Decimal | null;
-  totalPrice?: import('@prisma/client').Decimal | null;
+  unitPrice?: Prisma.Decimal | null;
+  totalPrice?: Prisma.Decimal | null;
   leadDays?: number;
   files: Array<{
     id: string;
@@ -65,7 +65,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
     return this.prisma.quote.findFirst({
       where: { id, tenantId },
       include,
-    });
+    }) as any;
   }
 
   async findMany(
@@ -84,7 +84,7 @@ export class QuoteRepository extends BaseRepositoryImpl<
       skip: options?.skip,
       take: options?.take,
       include: options?.include,
-    });
+    }) as any;
   }
 
   async findPaginated(

@@ -195,7 +195,7 @@ export class QuotesService {
     if (dto.objective) {
       await this.prisma.quote.update({
         where: { id: quoteId },
-        data: { objective: dto.objective as Prisma.InputJsonValue },
+        data: { objective: dto.objective as unknown as Prisma.InputJsonValue },
       });
     }
 
@@ -208,18 +208,18 @@ export class QuotesService {
       try {
         // Get or create quote item
         let quoteItem;
-        if (item.id) {
+        if ('id' in item && item.id) {
+          // Existing quote item
           quoteItem = await this.prisma.quoteItem.findFirst({
             where: { id: item.id, quoteId },
             include: { files: true, dfmReport: true },
           });
+          if (!quoteItem) {
+            throw new Error(`Quote item not found for id: ${item.id}`);
+          }
         } else {
           // Create new item
-          quoteItem = await this.addItem(tenantId, quoteId, item);
-        }
-
-        if (!quoteItem) {
-          throw new Error(`Quote item not found for id: ${item.id}`);
+          quoteItem = await this.addItem(tenantId, quoteId, item as AddQuoteItemDto);
         }
 
         // Try to get cached pricing result first
@@ -242,7 +242,7 @@ export class QuotesService {
               '', // machineId - placeholder
               quoteItem.selections,
               quoteItem.quantity,
-              quote.objective,
+              quote.objective as { cost?: number; lead?: number; green?: number },
             );
             return {
               pricing: {
@@ -281,7 +281,7 @@ export class QuotesService {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         errors.push({
-          itemId: item.id,
+          itemId: 'id' in item ? item.id : '',
           error: errorMessage,
         });
       }
@@ -464,16 +464,13 @@ export class QuotesService {
         customer: true,
         items: {
           include: {
-            part: true,
-            material: true,
-            process: true,
-            sustainability: true,
+            files: true,
           },
         },
         tenant: {
           select: {
             name: true,
-            taxId: true,
+            code: true,
             settings: true,
           },
         },
@@ -524,8 +521,8 @@ export class QuotesService {
         validUntil: quote.validityUntil,
         status: quote.status,
         currency: quote.currency,
-        customer: quote.customer,
-        items: quote.items.map(item => ({
+        customer: (quote as any).customer,
+        items: (quote as any).items?.map((item: any) => ({
           name: item.part?.filename || 'Part',
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -544,7 +541,7 @@ export class QuotesService {
         tax: quote.tax,
         shipping: quote.shipping,
         total: quote.totalPrice,
-        tenant: quote.tenant,
+        tenantId: quote.tenantId,
       },
       options: {
         includeItemDetails: true,

@@ -4,6 +4,7 @@ import { JobsService } from '../jobs/jobs.service';
 import { OrderStatus, PaymentStatus, QuoteStatus, InvoiceStatus } from '@madfam/shared';
 import { JobType } from '../jobs/interfaces/job.interface';
 import { QuoteItem } from '@prisma/client';
+import { Decimal } from 'decimal.js';
 import { customAlphabet } from 'nanoid';
 
 const generateOrderNumber = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10);
@@ -76,14 +77,15 @@ export class OrdersService {
           tenantId,
           orderItems: {
             create: quote.items.map((item: QuoteItem) => ({
-              partId: item.partId,
+              partId: item.partId || item.fileId || '',
+              quoteItemId: item.id,
               quantity: item.quantity,
               process: item.process,
               material: item.material,
-              finishOptions: item.finishOptions,
-              unitPrice: item.unitPrice,
-              subtotal: item.subtotal,
-              leadTimeDays: item.leadTimeDays,
+              finishOptions: item.selections || {},
+              unitPrice: item.unitPrice || new Decimal(0),
+              subtotal: item.totalPrice || new Decimal(0),
+              leadTimeDays: item.leadTime || item.leadDays || 1,
               tenantId,
             })),
           },
