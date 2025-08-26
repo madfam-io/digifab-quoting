@@ -375,10 +375,20 @@ export function FileUploadDemo() {
             No files yet? Try our demo with sample files
           </p>
           <button 
-            onClick={() => processFiles([
-              new File([new Blob()], 'sample-bracket.stl', { type: 'application/octet-stream' }),
-              new File([new Blob()], 'custom-enclosure.step', { type: 'application/step' })
-            ])}
+            onClick={() => {
+              const sampleFiles: File[] = [];
+              if (typeof File !== 'undefined') {
+                try {
+                  sampleFiles.push(
+                    new (File as any)([new Blob()], 'sample-bracket.stl', { type: 'application/octet-stream' }),
+                    new (File as any)([new Blob()], 'custom-enclosure.step', { type: 'application/step' })
+                  );
+                } catch (error) {
+                  console.warn('File constructor not available, using mock files');
+                }
+              }
+              processFiles(sampleFiles);
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >
             Try with Sample Files

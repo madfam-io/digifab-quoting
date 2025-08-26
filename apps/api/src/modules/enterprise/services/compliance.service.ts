@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/modules/redis/redis.service';
 import { AuditTrailService } from './audit-trail.service';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import * as archiver from 'archiver';
-import * as csvWriter from 'csv-writer';
+// import * as csvWriter from 'csv-writer';
 
 export interface AuditLogFilter {
   startDate?: Date;
@@ -20,12 +20,12 @@ export interface AuditLog {
   tenantId: string;
   userId: string;
   action: string;
-  entityType: string;
+  entity: string;
   entityId: string;
-  changes: Record<string, any>;
-  ipAddress: string;
-  userAgent: string;
-  createdAt: Date;
+  before: Record<string, any>;
+  after: Record<string, any>;
+  metadata: Record<string, any>;
+  at: Date;
 }
 
 export interface DataRetentionPolicy {
@@ -85,11 +85,11 @@ export class ComplianceService {
     };
 
     if (filter.startDate) {
-      where.createdAt = { gte: filter.startDate };
+      where.at = { gte: filter.startDate };
     }
     
     if (filter.endDate) {
-      where.createdAt = { ...where.createdAt, lte: filter.endDate };
+      where.at = { ...where.at, lte: filter.endDate };
     }
 
     if (filter.action) {
@@ -97,45 +97,35 @@ export class ComplianceService {
     }
 
     if (filter.user) {
-      where.OR = [
-        { userId: filter.user },
-        { 
-          user: {
-            OR: [
-              { email: { contains: filter.user, mode: 'insensitive' } },
-              { name: { contains: filter.user, mode: 'insensitive' } },
-            ]
-          }
-        }
-      ];
+      where.actorId = filter.user;
     }
 
     const auditLogs = await this.prisma.auditLog.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { at: 'desc' },
       take: filter.limit || 100,
       include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          }
-        }
+        // user: {
+        //   select: {
+        //     id: true,
+        //     email: true,
+        //     name: true,
+        //   }
+        // }
       }
     });
 
     return auditLogs.map(log => ({
       id: log.id,
       tenantId: log.tenantId,
-      userId: log.userId,
+      userId: log.actorId,
       action: log.action,
-      entityType: log.entityType,
+      entity: log.entity,
       entityId: log.entityId,
-      changes: log.changes as Record<string, any>,
-      ipAddress: log.ipAddress,
-      userAgent: log.userAgent,
-      createdAt: log.createdAt,
+      before: log.before as Record<string, any>,
+      after: log.after as Record<string, any>,
+      metadata: log.metadata as Record<string, any>,
+      at: log.at,
     }));
   }
 
@@ -243,7 +233,7 @@ export class ComplianceService {
       const deletedLogs = await this.prisma.auditLog.deleteMany({
         where: {
           tenantId,
-          createdAt: { lt: cutoffDate },
+          at: { lt: cutoffDate },
         },
       });
       results.auditLogsDeleted = deletedLogs.count;
@@ -257,7 +247,7 @@ export class ComplianceService {
       const oldFiles = await this.prisma.file.findMany({
         where: {
           tenantId,
-          createdAt: { lt: cutoffDate },
+          at: { lt: cutoffDate },
         },
       });
 
@@ -265,7 +255,7 @@ export class ComplianceService {
         try {
           // Delete from S3
           await this.s3Client.send(
-            new S3Client.DeleteObjectCommand({
+            new DeleteObjectCommand({
               Bucket: this.bucketName,
               Key: file.s3Key,
             })
@@ -278,7 +268,7 @@ export class ComplianceService {
       const deletedFiles = await this.prisma.file.deleteMany({
         where: {
           tenantId,
-          createdAt: { lt: cutoffDate },
+          at: { lt: cutoffDate },
         },
       });
       results.filesDeleted = deletedFiles.count;
@@ -456,21 +446,21 @@ export class ComplianceService {
         where: {
           tenantId,
           action: { in: ['create', 'update', 'delete'] },
-          createdAt: { gte: startDate, lte: endDate },
+          at: { gte: startDate, lte: endDate },
         },
       }),
       this.prisma.auditLog.count({
         where: {
           tenantId,
           action: { contains: 'access' },
-          createdAt: { gte: startDate, lte: endDate },
+          at: { gte: startDate, lte: endDate },
         },
       }),
       this.prisma.auditLog.count({
         where: {
           tenantId,
           action: 'data_export',
-          createdAt: { gte: startDate, lte: endDate },
+          at: { gte: startDate, lte: endDate },
         },
       }),
     ]);
