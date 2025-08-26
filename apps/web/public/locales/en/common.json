@@ -57,6 +57,13 @@
     "monthly": "Monthly",
     "yearly": "Yearly",
     "save": "Save",
+    "showDetails": "Show Details",
+    "hideDetails": "Hide Details",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "fees": "Fees",
+    "discount": "Discount",
+    "total": "Total",
     "free": {
       "name": "Maker",
       "description": "Perfect for hobbyists and DIY projects"

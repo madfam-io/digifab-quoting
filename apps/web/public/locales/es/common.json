@@ -57,6 +57,13 @@
     "monthly": "Mensual",
     "yearly": "Anual",
     "save": "Ahorra",
+    "showDetails": "Mostrar Detalles",
+    "hideDetails": "Ocultar Detalles",
+    "subtotal": "Subtotal",
+    "tax": "Impuestos",
+    "fees": "Comisiones",
+    "discount": "Descuento",
+    "total": "Total",
     "free": {
       "name": "Maker",
       "description": "Perfecto para hobbyistas y proyectos DIY"

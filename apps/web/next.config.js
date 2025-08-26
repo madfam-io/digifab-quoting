@@ -17,6 +17,10 @@ const nextConfig = {
         source: '/api/:path((?!auth).*)',
         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/:path*`,
       },
+      {
+        source: '/locales/:locale/:namespace',
+        destination: '/locales/:locale/:namespace.json',
+      },
     ];
   },
   async headers() {

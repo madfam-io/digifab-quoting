@@ -178,6 +178,32 @@ export class AuthController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Returns the current authenticated user profile information',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile data',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid or missing authentication token',
+    type: UnauthorizedResponseDto,
+  })
+  async getMe(@Request() req: AuthenticatedRequest) {
+    const user = req.user as User;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      roles: user.roles,
+      tenantId: user.tenantId,
+    };
+  }
+
   @Post('_log')
   @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
