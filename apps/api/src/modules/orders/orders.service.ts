@@ -265,7 +265,8 @@ export class OrdersService {
         number: invoiceNumber,
         orderId,
         customerId: order.customerId,
-        total: order.totalAmount,
+        totalAmount: order.totalAmount,
+        period: new Date().toISOString().slice(0, 7), // YYYY-MM format
         currency: order.currency,
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         tenantId,

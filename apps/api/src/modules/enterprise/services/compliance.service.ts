@@ -87,7 +87,7 @@ export class ComplianceService {
     if (filter.startDate) {
       where.at = { gte: filter.startDate };
     }
-    
+
     if (filter.endDate) {
       where.at = { ...where.at, lte: filter.endDate };
     }
@@ -112,10 +112,10 @@ export class ComplianceService {
         //     name: true,
         //   }
         // }
-      }
+      },
     });
 
-    return auditLogs.map(log => ({
+    return auditLogs.map((log) => ({
       id: log.id,
       tenantId: log.tenantId,
       userId: log.actorId,
@@ -131,16 +131,19 @@ export class ComplianceService {
 
   async initiateDataExport(tenantId: string, format: 'json' | 'csv'): Promise<string> {
     const exportId = `export-${tenantId}-${Date.now()}`;
-    
+
     // Start async export process
     setImmediate(() => this.performDataExport(tenantId, exportId, format));
-    
+
     this.logger.log(`Initiated data export for tenant ${tenantId}, format: ${format}`);
-    
+
     return exportId;
   }
 
-  async configureDataRetention(tenantId: string, policy: Omit<DataRetentionPolicy, 'tenantId'>): Promise<void> {
+  async configureDataRetention(
+    tenantId: string,
+    policy: Omit<DataRetentionPolicy, 'tenantId'>,
+  ): Promise<void> {
     await this.prisma.dataRetentionPolicy.upsert({
       where: { tenantId },
       update: {
@@ -184,10 +187,10 @@ export class ComplianceService {
   }
 
   async generateComplianceReport(
-    tenantId: string, 
+    tenantId: string,
     reportType: ComplianceReport['reportType'],
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ComplianceReport> {
     const metrics = await this.gatherComplianceMetrics(tenantId, startDate, endDate);
     const findings = await this.performComplianceAudit(tenantId, reportType, startDate, endDate);
@@ -229,7 +232,7 @@ export class ComplianceService {
     if (policy.auditLogRetentionDays > 0) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - policy.auditLogRetentionDays);
-      
+
       const deletedLogs = await this.prisma.auditLog.deleteMany({
         where: {
           tenantId,
@@ -243,7 +246,7 @@ export class ComplianceService {
     if (policy.fileRetentionDays > 0) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - policy.fileRetentionDays);
-      
+
       const oldFiles = await this.prisma.file.findMany({
         where: {
           tenantId,
@@ -258,7 +261,7 @@ export class ComplianceService {
             new DeleteObjectCommand({
               Bucket: this.bucketName,
               Key: file.s3Key,
-            })
+            }),
           );
         } catch (error) {
           this.logger.warn(`Failed to delete S3 object ${file.s3Key}: ${error.message}`);
@@ -278,7 +281,7 @@ export class ComplianceService {
     if (policy.inactiveUserRetentionDays > 0) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - policy.inactiveUserRetentionDays);
-      
+
       const deactivatedUsers = await this.prisma.user.updateMany({
         where: {
           tenantId,
@@ -301,7 +304,11 @@ export class ComplianceService {
     return results;
   }
 
-  private async performDataExport(tenantId: string, exportId: string, format: 'json' | 'csv'): Promise<void> {
+  private async performDataExport(
+    tenantId: string,
+    exportId: string,
+    format: 'json' | 'csv',
+  ): Promise<void> {
     try {
       // Gather all tenant data
       const [users, quotes, files, auditLogs, settings] = await Promise.all([
@@ -319,12 +326,12 @@ export class ComplianceService {
           generatedAt: new Date(),
           format,
         },
-        users: users.map(u => ({
+        users: users.map((u) => ({
           ...u,
           password: '[REDACTED]', // Never export passwords
         })),
         quotes,
-        files: files.map(f => ({
+        files: files.map((f) => ({
           ...f,
           url: '[REDACTED]', // Don't export direct URLs
         })),
@@ -360,16 +367,17 @@ export class ComplianceService {
             exportId,
             exportType: 'compliance-data-export',
           },
-        })
+        }),
       );
 
       // TODO: Send email notification to tenant admins
       // await this.sendExportCompleteNotification(tenantId, exportId, key);
 
       this.logger.log(`Completed data export ${exportId} for tenant ${tenantId}`);
-
     } catch (error) {
-      this.logger.error(`Failed to complete data export ${exportId} for tenant ${tenantId}: ${error.message}`);
+      this.logger.error(
+        `Failed to complete data export ${exportId} for tenant ${tenantId}: ${error.message}`,
+      );
       // TODO: Send error notification
     }
   }
@@ -379,7 +387,7 @@ export class ComplianceService {
       const archive = archiver('zip', { zlib: { level: 9 } });
       const chunks: Buffer[] = [];
 
-      archive.on('data', (chunk) => chunks.push(chunk));
+      archive.on('data', (chunk: Buffer) => chunks.push(chunk));
       archive.on('end', () => resolve(Buffer.concat(chunks)));
       archive.on('error', reject);
 
@@ -406,64 +414,59 @@ export class ComplianceService {
     if (!data.length) return '';
 
     const headers = Object.keys(data[0]);
-    const rows = data.map(row => 
-      headers.map(header => {
+    const rows = data.map((row) =>
+      headers.map((header) => {
         const value = row[header];
         if (value === null || value === undefined) return '';
         if (typeof value === 'object') return JSON.stringify(value);
         return String(value).replace(/"/g, '""'); // Escape quotes
-      })
+      }),
     );
 
     const csvContent = [
-      headers.map(h => `"${h}"`).join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      headers.map((h) => `"${h}"`).join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
     ].join('\n');
 
     return csvContent;
   }
 
   private async gatherComplianceMetrics(
-    tenantId: string, 
-    startDate: Date, 
-    endDate: Date
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
   ): Promise<ComplianceReport['metrics']> {
-    const [
-      totalUsers,
-      activeUsers,
-      dataProcessingEvents,
-      accessRequests,
-      dataExports,
-    ] = await Promise.all([
-      this.prisma.user.count({ where: { tenantId } }),
-      this.prisma.user.count({ 
-        where: { 
-          tenantId, 
-          lastLogin: { gte: startDate, lte: endDate } 
-        } 
-      }),
-      this.prisma.auditLog.count({
-        where: {
-          tenantId,
-          action: { in: ['create', 'update', 'delete'] },
-          at: { gte: startDate, lte: endDate },
-        },
-      }),
-      this.prisma.auditLog.count({
-        where: {
-          tenantId,
-          action: { contains: 'access' },
-          at: { gte: startDate, lte: endDate },
-        },
-      }),
-      this.prisma.auditLog.count({
-        where: {
-          tenantId,
-          action: 'data_export',
-          at: { gte: startDate, lte: endDate },
-        },
-      }),
-    ]);
+    const [totalUsers, activeUsers, dataProcessingEvents, accessRequests, dataExports] =
+      await Promise.all([
+        this.prisma.user.count({ where: { tenantId } }),
+        this.prisma.user.count({
+          where: {
+            tenantId,
+            lastLogin: { gte: startDate, lte: endDate },
+          },
+        }),
+        this.prisma.auditLog.count({
+          where: {
+            tenantId,
+            action: { in: ['create', 'update', 'delete'] },
+            at: { gte: startDate, lte: endDate },
+          },
+        }),
+        this.prisma.auditLog.count({
+          where: {
+            tenantId,
+            action: { contains: 'access' },
+            at: { gte: startDate, lte: endDate },
+          },
+        }),
+        this.prisma.auditLog.count({
+          where: {
+            tenantId,
+            action: 'data_export',
+            at: { gte: startDate, lte: endDate },
+          },
+        }),
+      ]);
 
     return {
       totalUsers,
@@ -479,7 +482,7 @@ export class ComplianceService {
     tenantId: string,
     reportType: ComplianceReport['reportType'],
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ComplianceReport['findings']> {
     const findings: ComplianceReport['findings'] = [];
 
@@ -497,7 +500,7 @@ export class ComplianceService {
     // Check for users without recent login (potential inactive accounts)
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 90); // 90 days
-    
+
     const inactiveUsers = await this.prisma.user.count({
       where: {
         tenantId,
@@ -528,7 +531,7 @@ export class ComplianceService {
       where: { tenantId, active: true },
     });
 
-    if (totalUsers > 0 && (adminUsers / totalUsers) > 0.2) {
+    if (totalUsers > 0 && adminUsers / totalUsers > 0.2) {
       findings.push({
         severity: 'medium',
         category: 'Privilege Management',
@@ -542,7 +545,7 @@ export class ComplianceService {
 
   private async storeComplianceReport(report: ComplianceReport): Promise<void> {
     const key = `compliance-reports/${report.tenantId}/${report.reportType}-${report.generatedAt.toISOString()}.json`;
-    
+
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucketName,
@@ -554,7 +557,7 @@ export class ComplianceService {
           reportType: report.reportType,
           generatedAt: report.generatedAt.toISOString(),
         },
-      })
+      }),
     );
   }
 

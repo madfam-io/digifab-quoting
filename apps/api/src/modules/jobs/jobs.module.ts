@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
@@ -25,7 +25,7 @@ import { ExcelReportGeneratorService } from './services/excel-report-generator.s
 import { CsvReportGeneratorService } from './services/csv-report-generator.service';
 import { ReportUploaderService } from './services/report-uploader.service';
 
-// Import link processing services  
+// Import link processing services
 import { ContentFetcherService } from '../link-processing/services/content-fetcher.service';
 import { BOMParserService } from '../link-processing/services/bom-parser.service';
 import { PersonaQuoteGeneratorService } from '../link-processing/services/persona-quote-generator.service';
@@ -128,7 +128,7 @@ import { PersonaQuoteGeneratorService } from '../link-processing/services/person
     LoggerModule,
     HttpModule,
     FilesModule,
-    QuotesModule,
+    forwardRef(() => QuotesModule),
     PricingModule,
   ],
   controllers: [JobsController],

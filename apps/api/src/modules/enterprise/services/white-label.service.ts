@@ -20,18 +20,18 @@ export interface BrandingConfiguration {
   accentColor: string;
   backgroundColor: string;
   textColor: string;
-  
+
   // Logo Configuration
   logoUrl?: string;
   logoSquareUrl?: string;
   faviconUrl?: string;
   watermarkUrl?: string;
-  
+
   // Typography
   primaryFont?: string;
   secondaryFont?: string;
   fontWeights?: Record<string, number>;
-  
+
   // Company Information
   companyName: string;
   companyDescription?: string;
@@ -47,17 +47,17 @@ export interface CustomizationConfiguration {
   footerContent?: string;
   customCSS?: string;
   customJS?: string;
-  
+
   // Content Customization
   welcomeMessage?: string;
   termsOfServiceUrl?: string;
   privacyPolicyUrl?: string;
   helpDocumentationUrl?: string;
-  
+
   // Feature Labels
   customLabels?: Record<string, string>;
   customMessages?: Record<string, string>;
-  
+
   // Workflow Customization
   customWorkflows?: Array<{
     name: string;
@@ -88,10 +88,10 @@ export interface FeatureConfiguration {
   // Enabled Features
   enabledFeatures: string[];
   disabledFeatures: string[];
-  
+
   // Feature Limits
   customLimits?: Record<string, number>;
-  
+
   // Integration Settings
   enabledIntegrations: string[];
   customIntegrations?: Array<{
@@ -99,7 +99,7 @@ export interface FeatureConfiguration {
     type: 'webhook' | 'api' | 'sso';
     configuration: Record<string, unknown>;
   }>;
-  
+
   // API Configuration
   customApiEndpoints?: Array<{
     path: string;
@@ -146,7 +146,9 @@ export class WhiteLabelService {
     });
   }
 
-  async createWhiteLabelConfiguration(config: WhiteLabelConfiguration): Promise<WhiteLabelConfiguration> {
+  async createWhiteLabelConfiguration(
+    config: WhiteLabelConfiguration,
+  ): Promise<WhiteLabelConfiguration> {
     // Validate configuration
     this.validateWhiteLabelConfiguration(config);
 
@@ -189,11 +191,11 @@ export class WhiteLabelService {
 
     const whiteLabelConfig: WhiteLabelConfiguration = {
       tenantId: config.tenantId,
-      branding: config.branding as BrandingConfiguration,
-      customization: config.customization as CustomizationConfiguration,
-      domain: config.domain as DomainConfiguration,
-      features: config.features as FeatureConfiguration,
-      deployment: config.deployment as DeploymentConfiguration,
+      branding: config.branding as unknown as BrandingConfiguration,
+      customization: config.customization as unknown as CustomizationConfiguration,
+      domain: config.domain as unknown as DomainConfiguration,
+      features: config.features as unknown as FeatureConfiguration,
+      deployment: config.deployment as unknown as DeploymentConfiguration,
     };
 
     // Cache for future requests
@@ -204,7 +206,7 @@ export class WhiteLabelService {
 
   async updateWhiteLabelConfiguration(
     tenantId: string,
-    updates: Partial<WhiteLabelConfiguration>
+    updates: Partial<WhiteLabelConfiguration>,
   ): Promise<WhiteLabelConfiguration> {
     const existingConfig = await this.getWhiteLabelConfiguration(tenantId);
     if (!existingConfig) {
@@ -221,11 +223,11 @@ export class WhiteLabelService {
     await this.prisma.whiteLabelConfiguration.update({
       where: { tenantId },
       data: {
-        branding: updatedConfig.branding,
-        customization: updatedConfig.customization,
-        domain: updatedConfig.domain,
-        features: updatedConfig.features,
-        deployment: updatedConfig.deployment,
+        branding: updatedConfig.branding as any,
+        customization: updatedConfig.customization as any,
+        domain: updatedConfig.domain as any,
+        features: updatedConfig.features as any,
+        deployment: updatedConfig.deployment as any,
       },
     });
 
@@ -246,7 +248,7 @@ export class WhiteLabelService {
     tenantId: string,
     assetType: 'logo' | 'logoSquare' | 'favicon' | 'watermark',
     fileBuffer: Buffer,
-    mimeType: string
+    mimeType: string,
   ): Promise<{ url: string }> {
     const fileExtension = this.getFileExtension(mimeType);
     const key = `white-label/${tenantId}/branding/${assetType}${fileExtension}`;
@@ -293,7 +295,10 @@ export class WhiteLabelService {
     return { url };
   }
 
-  async deleteBrandingAsset(tenantId: string, assetType: 'logo' | 'logoSquare' | 'favicon' | 'watermark'): Promise<void> {
+  async deleteBrandingAsset(
+    tenantId: string,
+    assetType: 'logo' | 'logoSquare' | 'favicon' | 'watermark',
+  ): Promise<void> {
     const config = await this.getWhiteLabelConfiguration(tenantId);
     if (!config) return;
 
@@ -315,7 +320,7 @@ export class WhiteLabelService {
 
     if (assetUrl) {
       const key = assetUrl.split('.com/')[1]; // Extract S3 key from URL
-      
+
       await this.s3Client.send(
         new DeleteObjectCommand({
           Bucket: this.bucketName,
@@ -344,8 +349,11 @@ export class WhiteLabelService {
     }
   }
 
-  async initiateDomainSetup(tenantId: string, domainConfig: DomainConfiguration): Promise<{
-    dnsRecords: Array<{ type: string; name: string; value: string; }>;
+  async initiateDomainSetup(
+    tenantId: string,
+    domainConfig: DomainConfiguration,
+  ): Promise<{
+    dnsRecords: Array<{ type: string; name: string; value: string }>;
     verificationInstructions: string;
   }> {
     if (!domainConfig.customDomain) {
@@ -353,7 +361,7 @@ export class WhiteLabelService {
     }
 
     // Generate DNS records needed for domain verification and setup
-    const dnsRecords = [
+    const dnsRecords: Array<{ type: 'CNAME' | 'A' | 'TXT'; name: string; value: string }> = [
       {
         type: 'CNAME',
         name: domainConfig.customDomain,
@@ -367,10 +375,10 @@ export class WhiteLabelService {
     ];
 
     // Update domain configuration with DNS records
-    domainConfig.dnsRecords = dnsRecords.map(record => ({
+    domainConfig.dnsRecords = dnsRecords.map((record) => ({
       ...record,
       verified: false,
-    }));
+    })) as any;
     domainConfig.domainVerificationStatus = 'pending';
 
     await this.updateWhiteLabelConfiguration(tenantId, { domain: domainConfig });
@@ -379,7 +387,7 @@ export class WhiteLabelService {
 To complete domain setup for ${domainConfig.customDomain}:
 
 1. Add the following DNS records to your domain:
-   ${dnsRecords.map(record => `   ${record.type}: ${record.name} -> ${record.value}`).join('\n')}
+   ${dnsRecords.map((record) => `   ${record.type}: ${record.name} -> ${record.value}`).join('\n')}
 
 2. DNS changes may take up to 24 hours to propagate.
 
@@ -388,7 +396,9 @@ To complete domain setup for ${domainConfig.customDomain}:
 For assistance, contact support@cotiza.studio
     `;
 
-    this.logger.log(`Initiated domain setup for ${domainConfig.customDomain} (tenant: ${tenantId})`);
+    this.logger.log(
+      `Initiated domain setup for ${domainConfig.customDomain} (tenant: ${tenantId})`,
+    );
 
     return {
       dnsRecords,
@@ -410,7 +420,7 @@ For assistance, contact support@cotiza.studio
       try {
         const verified = await this.verifyDNSRecord(record.type as any, record.name, record.value);
         record.verified = verified;
-        
+
         if (!verified) {
           allVerified = false;
           errors.push(`${record.type} record for ${record.name} not found or incorrect`);
@@ -436,7 +446,10 @@ For assistance, contact support@cotiza.studio
     };
   }
 
-  private async cacheConfiguration(tenantId: string, config: WhiteLabelConfiguration): Promise<void> {
+  private async cacheConfiguration(
+    tenantId: string,
+    config: WhiteLabelConfiguration,
+  ): Promise<void> {
     const key = `white_label_config:${tenantId}`;
     await this.redis.set(key, JSON.stringify(config), 60 * 60); // Cache for 1 hour
   }
@@ -444,7 +457,7 @@ For assistance, contact support@cotiza.studio
   private async getCachedConfiguration(tenantId: string): Promise<WhiteLabelConfiguration | null> {
     const key = `white_label_config:${tenantId}`;
     const cached = await this.redis.get(key);
-    
+
     if (cached) {
       try {
         return JSON.parse(cached as string);
@@ -452,7 +465,7 @@ For assistance, contact support@cotiza.studio
         await this.redis.del(key);
       }
     }
-    
+
     return null;
   }
 
@@ -463,7 +476,13 @@ For assistance, contact support@cotiza.studio
     }
 
     // Validate colors are valid hex colors
-    const colorFields = ['primaryColor', 'secondaryColor', 'accentColor', 'backgroundColor', 'textColor'];
+    const colorFields = [
+      'primaryColor',
+      'secondaryColor',
+      'accentColor',
+      'backgroundColor',
+      'textColor',
+    ];
     for (const field of colorFields) {
       const color = config.branding[field as keyof BrandingConfiguration] as string;
       if (color && !this.isValidHexColor(color)) {
@@ -503,13 +522,16 @@ For assistance, contact support@cotiza.studio
   }
 
   private generateVerificationToken(tenantId: string): string {
-    return Buffer.from(`${tenantId}-${Date.now()}`).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+    return Buffer.from(`${tenantId}-${Date.now()}`)
+      .toString('base64')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .substring(0, 32);
   }
 
   private async handleDomainChange(
     tenantId: string,
     oldDomain: DomainConfiguration,
-    newDomain: DomainConfiguration
+    newDomain: DomainConfiguration,
   ): Promise<void> {
     if (newDomain.customDomain) {
       await this.initiateDomainSetup(tenantId, newDomain);
@@ -517,11 +539,17 @@ For assistance, contact support@cotiza.studio
 
     // Clean up old domain if necessary
     if (oldDomain.customDomain && oldDomain.customDomain !== newDomain.customDomain) {
-      this.logger.log(`Domain changed from ${oldDomain.customDomain} to ${newDomain.customDomain} for tenant ${tenantId}`);
+      this.logger.log(
+        `Domain changed from ${oldDomain.customDomain} to ${newDomain.customDomain} for tenant ${tenantId}`,
+      );
     }
   }
 
-  private async verifyDNSRecord(type: 'CNAME' | 'A' | 'TXT', name: string, expectedValue: string): Promise<boolean> {
+  private async verifyDNSRecord(
+    type: 'CNAME' | 'A' | 'TXT',
+    name: string,
+    expectedValue: string,
+  ): Promise<boolean> {
     // Implementation would use DNS lookup libraries like 'dns' or external services
     // For now, return mock verification
     this.logger.debug(`Verifying ${type} record: ${name} -> ${expectedValue}`);

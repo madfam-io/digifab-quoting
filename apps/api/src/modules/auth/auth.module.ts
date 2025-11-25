@@ -9,26 +9,38 @@ import { UsersModule } from '../users/users.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { JanuaJwtStrategy } from './strategies/janua-jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JanuaAuthGuard } from './guards/janua-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
     UsersModule,
     TenantModule,
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'janua-jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get('jwt.secret'),
+        // Prefer Janua secret, fallback to local jwt.secret
+        secret: config.get('JANUA_JWT_SECRET') || config.get('jwt.secret'),
         signOptions: {
-          expiresIn: config.get('jwt.accessTokenExpiry'),
+          expiresIn: config.get('jwt.accessTokenExpiry') || '1h',
+          issuer: 'janua',
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    JanuaJwtStrategy,
+    JwtAuthGuard,
+    JanuaAuthGuard,
+    RolesGuard,
+  ],
+  exports: [AuthService, JwtAuthGuard, JanuaAuthGuard, RolesGuard],
 })
 export class AuthModule {}

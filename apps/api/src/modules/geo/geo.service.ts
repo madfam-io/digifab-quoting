@@ -5,15 +5,15 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/modules/redis/redis.service';
 import { Request } from 'express';
 import { firstValueFrom } from 'rxjs';
-import { 
-  GeoDetection, 
-  GeoMapping, 
+import {
+  GeoDetection,
+  GeoMapping,
   Currency,
   COUNTRY_CURRENCY_MAP,
   COUNTRY_LOCALE_MAP,
   GEO_MAPPINGS,
   getDefaultCurrencyForCountry,
-  getDefaultLocaleForCountry 
+  getDefaultLocaleForCountry,
 } from '@cotiza/shared';
 
 interface IPInfoResponse {
@@ -51,8 +51,10 @@ export class GeoService {
       // 1. Try edge headers first (Vercel/CloudFlare)
       const edgeDetection = this.detectFromEdgeHeaders(req);
       if (edgeDetection.detected.confidence > 80) {
-        this.logger.log(`High confidence geo detection from edge headers: ${edgeDetection.detected.country}`);
-        
+        this.logger.log(
+          `High confidence geo detection from edge headers: ${edgeDetection.detected.country}`,
+        );
+
         // Store in database for analytics
         await this.saveGeoSession({
           sessionId: this.generateSessionId(req),
@@ -60,13 +62,13 @@ export class GeoService {
           ...edgeDetection.detected,
           userAgent,
         });
-        
+
         return edgeDetection;
       }
 
       // 2. Try IP geolocation as fallback
       const ipDetection = await this.detectFromIP(ip);
-      
+
       // Store in database
       await this.saveGeoSession({
         sessionId: this.generateSessionId(req),
@@ -76,14 +78,13 @@ export class GeoService {
       });
 
       return ipDetection;
-
     } catch (error) {
       this.logger.error(`Geo detection failed for IP ${ip}:`, error);
-      
+
       // Return defaults with browser detection if available
       const browserDetection = this.detectFromBrowser(req);
       const defaultDetection = this.getDefaultGeoDetection();
-      
+
       return {
         ...defaultDetection,
         detected: {
@@ -100,21 +101,13 @@ export class GeoService {
    * Detect from edge headers (Vercel/CloudFlare)
    */
   private detectFromEdgeHeaders(req: Request): GeoDetection {
-    const countryCode = (
-      req.headers['x-vercel-ip-country'] ||
+    const countryCode = (req.headers['x-vercel-ip-country'] ||
       req.headers['cf-ipcountry'] ||
-      req.headers['x-country-code']
-    ) as string;
+      req.headers['x-country-code']) as string;
 
-    const city = (
-      req.headers['x-vercel-ip-city'] ||
-      req.headers['cf-ipcity']
-    ) as string;
+    const city = (req.headers['x-vercel-ip-city'] || req.headers['cf-ipcity']) as string;
 
-    const timezone = (
-      req.headers['x-vercel-ip-timezone'] ||
-      req.headers['cf-timezone']
-    ) as string;
+    const timezone = (req.headers['x-vercel-ip-timezone'] || req.headers['cf-timezone']) as string;
 
     if (countryCode && countryCode !== 'XX' && countryCode.length === 2) {
       const currency = getDefaultCurrencyForCountry(countryCode);
@@ -136,7 +129,7 @@ export class GeoService {
         recommended: {
           locale,
           currency,
-          alternativeLocales: ['es', 'en', 'pt-BR'].filter(l => l !== locale),
+          alternativeLocales: ['es', 'en', 'pt-BR'].filter((l) => l !== locale),
           alternativeCurrencies: this.getAlternativeCurrencies(currency),
         },
       };
@@ -155,7 +148,7 @@ export class GeoService {
     const cached = await this.redis.get(cacheKey);
     if (cached) {
       try {
-        return JSON.parse(cached);
+        return JSON.parse(cached as string);
       } catch (error) {
         this.logger.warn(`Failed to parse cached geo data for IP ${ip}`);
       }
@@ -171,16 +164,16 @@ export class GeoService {
       const response = await firstValueFrom(
         this.httpService.get<IPInfoResponse>(`https://ipinfo.io/${ip}/json`, {
           headers: {
-            'Authorization': `Bearer ${ipinfoToken}`,
-            'Accept': 'application/json',
+            Authorization: `Bearer ${ipinfoToken}`,
+            Accept: 'application/json',
           },
           timeout: 5000, // 5 second timeout
-        })
+        }),
       );
 
       const data = response.data;
       const countryCode = data.country;
-      
+
       if (!countryCode || countryCode.length !== 2) {
         throw new Error('Invalid country code from IP service');
       }
@@ -205,16 +198,15 @@ export class GeoService {
         recommended: {
           locale,
           currency,
-          alternativeLocales: ['es', 'en', 'pt-BR'].filter(l => l !== locale),
+          alternativeLocales: ['es', 'en', 'pt-BR'].filter((l) => l !== locale),
           alternativeCurrencies: this.getAlternativeCurrencies(currency),
         },
       };
 
       // Cache for 24 hours
-      await this.redis.set(cacheKey, JSON.stringify(detection), 'EX', this.cacheTTL);
+      await this.redis.set(cacheKey, JSON.stringify(detection), this.cacheTTL);
 
       return detection;
-
     } catch (error) {
       this.logger.error(`IP geolocation failed for ${ip}:`, error);
       return this.getDefaultGeoDetection();
@@ -233,7 +225,7 @@ export class GeoService {
       // Parse Accept-Language header (e.g., "es-MX,es;q=0.9,en;q=0.8")
       const languages = acceptLanguage
         .split(',')
-        .map(lang => {
+        .map((lang) => {
           const [code, q] = lang.trim().split(';q=');
           return {
             code: code.split('-')[0].toLowerCase(),
@@ -257,9 +249,12 @@ export class GeoService {
       }
     }
 
-    const currency = browserLocale === 'es' ? Currency.MXN :
-                    browserLocale === 'pt-BR' ? Currency.BRL :
-                    Currency.USD;
+    const currency =
+      browserLocale === 'es'
+        ? Currency.MXN
+        : browserLocale === 'pt-BR'
+          ? Currency.BRL
+          : Currency.USD;
 
     return {
       locale: browserLocale,
@@ -313,16 +308,16 @@ export class GeoService {
     const ip = this.getClientIp(req);
     const userAgent = req.headers['user-agent'] || '';
     const timestamp = Math.floor(Date.now() / (1000 * 60 * 60)); // Hourly buckets
-    
+
     // Simple hash function for session ID
     let hash = 0;
     const str = `${ip}-${userAgent}-${timestamp}`;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    
+
     return `sess_${Math.abs(hash).toString(36)}`;
   }
 
@@ -408,25 +403,25 @@ export class GeoService {
    */
   async updateUserPreferences(
     userId: string,
-    preferences: Partial<GeoDetection['userPreferences']>
+    preferences: Partial<GeoDetection['userPreferences']>,
   ): Promise<void> {
     try {
       await this.prisma.userPreferences.upsert({
         where: { userId },
         create: {
           userId,
-          preferredLocale: preferences.locale || 'es',
-          preferredCurrency: preferences.currency || Currency.MXN,
-          timezone: preferences.timezone,
-          autoDetect: preferences.autoDetect !== false,
-          currencyDisplayMode: preferences.currencyDisplayMode || 'symbol',
+          preferredLocale: preferences?.locale || 'es',
+          preferredCurrency: preferences?.currency || Currency.MXN,
+          timezone: preferences?.timezone,
+          autoDetect: preferences?.autoDetect !== false,
+          currencyDisplayMode: preferences?.currencyDisplayMode || 'symbol',
         },
         update: {
-          preferredLocale: preferences.locale,
-          preferredCurrency: preferences.currency,
-          timezone: preferences.timezone,
-          autoDetect: preferences.autoDetect,
-          currencyDisplayMode: preferences.currencyDisplayMode,
+          preferredLocale: preferences?.locale,
+          preferredCurrency: preferences?.currency,
+          timezone: preferences?.timezone,
+          autoDetect: preferences?.autoDetect,
+          currencyDisplayMode: preferences?.currencyDisplayMode,
           updatedAt: new Date(),
         },
       });
@@ -442,8 +437,15 @@ export class GeoService {
    * Get alternative currencies for a given currency
    */
   private getAlternativeCurrencies(currency: Currency): Currency[] {
-    const alternatives = [Currency.USD, Currency.EUR, Currency.MXN, Currency.BRL, Currency.GBP, Currency.CAD];
-    return alternatives.filter(c => c !== currency).slice(0, 4); // Return top 4 alternatives
+    const alternatives = [
+      Currency.USD,
+      Currency.EUR,
+      Currency.MXN,
+      Currency.BRL,
+      Currency.GBP,
+      Currency.CAD,
+    ];
+    return alternatives.filter((c) => c !== currency).slice(0, 4); // Return top 4 alternatives
   }
 
   /**
@@ -467,7 +469,7 @@ export class GeoService {
       NZ: 'New Zealand',
       // Add more as needed
     };
-    
+
     return countryNames[code.toUpperCase()] || code;
   }
 
@@ -509,12 +511,15 @@ export class GeoService {
       }
 
       // Country breakdown
-      const countryCount = sessions.reduce((acc, session) => {
-        if (session.country) {
-          acc[session.country] = (acc[session.country] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
+      const countryCount = sessions.reduce(
+        (acc, session) => {
+          if (session.country) {
+            acc[session.country] = (acc[session.country] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
       const topCountries = Object.entries(countryCount)
         .map(([country, count]) => ({
@@ -526,12 +531,15 @@ export class GeoService {
         .slice(0, 10);
 
       // Currency breakdown
-      const currencyCount = sessions.reduce((acc, session) => {
-        if (session.detectedCurrency) {
-          acc[session.detectedCurrency] = (acc[session.detectedCurrency] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<Currency, number>);
+      const currencyCount = sessions.reduce(
+        (acc, session) => {
+          if (session.detectedCurrency) {
+            acc[session.detectedCurrency] = (acc[session.detectedCurrency] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<Currency, number>,
+      );
 
       const topCurrencies = Object.entries(currencyCount)
         .map(([currency, count]) => ({
@@ -542,12 +550,15 @@ export class GeoService {
         .sort((a, b) => b.count - a.count);
 
       // Source breakdown
-      const sourceCount = sessions.reduce((acc, session) => {
-        if (session.source) {
-          acc[session.source] = (acc[session.source] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
+      const sourceCount = sessions.reduce(
+        (acc, session) => {
+          if (session.source) {
+            acc[session.source] = (acc[session.source] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
       const sourceBreakdown = Object.entries(sourceCount)
         .map(([source, count]) => ({
@@ -558,8 +569,7 @@ export class GeoService {
         .sort((a, b) => b.count - a.count);
 
       // Average confidence
-      const totalConfidence = sessions.reduce((sum, session) => 
-        sum + (session.confidence || 0), 0);
+      const totalConfidence = sessions.reduce((sum, session) => sum + (session.confidence || 0), 0);
       const averageConfidence = Math.round(totalConfidence / total);
 
       return {
@@ -569,7 +579,6 @@ export class GeoService {
         sourceBreakdown,
         averageConfidence,
       };
-
     } catch (error) {
       this.logger.error('Failed to get geo analytics:', error);
       throw error;

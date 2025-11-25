@@ -314,7 +314,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Execute Redis command directly (for advanced use)
    */
-  async execute<T = unknown>(command: string, ...args: Array<string | number | Buffer>): Promise<T> {
+  async execute<T = unknown>(
+    command: string,
+    ...args: Array<string | number | Buffer>
+  ): Promise<T> {
     if (!this.client) {
       throw new Error('Redis client not initialized');
     }
@@ -459,7 +462,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Legacy del method - use delete(key) instead  
+   * Legacy del method - use delete(key) instead
    * @deprecated
    */
   async del(key: string | string[]): Promise<number> {
@@ -658,6 +661,25 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         `Error getting list range ${key}`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      this.statistics.errors++;
+      return [];
+    }
+  }
+
+  /**
+   * Get all keys matching a pattern
+   */
+  async keys(pattern: string): Promise<string[]> {
+    if (!this.client) {
+      return [];
+    }
+    try {
+      return await this.client.keys(pattern);
+    } catch (error) {
+      this.logger.error(
+        `Error getting keys for pattern ${pattern}`,
         error instanceof Error ? error : new Error(String(error)),
       );
       this.statistics.errors++;

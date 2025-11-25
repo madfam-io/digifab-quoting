@@ -27,28 +27,21 @@ interface MulterFile {
   buffer: Buffer;
   size: number;
 }
-import {
-  CreateGuestQuote,
-  UpdateGuestQuoteItem,
-  GuestQuote,
-} from '@cotiza/shared';
+import { CreateGuestQuote, UpdateGuestQuoteItem, GuestQuote } from '@cotiza/shared';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Guest Quotes')
 @Controller('api/v1/guest/quotes')
+@Public() // Entire controller is public for anonymous quote creation
 export class GuestQuoteController {
-  constructor(
-    private readonly guestQuoteService: GuestQuoteService,
-  ) {}
+  constructor(private readonly guestQuoteService: GuestQuoteService) {}
 
   @Post('upload')
   @UseInterceptors(FilesInterceptor('files', 5))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload files for guest quote' })
   @ApiResponse({ status: 200, description: 'Files uploaded successfully' })
-  async uploadFiles(
-    @UploadedFiles() files: MulterFile[],
-    @Req() req: GuestSessionRequest,
-  ) {
+  async uploadFiles(@UploadedFiles() files: MulterFile[], @Req() req: GuestSessionRequest) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -60,7 +53,7 @@ export class GuestQuoteController {
 
     // For demo purposes, create mock upload results
     // In production, this would upload to S3
-    const uploadResults = files.map(file => ({
+    const uploadResults = files.map((file) => ({
       uploadId: uuidv4(),
       key: `guest/${sessionId}/${file.originalname}`,
       filename: file.originalname,
@@ -70,7 +63,7 @@ export class GuestQuoteController {
 
     return {
       uploadId: uploadResults[0].uploadId,
-      files: uploadResults.map(result => ({
+      files: uploadResults.map((result) => ({
         key: result.key,
         filename: result.filename,
         size: result.size,
@@ -112,9 +105,7 @@ export class GuestQuoteController {
   @Get()
   @ApiOperation({ summary: 'List all guest quotes for session' })
   @ApiResponse({ status: 200, description: 'List of quotes' })
-  async listQuotes(
-    @Req() req: GuestSessionRequest,
-  ): Promise<GuestQuote[]> {
+  async listQuotes(@Req() req: GuestSessionRequest): Promise<GuestQuote[]> {
     const sessionId = req.guestSession?.id;
     if (!sessionId) {
       throw new BadRequestException('Invalid session');
@@ -142,12 +133,7 @@ export class GuestQuoteController {
       throw new BadRequestException('Invalid item index');
     }
 
-    return this.guestQuoteService.updateQuoteItem(
-      sessionId,
-      quoteId,
-      index,
-      updateDto
-    );
+    return this.guestQuoteService.updateQuoteItem(sessionId, quoteId, index, updateDto);
   }
 
   @Get('session/metrics')
@@ -161,7 +147,7 @@ export class GuestQuoteController {
 
     const middleware = new GuestSessionMiddleware(
       this.guestQuoteService['redis'],
-      this.guestQuoteService['config']
+      this.guestQuoteService['config'],
     );
 
     return middleware.getSessionMetrics(sessionToken);

@@ -3,7 +3,11 @@ import { Prisma, QuoteItem } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateQuoteItemDto } from '../dto/update-quote-item.dto';
 import { Material, Machine, ProcessType, QuoteItemSelections } from '@cotiza/shared';
-import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@cotiza/pricing-engine';
+import {
+  PricingEngine,
+  TenantPricingConfig,
+  GeometryMetrics as PricingGeometryMetrics,
+} from '@cotiza/pricing-engine';
 import { CacheService } from '@/modules/redis/cache.service';
 import Decimal from 'decimal.js';
 
@@ -144,19 +148,23 @@ export class QuoteCalculationService {
         return {
           ...mappedItem,
           material: update.material || mappedItem.material,
-          selections: { 
-            ...(typeof mappedItem.selections === 'object' && mappedItem.selections !== null ? mappedItem.selections as Record<string, unknown> : {}),
-            ...(update.selections || {})
+          selections: {
+            ...(typeof mappedItem.selections === 'object' && mappedItem.selections !== null
+              ? (mappedItem.selections as Record<string, unknown>)
+              : {}),
+            ...(update.selections || {}),
           } as Prisma.JsonValue,
           quantity: update.quantity ?? mappedItem.quantity,
         };
       });
   }
 
-  private mapPrismaItemToItemWithRelations(prismaItem: PrismaQuoteWithItems['items'][0]): ItemWithRelations {
+  private mapPrismaItemToItemWithRelations(
+    prismaItem: PrismaQuoteWithItems['items'][0],
+  ): ItemWithRelations {
     return {
       ...prismaItem,
-      files: prismaItem.files.map(file => ({
+      files: prismaItem.files.map((file) => ({
         id: file.id,
         name: file.originalName,
         url: file.path, // or generate URL from S3 path
@@ -165,10 +173,12 @@ export class QuoteCalculationService {
         originalName: file.originalName,
         size: file.size,
       })),
-      dfmReport: prismaItem.dfmReport ? {
-        id: prismaItem.dfmReport.id,
-        metrics: prismaItem.dfmReport.metrics as Record<string, unknown>,
-      } : null,
+      dfmReport: prismaItem.dfmReport
+        ? {
+            id: prismaItem.dfmReport.id,
+            metrics: prismaItem.dfmReport.metrics as Record<string, unknown>,
+          }
+        : null,
     };
   }
 
@@ -251,7 +261,7 @@ export class QuoteCalculationService {
         try {
           // Extract geometry from DFM report
           const geometry = this.extractGeometry(item);
-          
+
           // Use pricing engine to calculate
           const pricingResult = this.pricingEngine.calculate({
             process: item.process as ProcessType,
@@ -306,7 +316,36 @@ export class QuoteCalculationService {
     };
   }
 
-  private prepareCalculationResult(calculations: Array<{ error?: string; item?: ItemWithRelations; pricing?: { unitPrice: Decimal; totalPrice: Decimal; leadDays: number; costBreakdown: { material: Decimal; machine: Decimal; energy: Decimal; labor: Decimal; overhead: Decimal; margin: Decimal; tooling?: Decimal; discount?: Decimal }; sustainability: { score: number; co2eKg: Decimal; energyKwh: Decimal; recycledPercent: number; wastePercent: number }; warnings?: string[] } }>, _currency: string): CalculationResult {
+  private prepareCalculationResult(
+    calculations: Array<{
+      error?: string;
+      item?: ItemWithRelations;
+      pricing?: {
+        unitPrice: Decimal;
+        totalPrice: Decimal;
+        leadDays: number;
+        costBreakdown: {
+          material: Decimal;
+          machine: Decimal;
+          energy: Decimal;
+          labor: Decimal;
+          overhead: Decimal;
+          margin: Decimal;
+          tooling?: Decimal;
+          discount?: Decimal;
+        };
+        sustainability: {
+          score: number;
+          co2eKg: Decimal;
+          energyKwh: Decimal;
+          recycledPercent: number;
+          wastePercent: number;
+        };
+        warnings?: string[];
+      };
+    }>,
+    _currency: string,
+  ): CalculationResult {
     const itemsToUpdate: Array<{ id: string; data: Prisma.QuoteItemUpdateInput }> = [];
     const warnings: string[] = [];
     let subtotal = new Decimal(0);
@@ -318,7 +357,12 @@ export class QuoteCalculationService {
       }
 
       const { item, pricing } = calc;
-      
+
+      if (!pricing) {
+        warnings.push(`No pricing available for item ${item.id}`);
+        continue;
+      }
+
       // Handle warnings from pricing engine
       if (pricing.warnings && pricing.warnings.length > 0) {
         warnings.push(...pricing.warnings);
@@ -417,7 +461,10 @@ export class QuoteCalculationService {
   }
 
   private parseTenantConfig(settings: Record<string, unknown>): TenantPricingConfig {
-    const volumeDiscounts = settings.volumeDiscounts as Array<{ minQuantity: number; discountPercent: number }> || [
+    const volumeDiscounts = (settings.volumeDiscounts as Array<{
+      minQuantity: number;
+      discountPercent: number;
+    }>) || [
       { minQuantity: 10, discountPercent: 5 },
       { minQuantity: 50, discountPercent: 10 },
       { minQuantity: 100, discountPercent: 15 },
@@ -429,7 +476,7 @@ export class QuoteCalculationService {
       energyTariffPerKwh: new Decimal((settings.energyTariffPerKwh as number) || 0.12),
       laborRatePerHour: new Decimal((settings.laborRatePerHour as number) || 25),
       rushUpchargePercent: new Decimal((settings.rushUpchargePercent as number) || 50),
-      volumeDiscounts: volumeDiscounts.map(vd => ({
+      volumeDiscounts: volumeDiscounts.map((vd) => ({
         minQuantity: vd.minQuantity,
         discountPercent: new Decimal(vd.discountPercent),
       })),

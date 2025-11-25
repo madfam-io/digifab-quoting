@@ -22,6 +22,7 @@ import {
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JanuaAuthGuard } from './guards/janua-auth.guard';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, RefreshTokenResponseDto } from './dto/refresh-token.dto';
@@ -44,6 +45,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
@@ -75,6 +77,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Authenticate user',
@@ -105,6 +108,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Refresh access token',
@@ -178,12 +182,13 @@ export class AuthController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JanuaAuthGuard)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get current user profile',
-    description: 'Returns the current authenticated user profile information',
+    description:
+      'Returns the current authenticated user profile information (supports Janua JWT tokens)',
   })
   @ApiResponse({
     status: 200,
@@ -194,11 +199,11 @@ export class AuthController {
     type: UnauthorizedResponseDto,
   })
   async getMe(@Request() req: AuthenticatedRequest) {
-    const user = req.user as User;
+    const user = req.user as any; // JanuaUser type from strategy
     return {
       id: user.id,
       email: user.email,
-      name: user.name,
+      name: user.name || null,
       roles: user.roles,
       tenantId: user.tenantId,
     };

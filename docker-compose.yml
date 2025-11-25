@@ -1,62 +1,41 @@
-version: '3.8'
+name: cotiza
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: cotiza-postgres
-    environment:
-      POSTGRES_DB: cotiza_quoting
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: cotiza-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile.dev
     container_name: cotiza-api
     ports:
-      - "4000:4000"
+      - '8200:4000'
     environment:
       NODE_ENV: development
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cotiza_quoting?schema=public
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://madfam:madfam_dev_password@madfam-postgres-shared:5432/cotiza_db?schema=public
+      REDIS_URL: redis://:redis_dev_password@madfam-redis-shared:6379/1
       JWT_SECRET: dev-jwt-secret-change-in-production
+      # Shared JWT secret for cross-service authentication (MADFAM ecosystem)
+      JANUA_JWT_SECRET: dev-shared-janua-secret-32chars!!
+      JANUA_API_URL: http://janua-api:8001
       S3_BUCKET: cotiza-quoting-dev
       AWS_REGION: us-east-1
+      MINIO_ENDPOINT: madfam-minio-shared:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      STRIPE_SECRET_KEY: sk_test_placeholder_for_dev
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder_for_dev
     volumes:
       - ./apps/api:/app/apps/api
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/api/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: npm run dev
+    command: npx turbo run dev --filter=@cotiza/api
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   web:
     build:
@@ -64,9 +43,9 @@ services:
       dockerfile: apps/web/Dockerfile.dev
     container_name: cotiza-web
     ports:
-      - "3000:3000"
+      - '3030:3002'
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:8200/api/v1
     volumes:
       - ./apps/web:/app/apps/web
       - ./packages:/app/packages
@@ -75,7 +54,13 @@ services:
       - /app/apps/web/.next
     depends_on:
       - api
-    command: npm run dev
+    command: npx turbo run dev --filter=@cotiza/web
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3002/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   worker:
     build:
@@ -83,20 +68,28 @@ services:
       dockerfile: Dockerfile.dev
     container_name: cotiza-worker
     ports:
-      - "8000:8000"
+      - '8201:8000'
     environment:
       PYTHONUNBUFFERED: 1
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cotiza_quoting
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://madfam:madfam_dev_password@madfam-postgres-shared:5432/cotiza_db
+      REDIS_URL: redis://:redis_dev_password@madfam-redis-shared:6379/1
     volumes:
       - ./apps/worker:/app
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
-volumes:
-  postgres_data:
-  redis_data:
+networks:
+  default:
+    name: madfam-shared-network
+    external: true

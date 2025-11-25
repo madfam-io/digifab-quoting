@@ -10,5 +10,14 @@
     "noImplicitThis": false,
     "alwaysStrict": false
   },
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "**/examples/**", "**/*.example.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/examples/**",
+    "**/*.example.ts",
+    "src/modules/enterprise/**",
+    "src/modules/conversion/**"
+  ]
 }

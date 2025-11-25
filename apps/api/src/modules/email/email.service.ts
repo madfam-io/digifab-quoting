@@ -37,7 +37,7 @@ export class EmailService {
 
     // Configure email transporter
     const emailProvider = this.config.get('EMAIL_PROVIDER', 'smtp');
-    
+
     if (emailProvider === 'sendgrid') {
       this.transporter = nodemailer.createTransport({
         host: 'smtp.sendgrid.net',
@@ -55,12 +55,12 @@ export class EmailService {
         secretAccessKey: this.config.get('AWS_SECRET_ACCESS_KEY'),
         region: this.config.get('AWS_REGION', 'us-east-1'),
       });
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         SES: new aws.SES({ apiVersion: '2010-12-01' }),
       });
     } else {
       // Default SMTP configuration
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host: this.config.get('SMTP_HOST', 'localhost'),
         port: this.config.get('SMTP_PORT', 587),
         secure: this.config.get('SMTP_SECURE', false),
@@ -83,11 +83,7 @@ export class EmailService {
   ): Promise<void> {
     try {
       // Get localized email content
-      const { subject, body } = await this.i18n.translateEmail(
-        templateName,
-        locale,
-        params,
-      );
+      const { subject, body } = await this.i18n.translateEmail(templateName, locale, params);
 
       // Get HTML template with localized content
       const html = await this.renderEmailTemplate(templateName, body, locale);
@@ -109,11 +105,7 @@ export class EmailService {
   /**
    * Send quote created notification
    */
-  async sendQuoteCreated(
-    quoteId: string,
-    userEmail: string,
-    locale: Locale = 'es',
-  ): Promise<void> {
+  async sendQuoteCreated(quoteId: string, userEmail: string, locale: Locale = 'es'): Promise<void> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       include: { items: true },
@@ -131,12 +123,7 @@ export class EmailService {
       viewUrl: `${this.config.get('FRONTEND_URL')}/quote/${quoteId}`,
     };
 
-    await this.sendTemplate(
-      'quote.created',
-      { to: userEmail },
-      params,
-      locale,
-    );
+    await this.sendTemplate('quote.created', { to: userEmail }, params, locale);
   }
 
   /**
@@ -149,7 +136,7 @@ export class EmailService {
   ): Promise<void> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
-      include: { 
+      include: {
         items: true,
         orders: { take: 1 },
       },
@@ -162,17 +149,12 @@ export class EmailService {
     const order = quote.orders[0];
     const params = {
       quoteNumber: quote.number,
-      orderNumber: order?.number || 'N/A',
+      orderNumber: order?.orderNumber || 'N/A',
       total: this.i18n.formatCurrency(Number(quote.total), locale, quote.currency),
       trackingUrl: `${this.config.get('FRONTEND_URL')}/orders/${order?.id}`,
     };
 
-    await this.sendTemplate(
-      'quote.accepted',
-      { to: userEmail },
-      params,
-      locale,
-    );
+    await this.sendTemplate('quote.accepted', { to: userEmail }, params, locale);
   }
 
   /**
@@ -188,34 +170,20 @@ export class EmailService {
       expiresIn: '1', // hours
     };
 
-    await this.sendTemplate(
-      'auth.passwordReset',
-      { to: userEmail },
-      params,
-      locale,
-    );
+    await this.sendTemplate('auth.passwordReset', { to: userEmail }, params, locale);
   }
 
   /**
    * Send welcome email
    */
-  async sendWelcome(
-    userEmail: string,
-    userName: string,
-    locale: Locale = 'es',
-  ): Promise<void> {
+  async sendWelcome(userEmail: string, userName: string, locale: Locale = 'es'): Promise<void> {
     const params = {
       userName,
       loginUrl: `${this.config.get('FRONTEND_URL')}/auth/login`,
       helpUrl: `${this.config.get('FRONTEND_URL')}/help`,
     };
 
-    await this.sendTemplate(
-      'auth.welcome',
-      { to: userEmail },
-      params,
-      locale,
-    );
+    await this.sendTemplate('auth.welcome', { to: userEmail }, params, locale);
   }
 
   /**
@@ -240,17 +208,12 @@ export class EmailService {
     const translatedStatus = await this.i18n.translate(statusKey, locale);
 
     const params = {
-      orderNumber: order.number,
+      orderNumber: order.orderNumber,
       status: translatedStatus,
       trackingUrl: `${this.config.get('FRONTEND_URL')}/orders/${orderId}`,
     };
 
-    await this.sendTemplate(
-      'order.statusUpdate',
-      { to: userEmail },
-      params,
-      locale,
-    );
+    await this.sendTemplate('order.statusUpdate', { to: userEmail }, params, locale);
   }
 
   /**

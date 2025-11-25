@@ -30,9 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       datasources: {
         db: { url: databaseUrl },
       },
-      log: isProduction 
-        ? ['error', 'warn']
-        : ['error', 'warn', 'info', 'query'],
+      log: isProduction ? ['error', 'warn'] : ['error', 'warn', 'info', 'query'],
       errorFormat: isProduction ? 'minimal' : 'pretty',
     });
 
@@ -80,13 +78,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
       // Test connection and warm up pool
       await this.$executeRaw`SELECT 1`;
-      
+
       // Log pool configuration
       const poolStats = await this.$queryRaw`
-        SELECT 
-          max_connections,
+        SELECT
+          setting as max_connections,
           (SELECT count(*) FROM pg_stat_activity) as current_connections
-        FROM pg_settings 
+        FROM pg_settings
         WHERE name = 'max_connections';
       `;
       this.logger.log('Database pool stats:', poolStats);
@@ -119,31 +117,31 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   // Middleware for automatic retries
   private retryMiddleware: Prisma.Middleware = async (params, next) => {
     let lastError: Error | undefined;
-    
+
     for (let i = 0; i < this.maxRetries; i++) {
       try {
         return await next(params);
       } catch (error: unknown) {
         lastError = error as Error;
-        
+
         // Only retry on connection errors
         if (
           error instanceof Error &&
           'code' in error &&
           (error.code === 'P1001' || // Can't reach database
-           error.code === 'P1002' || // Database timeout
-           error.message?.includes('connection'))
+            error.code === 'P1002' || // Database timeout
+            error.message?.includes('connection'))
         ) {
           this.logger.warn(`Database operation failed, retry ${i + 1}/${this.maxRetries}`);
-          await new Promise(resolve => setTimeout(resolve, this.retryDelay * (i + 1)));
+          await new Promise((resolve) => setTimeout(resolve, this.retryDelay * (i + 1)));
           continue;
         }
-        
+
         // Don't retry other errors
         throw error;
       }
     }
-    
+
     throw lastError;
   };
 
@@ -151,11 +149,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private performanceMiddleware: Prisma.Middleware = async (params, next) => {
     const threshold = 1000; // 1 second
     const before = Date.now();
-    
+
     try {
       const result = await next(params);
       const duration = Date.now() - before;
-      
+
       if (duration > threshold) {
         this.logger.warn({
           message: 'Slow query detected',
@@ -165,7 +163,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           args: params.args,
         });
       }
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - before;
@@ -189,14 +187,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // Get tenant ID from context (set by TenantContextMiddleware)
     const tenantId = (params as PrismaMiddlewareParams).__tenantId;
-    
+
     if (!tenantId) {
       // Skip tenant filtering for auth-related models
       const authModels = ['User', 'Session', 'ApiKey'];
       if (authModels.includes(params.model)) {
         return next(params);
       }
-      
+
       this.logger.warn(`No tenant ID provided for ${params.model}.${params.action}`);
       return next(params);
     }
@@ -263,7 +261,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async getConnectionStats() {
     const stats = await this.$queryRaw<ConnectionStats[]>`
-      SELECT 
+      SELECT
         count(*) as total_connections,
         count(*) FILTER (WHERE state = 'active') as active_connections,
         count(*) FILTER (WHERE state = 'idle') as idle_connections,

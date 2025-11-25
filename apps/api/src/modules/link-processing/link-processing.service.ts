@@ -4,11 +4,11 @@ import { Queue } from 'bull';
 import { RedisService } from '../redis/redis.service';
 import { QuotesService } from '../quotes/quotes.service';
 import { JobType } from '../jobs/interfaces/job.interface';
-import { 
-  AnalyzeLinkDto, 
-  LinkAnalysisResponseDto, 
+import {
+  AnalyzeLinkDto,
+  LinkAnalysisResponseDto,
   AnalysisStatus,
-  SourceType 
+  SourceType,
 } from './dto/analyze-link.dto';
 import { UserPersona, Currency } from '@cotiza/shared';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,7 +34,7 @@ interface LinkAnalysis {
 @Injectable()
 export class LinkProcessingService {
   private readonly logger = new Logger(LinkProcessingService.name);
-  
+
   constructor(
     private readonly redis: RedisService,
     @InjectQueue(JobType.LINK_ANALYSIS) private readonly linkAnalysisQueue: Queue,
@@ -44,7 +44,7 @@ export class LinkProcessingService {
   async startAnalysis(
     tenantId: string,
     userId: string,
-    dto: AnalyzeLinkDto
+    dto: AnalyzeLinkDto,
   ): Promise<LinkAnalysisResponseDto> {
     this.logger.log(`Starting link analysis for: ${dto.url}`);
 
@@ -80,10 +80,9 @@ export class LinkProcessingService {
     return this.mapAnalysisToResponse(analysis);
   }
 
-
   async getAnalysis(tenantId: string, analysisId: string): Promise<LinkAnalysisResponseDto> {
     const analysis = await this.getStoredAnalysis(analysisId);
-    
+
     if (!analysis) {
       throw new NotFoundException('Analysis not found');
     }
@@ -99,7 +98,7 @@ export class LinkProcessingService {
   async listAnalyses(
     _tenantId: string,
     _userId: string,
-    filters: { status?: string; page: number; limit: number }
+    filters: { status?: string; page: number; limit: number },
   ): Promise<{
     data: LinkAnalysisResponseDto[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
@@ -107,7 +106,7 @@ export class LinkProcessingService {
     // Get all analyses for user from Redis
     // Note: This is a simplified implementation. In production, consider using a proper search index
     const keys: string[] = [];
-    
+
     const analyses: LinkAnalysis[] = [];
     for (const key of keys) {
       const analysis = await this.redis.get(key);
@@ -129,7 +128,7 @@ export class LinkProcessingService {
     const paginatedAnalyses = analyses.slice(startIndex, startIndex + filters.limit);
 
     return {
-      data: paginatedAnalyses.map(a => this.mapAnalysisToResponse(a)),
+      data: paginatedAnalyses.map((a) => this.mapAnalysisToResponse(a)),
       pagination: {
         page: filters.page,
         limit: filters.limit,
@@ -144,10 +143,10 @@ export class LinkProcessingService {
     userId: string,
     analysisId: string,
     selectedItems?: string[],
-    persona?: string
+    persona?: string,
   ): Promise<{ quoteId: string; message: string }> {
     const analysis = await this.getStoredAnalysis(analysisId);
-    
+
     if (!analysis || analysis.tenantId !== tenantId || analysis.userId !== userId) {
       throw new NotFoundException('Analysis not found');
     }
@@ -157,9 +156,10 @@ export class LinkProcessingService {
     }
 
     // Find the persona quote to use
-    const personaEnum = persona as UserPersona || UserPersona.DIY_MAKER;
-    const selectedQuote = analysis.quotes?.find(q => q.persona === personaEnum) || analysis.quotes?.[0];
-    
+    const personaEnum = (persona as UserPersona) || UserPersona.DIY_MAKER;
+    const selectedQuote =
+      analysis.quotes?.find((q) => q.persona === personaEnum) || analysis.quotes?.[0];
+
     if (!selectedQuote) {
       throw new BadRequestException('No quote available for conversion');
     }
@@ -167,8 +167,8 @@ export class LinkProcessingService {
     // Filter items if specific ones were selected
     let itemsToQuote = selectedQuote.recommendations;
     if (selectedItems && selectedItems.length > 0) {
-      itemsToQuote = selectedQuote.recommendations.filter(rec => 
-        selectedItems.includes(rec.component.name)
+      itemsToQuote = selectedQuote.recommendations.filter((rec: { component: { name: string } }) =>
+        selectedItems.includes(rec.component.name),
       );
     }
 
@@ -188,7 +188,7 @@ export class LinkProcessingService {
         // This is a manufacturing item - for now we'll create a placeholder file
         // In production, this would need proper file handling
         const placeholderFileId = 'placeholder-file-id';
-        
+
         await this.quotesService.addItem(tenantId, quote.id, {
           fileId: placeholderFileId,
           name: recommendation.component.name,
@@ -214,7 +214,7 @@ export class LinkProcessingService {
 
   async retryAnalysis(tenantId: string, analysisId: string): Promise<LinkAnalysisResponseDto> {
     const analysis = await this.getStoredAnalysis(analysisId);
-    
+
     if (!analysis || analysis.tenantId !== tenantId) {
       throw new NotFoundException('Analysis not found');
     }
@@ -250,12 +250,12 @@ export class LinkProcessingService {
   private async getStoredAnalysis(analysisId: string): Promise<LinkAnalysis | null> {
     const key = this.getAnalysisKey(analysisId);
     const stored = await this.redis.get(key);
-    return (stored && typeof stored === 'string') ? JSON.parse(stored) : null;
+    return stored && typeof stored === 'string' ? JSON.parse(stored) : null;
   }
 
   private async updateAnalysis(
-    analysisId: string, 
-    updates: Partial<LinkAnalysis>
+    analysisId: string,
+    updates: Partial<LinkAnalysis>,
   ): Promise<LinkAnalysis> {
     const existing = await this.getStoredAnalysis(analysisId);
     if (!existing) {

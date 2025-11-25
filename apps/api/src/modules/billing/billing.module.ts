@@ -9,11 +9,13 @@ import { PricingTierService } from './services/pricing-tier.service';
 import { UsageTrackingInterceptor } from './interceptors/usage-tracking.interceptor';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RedisModule } from '@/modules/redis/redis.module';
+import { PaymentModule } from '@/modules/payment/payment.module';
 
 @Module({
   imports: [
     PrismaModule,
     RedisModule,
+    PaymentModule,
     BullModule.registerQueue({
       name: 'billing',
       redis: {
@@ -31,11 +33,6 @@ import { RedisModule } from '@/modules/redis/redis.module';
     PricingTierService,
     UsageTrackingInterceptor,
   ],
-  exports: [
-    BillingService,
-    UsageTrackingService,
-    MeteringService,
-    UsageTrackingInterceptor,
-  ],
+  exports: [BillingService, UsageTrackingService, MeteringService, UsageTrackingInterceptor],
 })
 export class BillingModule {}

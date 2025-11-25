@@ -31,20 +31,20 @@ export class I18nService {
     const locales: Locale[] = ['es', 'en', 'pt-BR'];
     const translationsDir = path.join(__dirname, '../../../locales');
 
-    locales.forEach(locale => {
+    locales.forEach((locale) => {
       const localeDir = path.join(translationsDir, locale);
-      
+
       try {
         if (fs.existsSync(localeDir)) {
           const files = fs.readdirSync(localeDir);
-          
-          files.forEach(file => {
+
+          files.forEach((file) => {
             if (file.endsWith('.json')) {
               const namespace = file.replace('.json', '');
               const filePath = path.join(localeDir, file);
               const content = fs.readFileSync(filePath, 'utf-8');
               const key = `${locale}.${namespace}`;
-              
+
               this.translations.set(key, JSON.parse(content));
               this.logger.log(`Loaded translations: ${key}`);
             }
@@ -63,14 +63,14 @@ export class I18nService {
     key: string,
     locale: Locale = 'es',
     params?: TranslationParams,
-    namespace = 'common'
+    namespace = 'common',
   ): Promise<string> {
     // Try cache first
     const cacheKey = `${this.cachePrefix}${locale}:${namespace}:${key}`;
     const cached = await this.redis.get(cacheKey);
-    
+
     if (cached) {
-      return this.interpolate(cached, params);
+      return this.interpolate(cached as string, params);
     }
 
     // Try static translations
@@ -124,7 +124,7 @@ export class I18nService {
   private async getDatabaseTranslation(
     key: string,
     locale: Locale,
-    namespace: string
+    namespace: string,
   ): Promise<string | null> {
     try {
       const translation = await this.prisma.translation.findFirst({
@@ -149,7 +149,7 @@ export class I18nService {
 
     return Object.entries(params).reduce(
       (str, [key, value]) => str.replace(new RegExp(`{{${key}}}`, 'g'), String(value)),
-      text
+      text,
     );
   }
 
@@ -159,7 +159,7 @@ export class I18nService {
   async translateError(
     errorCode: string,
     locale: Locale = 'es',
-    params?: TranslationParams
+    params?: TranslationParams,
   ): Promise<string> {
     return this.translate(errorCode, locale, params, 'errors');
   }
@@ -170,7 +170,7 @@ export class I18nService {
   async translateEmail(
     templateKey: string,
     locale: Locale = 'es',
-    params?: TranslationParams
+    params?: TranslationParams,
   ): Promise<{ subject: string; body: string }> {
     const [subject, body] = await Promise.all([
       this.translate(`${templateKey}.subject`, locale, params, 'emails'),
@@ -185,7 +185,7 @@ export class I18nService {
    */
   async getNamespaceTranslations(
     namespace: string,
-    locale: Locale = 'es'
+    locale: Locale = 'es',
   ): Promise<Record<string, any>> {
     // Check static translations first
     const staticKey = `${locale}.${namespace}`;
@@ -202,11 +202,11 @@ export class I18nService {
     });
 
     const result: Record<string, any> = {};
-    
-    dbTranslations.forEach(t => {
+
+    dbTranslations.forEach((t) => {
       const keys = t.key.replace(`${namespace}.`, '').split('.');
       let current = result;
-      
+
       keys.forEach((key, index) => {
         if (index === keys.length - 1) {
           current[key] = t.value;
@@ -232,16 +232,16 @@ export class I18nService {
    */
   formatCurrency(amount: number, locale: Locale = 'es', currency?: string): string {
     const currencyMap: Record<Locale, string> = {
-      'es': 'MXN',
-      'en': 'USD',
-      'pt-BR': 'BRL'
+      es: 'MXN',
+      en: 'USD',
+      'pt-BR': 'BRL',
     };
-    
+
     const localeCurrency = currency || currencyMap[locale];
-    
+
     return new Intl.NumberFormat(locale === 'pt-BR' ? 'pt-BR' : locale, {
       style: 'currency',
-      currency: localeCurrency
+      currency: localeCurrency,
     }).format(amount);
   }
 

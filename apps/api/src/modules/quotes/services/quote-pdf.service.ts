@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { LoggerService } from '@/common/logger/logger.service';
-import { Quote as PrismaQuote, QuoteItem as PrismaQuoteItem, Currency } from '@prisma/client';
-import * as PDFKit from 'pdfkit';
+import { Currency } from '@prisma/client';
+import PDFKit from 'pdfkit';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -23,7 +23,10 @@ export class QuotePdfService {
     });
   }
 
-  async generatePdf(tenantId: string, quoteId: string): Promise<{ url: string; expiresAt: string }> {
+  async generatePdf(
+    tenantId: string,
+    quoteId: string,
+  ): Promise<{ url: string; expiresAt: string }> {
     // Fetch quote with all related data
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId, tenantId },
@@ -38,7 +41,11 @@ export class QuotePdfService {
           select: {
             name: true,
             email: true,
-            company: true,
+            customer: {
+              select: {
+                company: true,
+              },
+            },
           },
         },
         tenant: {
@@ -59,7 +66,7 @@ export class QuotePdfService {
 
     // Upload to S3
     const key = `quotes/${tenantId}/${quoteId}/quote-${quote.number}.pdf`;
-    
+
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucketName,
@@ -109,19 +116,19 @@ export class QuotePdfService {
 
         // Header
         this.addHeader(doc, quote);
-        
+
         // Customer Information
         this.addCustomerInfo(doc, quote);
-        
+
         // Quote Details
         this.addQuoteDetails(doc, quote);
-        
+
         // Items Table
         this.addItemsTable(doc, quote);
-        
+
         // Totals
         this.addTotals(doc, quote);
-        
+
         // Terms and Footer
         this.addTermsAndFooter(doc, quote);
 
@@ -134,7 +141,7 @@ export class QuotePdfService {
 
   private addHeader(doc: PDFKit.PDFDocument, quote: any): void {
     const branding = quote.tenant?.branding || {};
-    
+
     doc
       .fontSize(24)
       .font('Helvetica-Bold')
@@ -151,40 +158,31 @@ export class QuotePdfService {
   }
 
   private addCustomerInfo(doc: PDFKit.PDFDocument, quote: any): void {
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .text('Bill To:', 50, 130);
+    doc.fontSize(14).font('Helvetica-Bold').text('Bill To:', 50, 130);
 
     let y = 150;
     if (quote.customer?.company) {
       doc.fontSize(12).font('Helvetica').text(quote.customer.company, 50, y);
       y += 15;
     }
-    
+
     if (quote.customer?.name) {
       doc.text(quote.customer.name, 50, y);
       y += 15;
     }
-    
+
     if (quote.customer?.email) {
       doc.text(quote.customer.email, 50, y);
     }
   }
 
   private addQuoteDetails(doc: PDFKit.PDFDocument, quote: any): void {
-    const currency = quote.currency as Currency || Currency.MXN;
+    const currency = (quote.currency as Currency) || Currency.MXN;
     const symbol = this.getCurrencySymbol(currency);
-    
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .text('Quote Details:', 300, 130);
-    
-    doc
-      .fontSize(12)
-      .font('Helvetica')
-      .text(`Currency: ${currency} (${symbol})`, 300, 150);
+
+    doc.fontSize(14).font('Helvetica-Bold').text('Quote Details:', 300, 130);
+
+    doc.fontSize(12).font('Helvetica').text(`Currency: ${currency} (${symbol})`, 300, 150);
 
     doc
       .fontSize(12)
@@ -193,9 +191,10 @@ export class QuotePdfService {
       .text(`Status: ${quote.status.toUpperCase()}`, 300, 165);
 
     if (quote.sustainability) {
-      const sustainability = typeof quote.sustainability === 'string' 
-        ? JSON.parse(quote.sustainability) 
-        : quote.sustainability;
+      const sustainability =
+        typeof quote.sustainability === 'string'
+          ? JSON.parse(quote.sustainability)
+          : quote.sustainability;
       doc.text(`Sustainability Score: ${sustainability.score || 'N/A'}`, 300, 180);
     }
   }
@@ -214,7 +213,10 @@ export class QuotePdfService {
     });
 
     // Header line
-    doc.moveTo(50, tableTop + 15).lineTo(530, tableTop + 15).stroke();
+    doc
+      .moveTo(50, tableTop + 15)
+      .lineTo(530, tableTop + 15)
+      .stroke();
 
     // Table rows
     let currentY = tableTop + 25;
@@ -232,9 +234,9 @@ export class QuotePdfService {
       ];
 
       rowData.forEach((data, i) => {
-        doc.text(data, currentX, currentY, { 
-          width: columnWidths[i], 
-          align: i >= 3 ? 'right' : 'left' 
+        doc.text(data, currentX, currentY, {
+          width: columnWidths[i],
+          align: i >= 3 ? 'right' : 'left',
         });
         currentX += columnWidths[i];
       });
@@ -254,19 +256,25 @@ export class QuotePdfService {
 
     if (quote.subtotal) {
       doc.text(`Subtotal:`, totalsX, y);
-      doc.text(`${this.formatMoney(quote.subtotal, quote.currency)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.subtotal, quote.currency)}`, totalsX + 80, y, {
+        align: 'right',
+      });
       y += 20;
     }
 
     if (quote.tax) {
       doc.text(`Tax:`, totalsX, y);
-      doc.text(`${this.formatMoney(quote.tax, quote.currency)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.tax, quote.currency)}`, totalsX + 80, y, {
+        align: 'right',
+      });
       y += 20;
     }
 
     if (quote.shipping) {
       doc.text(`Shipping:`, totalsX, y);
-      doc.text(`${this.formatMoney(quote.shipping, quote.currency)}`, totalsX + 80, y, { align: 'right' });
+      doc.text(`${this.formatMoney(quote.shipping, quote.currency)}`, totalsX + 80, y, {
+        align: 'right',
+      });
       y += 20;
     }
 
@@ -276,7 +284,9 @@ export class QuotePdfService {
 
     doc.fontSize(14).font('Helvetica-Bold');
     doc.text(`Total:`, totalsX, y);
-    doc.text(`${this.formatMoney(quote.total || 0, quote.currency)}`, totalsX + 80, y, { align: 'right' });
+    doc.text(`${this.formatMoney(quote.total || 0, quote.currency)}`, totalsX + 80, y, {
+      align: 'right',
+    });
   }
 
   private addTermsAndFooter(doc: PDFKit.PDFDocument, quote: any): void {
@@ -284,25 +294,32 @@ export class QuotePdfService {
 
     doc.fontSize(10).font('Helvetica');
     doc.text('Terms & Conditions:', 50, footerY);
-    doc.text(`This quote is valid until ${new Date(quote.validityUntil).toLocaleDateString()}.`, 50, footerY + 15);
+    doc.text(
+      `This quote is valid until ${new Date(quote.validityUntil).toLocaleDateString()}.`,
+      50,
+      footerY + 15,
+    );
     doc.text('Prices are subject to change without notice.', 50, footerY + 30);
     doc.text('Payment terms: Net 30 days from invoice date.', 50, footerY + 45);
 
     // Footer line
-    doc.moveTo(50, footerY + 65).lineTo(530, footerY + 65).stroke();
-    
+    doc
+      .moveTo(50, footerY + 65)
+      .lineTo(530, footerY + 65)
+      .stroke();
+
     doc.text(`Generated on ${new Date().toLocaleString()}`, 50, footerY + 75);
     doc.text('Powered by Cotiza Studio Digital Fabrication Platform', 300, footerY + 75);
   }
 
   private formatMoney(amount: number, currency?: Currency | string): string {
-    const curr = currency as Currency || Currency.MXN;
+    const curr = (currency as Currency) || Currency.MXN;
     const symbol = this.getCurrencySymbol(curr);
     const decimals = this.getCurrencyDecimals(curr);
-    
+
     // Format based on currency conventions
     const formatted = amount.toFixed(decimals);
-    
+
     // Apply symbol position based on currency
     if (curr === Currency.EUR) {
       return `${formatted} ${symbol}`; // EUR format: 100.00 €
@@ -350,7 +367,7 @@ export class QuotePdfService {
 
   private getCurrencyDecimals(currency: Currency): number {
     // Currencies with no decimal places
-    if ([Currency.JPY, Currency.KRW].includes(currency)) {
+    if ([Currency.JPY, Currency.KRW].includes(currency as any)) {
       return 0;
     }
     // Most currencies use 2 decimal places

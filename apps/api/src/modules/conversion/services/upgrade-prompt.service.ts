@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConversionTrackingService, UpgradeTrigger, TriggerType, ConversionStage } from './conversion-tracking.service';
-import { UsageTrackingService, UsageEventType } from '@/modules/billing/services/usage-tracking.service';
+import {
+  ConversionTrackingService,
+  UpgradeTrigger,
+  TriggerType,
+  ConversionStage,
+} from './conversion-tracking.service';
+import {
+  UsageTrackingService,
+  UsageEventType,
+} from '@/modules/billing/services/usage-tracking.service';
 import { PricingTierService } from '@/modules/billing/services/pricing-tier.service';
 import { TenantContextService } from '@/modules/tenant/tenant-context.service';
 
@@ -68,7 +76,10 @@ export class UpgradePromptService {
     private readonly tenantContext: TenantContextService,
   ) {}
 
-  async getUpgradePrompts(userId: string, context: 'dashboard' | 'quotes' | 'files' | 'billing' = 'dashboard'): Promise<UpgradePrompt[]> {
+  async getUpgradePrompts(
+    userId: string,
+    context: 'dashboard' | 'quotes' | 'files' | 'billing' = 'dashboard',
+  ): Promise<UpgradePrompt[]> {
     try {
       const funnel = await this.conversionTracking.getConversionFunnel(userId);
       if (!funnel) return [];
@@ -78,7 +89,7 @@ export class UpgradePromptService {
 
       for (const trigger of triggers) {
         const prompt = await this.createPromptFromTrigger(userId, trigger, context);
-        if (prompt && await this.shouldShowPrompt(userId, prompt)) {
+        if (prompt && (await this.shouldShowPrompt(userId, prompt))) {
           prompts.push(prompt);
         }
       }
@@ -91,10 +102,14 @@ export class UpgradePromptService {
     }
   }
 
-  private async createPromptFromTrigger(userId: string, trigger: UpgradeTrigger, context: string): Promise<UpgradePrompt | null> {
+  private async createPromptFromTrigger(
+    userId: string,
+    trigger: UpgradeTrigger,
+    context: string,
+  ): Promise<UpgradePrompt | null> {
     const tenantId = this.tenantContext.getTenantId();
     const currentUsage = await this.usageTracking.getUsageSummary(tenantId);
-    
+
     const promptContext: UpgradePromptContext = {
       currentUsage: currentUsage.events,
       currentTier: currentUsage.billingTier,
@@ -112,35 +127,39 @@ export class UpgradePromptService {
     switch (trigger.type) {
       case TriggerType.USAGE_LIMIT:
         return this.createUsageLimitPrompt(basePrompt, trigger, currentUsage.events);
-        
+
       case TriggerType.FEATURE_GATE:
         return this.createFeatureGatePrompt(basePrompt, trigger, context);
-        
+
       case TriggerType.VALUE_DEMONSTRATION:
         return this.createValueDemonstrationPrompt(basePrompt, trigger, currentUsage.events);
-        
+
       case TriggerType.TIME_BASED:
-        return this.createTimeBased Prompt(basePrompt, trigger);
-        
+        return this.createTimeBasedPrompt(basePrompt, trigger);
+
       case TriggerType.BEHAVIOR_BASED:
         return this.createBehaviorBasedPrompt(basePrompt, trigger);
-        
+
       default:
         return null;
     }
   }
 
-  private createUsageLimitPrompt(basePrompt: Partial<UpgradePrompt>, trigger: UpgradeTrigger, usage: Record<UsageEventType, number>): UpgradePrompt {
+  private createUsageLimitPrompt(
+    basePrompt: Partial<UpgradePrompt>,
+    trigger: UpgradeTrigger,
+    usage: Record<UsageEventType, number>,
+  ): UpgradePrompt {
     const limitType = trigger.context.eventType as UsageEventType;
     const current = usage[limitType] || 0;
-    
+
     return {
       ...basePrompt,
       type: PromptType.MODAL,
-      title: "Usage Limit Reached",
+      title: 'Usage Limit Reached',
       message: `You've used ${current} ${this.getUsageTypeLabel(limitType)} this month. Upgrade to continue with unlimited access.`,
-      cta: "Upgrade to Pro",
-      ctaUrl: "/billing/upgrade?plan=pro&trigger=usage_limit",
+      cta: 'Upgrade to Pro',
+      ctaUrl: '/billing/upgrade?plan=pro&trigger=usage_limit',
       dismissible: false, // Force user decision
       context: {
         ...basePrompt.context!,
@@ -155,16 +174,20 @@ export class UpgradePromptService {
     } as UpgradePrompt;
   }
 
-  private createFeatureGatePrompt(basePrompt: Partial<UpgradePrompt>, trigger: UpgradeTrigger, context: string): UpgradePrompt {
+  private createFeatureGatePrompt(
+    basePrompt: Partial<UpgradePrompt>,
+    trigger: UpgradeTrigger,
+    context: string,
+  ): UpgradePrompt {
     const features = this.getContextFeatures(context);
-    
+
     return {
       ...basePrompt,
       type: PromptType.FEATURE_GATE,
-      title: "Unlock Pro Features",
+      title: 'Unlock Pro Features',
       message: `This feature is available in our Pro plan. Upgrade to access ${features.join(', ')} and more.`,
-      cta: "See Pro Features",
-      ctaUrl: "/billing/upgrade?plan=pro&trigger=feature_gate",
+      cta: 'See Pro Features',
+      ctaUrl: '/billing/upgrade?plan=pro&trigger=feature_gate',
       dismissible: true,
       context: {
         ...basePrompt.context!,
@@ -174,17 +197,21 @@ export class UpgradePromptService {
     } as UpgradePrompt;
   }
 
-  private createValueDemonstrationPrompt(basePrompt: Partial<UpgradePrompt>, trigger: UpgradeTrigger, usage: Record<UsageEventType, number>): UpgradePrompt {
+  private createValueDemonstrationPrompt(
+    basePrompt: Partial<UpgradePrompt>,
+    trigger: UpgradeTrigger,
+    usage: Record<UsageEventType, number>,
+  ): UpgradePrompt {
     const quotesCreated = usage[UsageEventType.QUOTE_GENERATION] || 0;
     const potentialSavings = quotesCreated * 0.5; // Estimate time savings
-    
+
     return {
       ...basePrompt,
       type: PromptType.BANNER,
       title: "You're Getting Great Value!",
       message: `You've created ${quotesCreated} quotes and saved approximately ${potentialSavings.toFixed(1)} hours. Upgrade for unlimited access and advanced features.`,
-      cta: "Upgrade Now",
-      ctaUrl: "/billing/upgrade?plan=pro&trigger=value_demo",
+      cta: 'Upgrade Now',
+      ctaUrl: '/billing/upgrade?plan=pro&trigger=value_demo',
       dismissible: true,
       context: {
         ...basePrompt.context!,
@@ -200,14 +227,18 @@ export class UpgradePromptService {
     } as UpgradePrompt;
   }
 
-  private createTimeBasedPrompt(basePrompt: Partial<UpgradePrompt>, trigger: UpgradeTrigger): UpgradePrompt {
+  private createTimeBasedPrompt(
+    basePrompt: Partial<UpgradePrompt>,
+    trigger: UpgradeTrigger,
+  ): UpgradePrompt {
     return {
       ...basePrompt,
       type: PromptType.TOAST,
-      title: "Special Offer",
-      message: "You've been using Cotiza Studio for a week! Upgrade now and save 20% on your first month.",
-      cta: "Claim Offer",
-      ctaUrl: "/billing/upgrade?plan=pro&trigger=time_based&discount=20",
+      title: 'Special Offer',
+      message:
+        "You've been using Cotiza Studio for a week! Upgrade now and save 20% on your first month.",
+      cta: 'Claim Offer',
+      ctaUrl: '/billing/upgrade?plan=pro&trigger=time_based&discount=20',
       dismissible: true,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       context: {
@@ -218,14 +249,18 @@ export class UpgradePromptService {
     } as UpgradePrompt;
   }
 
-  private createBehaviorBasedPrompt(basePrompt: Partial<UpgradePrompt>, trigger: UpgradeTrigger): UpgradePrompt {
+  private createBehaviorBasedPrompt(
+    basePrompt: Partial<UpgradePrompt>,
+    trigger: UpgradeTrigger,
+  ): UpgradePrompt {
     return {
       ...basePrompt,
       type: PromptType.INLINE,
-      title: "Power User Detected!",
-      message: "Based on your usage patterns, you'd benefit from our Pro features. Get advanced tools and priority support.",
-      cta: "Upgrade to Pro",
-      ctaUrl: "/billing/upgrade?plan=pro&trigger=behavior",
+      title: 'Power User Detected!',
+      message:
+        "Based on your usage patterns, you'd benefit from our Pro features. Get advanced tools and priority support.",
+      cta: 'Upgrade to Pro',
+      ctaUrl: '/billing/upgrade?plan=pro&trigger=behavior',
       dismissible: true,
       context: {
         ...basePrompt.context!,
@@ -244,11 +279,11 @@ export class UpgradePromptService {
     // Check if prompt was recently shown
     const shownKey = `${this.SHOWN_KEY_PREFIX}:${userId}:${prompt.type}:${prompt.metadata.triggerId}`;
     const lastShown = await this.usageTracking['redis'].get(shownKey);
-    
+
     if (lastShown) {
       const hoursSinceShown = (Date.now() - parseInt(lastShown as string)) / (1000 * 60 * 60);
       const cooldownHours = this.getCooldownHours(prompt.type);
-      
+
       if (hoursSinceShown < cooldownHours) {
         return false;
       }
@@ -269,26 +304,33 @@ export class UpgradePromptService {
 
     // Track analytics
     await this.conversionTracking.markTriggerShown(userId, prompt.metadata.triggerId as any);
-    
+
     this.logger.debug(`Marked prompt ${promptId} as shown for user ${userId}`);
   }
 
   async markPromptClicked(userId: string, promptId: string, prompt: UpgradePrompt): Promise<void> {
     // Track click analytics
     await this.conversionTracking.markTriggerClicked(userId, prompt.metadata.triggerId as any);
-    
+
     this.logger.debug(`Marked prompt ${promptId} as clicked for user ${userId}`);
   }
 
-  async markPromptDismissed(userId: string, promptId: string, prompt: UpgradePrompt): Promise<void> {
+  async markPromptDismissed(
+    userId: string,
+    promptId: string,
+    prompt: UpgradePrompt,
+  ): Promise<void> {
     // Set longer cooldown for dismissed prompts
     const dismissedKey = `${this.SHOWN_KEY_PREFIX}:${userId}:${prompt.type}:${prompt.metadata.triggerId}:dismissed`;
     await this.usageTracking['redis'].set(dismissedKey, Date.now().toString(), 24 * 60 * 60); // 24 hours
-    
+
     this.logger.debug(`Marked prompt ${promptId} as dismissed for user ${userId}`);
   }
 
-  private calculateUrgency(trigger: UpgradeTrigger, usage: Record<UsageEventType, number>): 'low' | 'medium' | 'high' | 'critical' {
+  private calculateUrgency(
+    trigger: UpgradeTrigger,
+    usage: Record<UsageEventType, number>,
+  ): 'low' | 'medium' | 'high' | 'critical' {
     switch (trigger.type) {
       case TriggerType.USAGE_LIMIT:
         return 'critical';
@@ -315,7 +357,7 @@ export class UpgradePromptService {
       [UsageEventType.STORAGE_GB_HOUR]: 'GB-hours of storage',
       [UsageEventType.COMPUTE_SECONDS]: 'compute seconds',
     };
-    
+
     return labels[eventType] || 'units';
   }
 
@@ -326,8 +368,10 @@ export class UpgradePromptService {
       files: ['Unlimited file storage', 'Advanced analysis', 'Batch processing'],
       billing: ['Usage analytics', 'Cost optimization', 'Custom reporting'],
     };
-    
-    return contextFeatures[context] || ['Advanced features', 'Priority support', 'Unlimited access'];
+
+    return (
+      contextFeatures[context] || ['Advanced features', 'Priority support', 'Unlimited access']
+    );
   }
 
   private getCooldownHours(promptType: PromptType): number {
@@ -339,16 +383,19 @@ export class UpgradePromptService {
       [PromptType.PAGE_GATE]: 48, // 48 hours
       [PromptType.FEATURE_GATE]: 12, // 12 hours
     };
-    
+
     return cooldowns[promptType] || 8;
   }
 
   // A/B testing methods
-  async getPromptVariant(userId: string, promptType: string): Promise<'control' | 'variant_a' | 'variant_b'> {
+  async getPromptVariant(
+    userId: string,
+    promptType: string,
+  ): Promise<'control' | 'variant_a' | 'variant_b'> {
     // Simple hash-based assignment for consistent user experience
     const hash = this.hashUserId(userId + promptType);
     const bucket = hash % 100;
-    
+
     if (bucket < 33) return 'control';
     if (bucket < 66) return 'variant_a';
     return 'variant_b';
@@ -358,7 +405,7 @@ export class UpgradePromptService {
     let hash = 0;
     for (let i = 0; i < input.length; i++) {
       const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);

@@ -100,7 +100,11 @@ export class PdfReportGeneratorService {
     return titles[language || 'en'][reportType];
   }
 
-  private addQuoteContent(doc: InstanceType<typeof PDFDocument>, quote: QuoteOrderData, options: ReportGenerationJobData['options']): void {
+  private addQuoteContent(
+    doc: InstanceType<typeof PDFDocument>,
+    quote: QuoteOrderData,
+    options: ReportGenerationJobData['options'],
+  ): void {
     // Customer information
     doc.fontSize(14).text('Customer Information', { underline: true });
     doc
@@ -116,7 +120,9 @@ export class PdfReportGeneratorService {
       .fontSize(12)
       .text(`Quote Number: ${quote.number}`)
       .text(`Date: ${new Date(quote.createdAt).toLocaleDateString()}`)
-      .text(`Valid Until: ${new Date((quote as QuoteOrderData & { validUntil?: Date }).validUntil || quote.createdAt).toLocaleDateString()}`)
+      .text(
+        `Valid Until: ${new Date((quote as QuoteOrderData & { validUntil?: Date }).validUntil || quote.createdAt).toLocaleDateString()}`,
+      )
       .text(`Status: ${quote.status}`)
       .text(`Currency: ${quote.currency}`)
       .moveDown();
@@ -138,9 +144,18 @@ export class PdfReportGeneratorService {
     item: ReportItem,
     index: number,
   ): void {
-    const fileName = (item as ReportItem & { files?: Array<{ originalName?: string }> }).files?.[0]?.originalName || item.name || 'Unknown file';
-    const materialName = (item as ReportItem & { material?: { name?: string } }).material?.name || 'Unknown material';
-    const processName = (item as ReportItem & { manufacturingProcess?: { name?: string }; processCode?: string }).manufacturingProcess?.name || (item as ReportItem & { processCode?: string }).processCode || 'Unknown process';
+    const fileName =
+      (item as ReportItem & { files?: Array<{ originalName?: string }> }).files?.[0]
+        ?.originalName ||
+      item.name ||
+      'Unknown file';
+    const materialName =
+      (item as ReportItem & { material?: { name?: string } }).material?.name || 'Unknown material';
+    const processName =
+      (item as ReportItem & { manufacturingProcess?: { name?: string }; processCode?: string })
+        .manufacturingProcess?.name ||
+      (item as ReportItem & { processCode?: string }).processCode ||
+      'Unknown process';
 
     doc
       .fontSize(12)
@@ -148,12 +163,20 @@ export class PdfReportGeneratorService {
       .text(`   Material: ${materialName}`)
       .text(`   Process: ${processName}`)
       .text(`   Quantity: ${item.quantity || 0}`)
-      .text(`   Unit Price: ${this.formatCurrency(item.unitPrice || 0, (item as ReportItem & { currency?: string }).currency || 'MXN')}`)
-      .text(`   Total: ${this.formatCurrency((item.unitPrice || 0) * (item.quantity || 0), (item as ReportItem & { currency?: string }).currency || 'MXN')}`)
+      .text(
+        `   Unit Price: ${this.formatCurrency(item.unitPrice || 0, (item as ReportItem & { currency?: string }).currency || 'MXN')}`,
+      )
+      .text(
+        `   Total: ${this.formatCurrency((item.unitPrice || 0) * (item.quantity || 0), (item as ReportItem & { currency?: string }).currency || 'MXN')}`,
+      )
       .moveDown(0.5);
   }
 
-  private addOrderContent(doc: InstanceType<typeof PDFDocument>, order: QuoteOrderData, options: ReportGenerationJobData['options']): void {
+  private addOrderContent(
+    doc: InstanceType<typeof PDFDocument>,
+    order: QuoteOrderData,
+    options: ReportGenerationJobData['options'],
+  ): void {
     // Order header
     doc.fontSize(14).text('Order Information', { underline: true });
     doc
@@ -225,11 +248,26 @@ export class PdfReportGeneratorService {
         .fontSize(12)
         .text(invoice.customer.name)
         .text(invoice.customer.company || '')
-        .text((invoice.customer as CustomerData & { billingAddress?: { street?: string; city?: string; state?: string; postalCode?: string; country?: string } }).billingAddress?.street || '')
+        .text(
+          (
+            invoice.customer as CustomerData & {
+              billingAddress?: {
+                street?: string;
+                city?: string;
+                state?: string;
+                postalCode?: string;
+                country?: string;
+              };
+            }
+          ).billingAddress?.street || '',
+        )
         .text(
           `${(invoice.customer as CustomerData & { billingAddress?: { city?: string; state?: string; postalCode?: string } }).billingAddress?.city || ''}, ${(invoice.customer as CustomerData & { billingAddress?: { state?: string } }).billingAddress?.state || ''} ${(invoice.customer as CustomerData & { billingAddress?: { postalCode?: string } }).billingAddress?.postalCode || ''}`,
         )
-        .text((invoice.customer as CustomerData & { billingAddress?: { country?: string } }).billingAddress?.country || '')
+        .text(
+          (invoice.customer as CustomerData & { billingAddress?: { country?: string } })
+            .billingAddress?.country || '',
+        )
         .moveDown();
     }
 
@@ -237,14 +275,22 @@ export class PdfReportGeneratorService {
     doc.fontSize(14).text('Invoice Details', { underline: true });
     doc
       .fontSize(12)
-      .text(`Invoice Date: ${new Date((invoice as InvoiceData & { issuedAt?: Date }).issuedAt || invoice.dueDate).toLocaleDateString()}`)
-      .text(`Due Date: ${new Date((invoice as InvoiceData & { dueAt?: Date }).dueAt || invoice.dueDate).toLocaleDateString()}`)
+      .text(
+        `Invoice Date: ${new Date((invoice as InvoiceData & { issuedAt?: Date }).issuedAt || invoice.dueDate).toLocaleDateString()}`,
+      )
+      .text(
+        `Due Date: ${new Date((invoice as InvoiceData & { dueAt?: Date }).dueAt || invoice.dueDate).toLocaleDateString()}`,
+      )
       .text(`Status: ${invoice.status}`)
       .moveDown();
 
     // Line items
     if (invoice.order?.quote?.items) {
-      this.addInvoiceLineItems(doc, invoice.order.quote.items, (invoice as InvoiceData & { currency?: string }).currency || 'MXN');
+      this.addInvoiceLineItems(
+        doc,
+        invoice.order.quote.items,
+        (invoice as InvoiceData & { currency?: string }).currency || 'MXN',
+      );
     }
 
     // Totals
@@ -302,19 +348,28 @@ export class PdfReportGeneratorService {
     }
   }
 
-  private addPricingSummary(doc: InstanceType<typeof PDFDocument>, quote: QuoteOrderData & { subtotal?: number; tax?: number; shipping?: number; total?: number }): void {
+  private addPricingSummary(
+    doc: InstanceType<typeof PDFDocument>,
+    quote: QuoteOrderData & { subtotal?: number; tax?: number; shipping?: number; total?: number },
+  ): void {
     doc.fontSize(14).text('Pricing Summary', { underline: true });
     doc
       .fontSize(12)
       .text(`Subtotal: ${this.formatCurrency(quote.subtotal || 0, quote.currency)}`)
       .text(`Tax: ${this.formatCurrency(quote.tax || 0, quote.currency)}`)
       .text(`Shipping: ${this.formatCurrency(quote.shipping || 0, quote.currency)}`)
-      .text(`Total: ${this.formatCurrency(quote.total || quote.totalAmount || 0, quote.currency)}`, {
-        underline: true,
-      });
+      .text(
+        `Total: ${this.formatCurrency(quote.total || quote.totalAmount || 0, quote.currency)}`,
+        {
+          underline: true,
+        },
+      );
   }
 
-  private addPaymentInformation(doc: InstanceType<typeof PDFDocument>, order: QuoteOrderData & { paymentStatus?: string; totalPaid?: number }): void {
+  private addPaymentInformation(
+    doc: InstanceType<typeof PDFDocument>,
+    order: QuoteOrderData & { paymentStatus?: string; totalPaid?: number },
+  ): void {
     doc.fontSize(14).text('Payment Information', { underline: true });
     doc
       .fontSize(12)
@@ -355,22 +410,34 @@ export class PdfReportGeneratorService {
     doc.moveDown();
     doc
       .fontSize(12)
-      .text(`Subtotal: ${this.formatCurrency(invoice.subtotal, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`, {
-        align: 'right',
-      })
-      .text(`Tax: ${this.formatCurrency(invoice.tax, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`, { align: 'right' })
-      .text(`Total: ${this.formatCurrency(invoice.total, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`, {
-        align: 'right',
-        underline: true,
-      });
-
-    if (invoice.totalPaid > 0) {
-      doc
-        .text(`Paid: ${this.formatCurrency(invoice.totalPaid, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`, {
+      .text(
+        `Subtotal: ${this.formatCurrency(invoice.subtotal, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
+        {
           align: 'right',
-        })
+        },
+      )
+      .text(
+        `Tax: ${this.formatCurrency(invoice.tax, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
+        { align: 'right' },
+      )
+      .text(
+        `Total: ${this.formatCurrency(invoice.total, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
+        {
+          align: 'right',
+          underline: true,
+        },
+      );
+
+    if (invoice.totalPaid && invoice.totalPaid > 0) {
+      doc
         .text(
-          `Balance Due: ${this.formatCurrency(invoice.total - invoice.totalPaid, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
+          `Paid: ${this.formatCurrency(invoice.totalPaid, (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
+          {
+            align: 'right',
+          },
+        )
+        .text(
+          `Balance Due: ${this.formatCurrency(invoice.total - (invoice.totalPaid || 0), (invoice as InvoiceData & { currency?: string }).currency || 'MXN')}`,
           {
             align: 'right',
             underline: true,

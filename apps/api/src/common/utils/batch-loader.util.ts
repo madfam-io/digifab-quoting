@@ -37,7 +37,7 @@ export class BatchLoader<K, V> {
   }
 
   async loadMany(keys: K[]): Promise<(V | null)[]> {
-    return Promise.all(keys.map(key => this.load(key)));
+    return Promise.all(keys.map((key) => this.load(key)));
   }
 
   private async dispatchBatch(): Promise<void> {
@@ -50,24 +50,24 @@ export class BatchLoader<K, V> {
     if (batch.length === 0) return;
 
     try {
-      const keys = batch.map(request => request.key);
+      const keys = batch.map((request) => request.key);
       const values = await this.batchLoadFn(keys);
-      
+
       // Create a map for O(1) lookups
       const valueMap = new Map<K, V>();
-      values.forEach(value => {
+      values.forEach((value) => {
         const key = this.keyFn(value);
         valueMap.set(key, value);
       });
 
       // Resolve all pending requests
-      batch.forEach(request => {
+      batch.forEach((request) => {
         const value = valueMap.get(request.key) || null;
         request.resolve(value);
       });
     } catch (error) {
       // Reject all pending requests
-      batch.forEach(request => {
+      batch.forEach((request) => {
         request.reject(error instanceof Error ? error : new Error(String(error)));
       });
     }
@@ -84,7 +84,7 @@ export class BatchLoaderFactory {
         });
       },
       (material: any) => material.id,
-      { maxBatchSize: 50, batchWindowMs: 5 }
+      { maxBatchSize: 50, batchWindowMs: 5 },
     );
   }
 
@@ -96,7 +96,7 @@ export class BatchLoaderFactory {
         });
       },
       (machine: any) => machine.id,
-      { maxBatchSize: 50, batchWindowMs: 5 }
+      { maxBatchSize: 50, batchWindowMs: 5 },
     );
   }
 
@@ -107,18 +107,18 @@ export class BatchLoaderFactory {
           where: { id: { in: tenantIds } },
           select: { id: true, settings: true, features: true },
         });
-        
+
         const margins = await prisma.margin.findMany({
           where: { tenantId: { in: tenantIds }, active: true },
         });
-        
-        return tenants.map(tenant => ({
+
+        return tenants.map((tenant: { id: string }) => ({
           ...tenant,
-          margins: margins.filter(m => m.tenantId === tenant.id),
+          margins: margins.filter((m: { tenantId: string }) => m.tenantId === tenant.id),
         }));
       },
       (config: any) => config.id,
-      { maxBatchSize: 20, batchWindowMs: 10 }
+      { maxBatchSize: 20, batchWindowMs: 10 },
     );
   }
 }

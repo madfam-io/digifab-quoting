@@ -1,35 +1,53 @@
+# Enhanced Dockerfile for Cotiza Studio Web (Revenue Critical)
+# Enclii-compliant: ✅ All 5 criteria met (added USER directive)
+
+# ============================================
+# STAGE 1: Builder
+# ============================================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 COPY turbo.json ./
 COPY tsconfig.json ./
-
-# Copy workspace packages
 COPY packages/ ./packages/
 COPY apps/web/ ./apps/web/
 
-# Install dependencies
 RUN npm ci
-
-# Build the application
 RUN npm run build -- --filter=@cotiza/web...
 
-# Production image
+# ============================================
+# STAGE 2: Runner
+# ============================================
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy built application
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+# Create non-root user (SECURITY FIX)
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
+USER nextjs
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Environment variables for Enclii/Revenue Shield
+ENV NEXTAUTH_URL="" \
+    NEXTAUTH_SECRET="" \
+    DATABASE_URL="" \
+    AUTH_PROVIDER_URL="" \
+    STRIPE_SECRET_KEY="" \
+    AWS_S3_BUCKET=""
 
 EXPOSE 3000
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || exit 1
 
 CMD ["node", "apps/web/server.js"]

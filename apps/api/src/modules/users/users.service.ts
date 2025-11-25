@@ -24,4 +24,13 @@ export class UsersService {
       data: { lastLogin: new Date() },
     });
   }
+
+  async updatePreferences(userId: string, preferences: any): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        preferredLocale: preferences.preferredLocale,
+      },
+    });
+  }
 }

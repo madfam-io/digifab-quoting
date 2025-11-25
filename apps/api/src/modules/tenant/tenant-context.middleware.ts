@@ -117,7 +117,16 @@ export class TenantContextMiddleware implements NestMiddleware {
   }
 
   private isPublicEndpoint(path: string): boolean {
-    const publicPaths = ['/health', '/auth/login', '/auth/register', '/auth/refresh'];
+    const publicPaths = [
+      '/health',
+      '/api/health',
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
+      '/api/v1/guest', // Guest quote endpoints
+      '/api/docs', // Swagger docs
+      '/api', // Root API redirect
+    ];
 
     // Check if the path contains any of the public paths
     return publicPaths.some((p) => path.includes(p));

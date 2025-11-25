@@ -26,6 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.873.0",
     "@aws-sdk/client-s3": "^3.873.0",
+    "@aws-sdk/s3-request-presigner": "^3.939.0",
     "@cotiza/pricing-engine": "*",
     "@cotiza/shared": "*",
     "@nestjs/axios": "^4.0.1",
@@ -85,6 +86,7 @@
     "@nestjs/cli": "^10.3.2",
     "@nestjs/schematics": "^10.1.1",
     "@nestjs/testing": "^10.3.3",
+    "@types/archiver": "^7.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",

@@ -61,9 +61,15 @@ export class FileAnalysisProcessor {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.workerServiceUrl = this.configService.get<string>('WORKER_SERVICE_URL', 'http://localhost:8000');
+    this.workerServiceUrl = this.configService.get<string>(
+      'WORKER_SERVICE_URL',
+      'http://localhost:8000',
+    );
     this.workerServiceTimeout = this.configService.get<number>('WORKER_SERVICE_TIMEOUT_MS', 300000);
-    this.progressIntervalMs = this.configService.get<number>('FILE_ANALYSIS_PROGRESS_INTERVAL_MS', 5000);
+    this.progressIntervalMs = this.configService.get<number>(
+      'FILE_ANALYSIS_PROGRESS_INTERVAL_MS',
+      5000,
+    );
   }
 
   @Process()
@@ -209,7 +215,7 @@ export class FileAnalysisProcessor {
     job: Job<FileAnalysisJobData>,
   ): Promise<FileAnalysisResult> {
     const formData = new FormData();
-    const blob = new Blob([fileBuffer], { type: `application/${fileType}` });
+    const blob = new Blob([fileBuffer as BlobPart], { type: `application/${fileType}` });
     formData.append('file', blob, fileName);
     formData.append('options', JSON.stringify(analysisOptions || {}));
 

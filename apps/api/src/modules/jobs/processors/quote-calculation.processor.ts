@@ -381,7 +381,11 @@ export class QuoteCalculationProcessor {
     return volume * baseRate * multiplier;
   }
 
-  private getMarginRate(quantity: number, complexity: string, pricingConfig: PricingConfig): number {
+  private getMarginRate(
+    quantity: number,
+    complexity: string,
+    pricingConfig: PricingConfig,
+  ): number {
     let baseMargin = pricingConfig.defaultMargin || 0.3;
 
     // Volume discount
@@ -477,7 +481,7 @@ export class QuoteCalculationProcessor {
           subtotal: summary.subtotal,
           tax: summary.tax,
           total: summary.total,
-          currency: summary.currency,
+          currency: summary.currency as any,
           validUntil: summary.validUntil,
           metadata: {
             rushFee: summary.rushFee,

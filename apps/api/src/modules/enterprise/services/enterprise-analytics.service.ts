@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/modules/redis/redis.service';
-import { UsageTrackingService, UsageEventType } from '../../billing/services/usage-tracking.service';
+import {
+  UsageTrackingService,
+  UsageEventType,
+} from '../../billing/services/usage-tracking.service';
 
 export interface EnterpriseAnalytics {
   tenantId: string;
@@ -85,22 +88,28 @@ export interface UsageAnalytics {
     totalComputeHours: number;
     peakConcurrency: number;
   };
-  breakdown: Record<UsageEventType, {
-    count: number;
-    trend: number; // percentage change from previous period
-    cost: number;
-  }>;
+  breakdown: Record<
+    UsageEventType,
+    {
+      count: number;
+      trend: number; // percentage change from previous period
+      cost: number;
+    }
+  >;
   patterns: {
     hourlyDistribution: Array<{ hour: number; usage: number }>;
     dailyDistribution: Array<{ day: string; usage: number }>;
     weeklyDistribution: Array<{ week: string; usage: number }>;
   };
   limits: {
-    quotaUtilization: Record<UsageEventType, {
-      used: number;
-      limit: number;
-      percentage: number;
-    }>;
+    quotaUtilization: Record<
+      UsageEventType,
+      {
+        used: number;
+        limit: number;
+        percentage: number;
+      }
+    >;
     approaching: UsageEventType[];
     exceeded: UsageEventType[];
   };
@@ -209,28 +218,51 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  async generateCustomReport(tenantId: string, config: {
-    metrics: string[];
-    period: string;
-    granularity: 'hour' | 'day' | 'week' | 'month';
-    filters?: Record<string, any>;
-  }): Promise<any> {
+  async generateCustomReport(
+    tenantId: string,
+    config: {
+      metrics: string[];
+      period: string;
+      granularity: 'hour' | 'day' | 'week' | 'month';
+      filters?: Record<string, any>;
+    },
+  ): Promise<any> {
     const { startDate, endDate } = this.getPeriodDates(config.period);
     const results: any = {};
 
     for (const metric of config.metrics) {
       switch (metric) {
         case 'user_growth':
-          results.userGrowth = await this.getUserGrowthTrend(tenantId, startDate, endDate, config.granularity);
+          results.userGrowth = await this.getUserGrowthTrend(
+            tenantId,
+            startDate,
+            endDate,
+            config.granularity,
+          );
           break;
         case 'revenue':
-          results.revenue = await this.getRevenueTrend(tenantId, startDate, endDate, config.granularity);
+          results.revenue = await this.getRevenueTrend(
+            tenantId,
+            startDate,
+            endDate,
+            config.granularity,
+          );
           break;
         case 'usage':
-          results.usage = await this.getUsageTrend(tenantId, startDate, endDate, config.granularity);
+          results.usage = await this.getUsageTrend(
+            tenantId,
+            startDate,
+            endDate,
+            config.granularity,
+          );
           break;
         case 'performance':
-          results.performance = await this.getPerformanceTrend(tenantId, startDate, endDate, config.granularity);
+          results.performance = await this.getPerformanceTrend(
+            tenantId,
+            startDate,
+            endDate,
+            config.granularity,
+          );
           break;
         default:
           this.logger.warn(`Unknown metric requested: ${metric}`);
@@ -246,7 +278,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getOverviewMetrics(tenantId: string, startDate: Date, endDate: Date): Promise<EnterpriseAnalytics['overview']> {
+  private async getOverviewMetrics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<EnterpriseAnalytics['overview']> {
     const [users, quotes, payments] = await Promise.all([
       this.prisma.user.findMany({
         where: { tenantId },
@@ -280,9 +316,9 @@ export class EnterpriseAnalyticsService {
     ]);
 
     const totalUsers = users.length;
-    const activeUsers = users.filter(u => u.lastLogin && u.lastLogin >= startDate).length;
+    const activeUsers = users.filter((u) => u.lastLogin && u.lastLogin >= startDate).length;
     const totalQuotes = quotes.length;
-    const acceptedQuotes = quotes.filter(q => q.status === 'accepted').length;
+    const acceptedQuotes = quotes.filter((q) => q.status === 'accepted').length;
     const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
     const averageOrderValue = payments.length > 0 ? totalRevenue / payments.length : 0;
     const conversionRate = totalQuotes > 0 ? acceptedQuotes / totalQuotes : 0;
@@ -298,7 +334,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getUsageMetrics(tenantId: string, startDate: Date, endDate: Date): Promise<EnterpriseAnalytics['usage']> {
+  private async getUsageMetrics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<EnterpriseAnalytics['usage']> {
     const usage = await this.usageTracking.getTenantUsage(tenantId, startDate, endDate);
 
     return {
@@ -310,7 +350,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getPerformanceMetrics(tenantId: string, startDate: Date, endDate: Date): Promise<EnterpriseAnalytics['performance']> {
+  private async getPerformanceMetrics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<EnterpriseAnalytics['performance']> {
     // Mock implementation - would integrate with APM tools
     return {
       averageQuoteTime: 45.2,
@@ -320,7 +364,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getTrendMetrics(tenantId: string, startDate: Date, endDate: Date): Promise<EnterpriseAnalytics['trends']> {
+  private async getTrendMetrics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<EnterpriseAnalytics['trends']> {
     const [userGrowth, revenueGrowth, usageGrowth] = await Promise.all([
       this.getUserGrowthTrend(tenantId, startDate, endDate, 'day'),
       this.getRevenueTrend(tenantId, startDate, endDate, 'day'),
@@ -334,7 +382,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getUserMetrics(tenantId: string, startDate: Date, endDate: Date): Promise<UserAnalytics['metrics']> {
+  private async getUserMetrics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UserAnalytics['metrics']> {
     const users = await this.prisma.user.findMany({
       where: { tenantId },
       select: {
@@ -346,9 +398,11 @@ export class EnterpriseAnalyticsService {
     });
 
     const totalUsers = users.length;
-    const newUsers = users.filter(u => u.createdAt >= startDate && u.createdAt <= endDate).length;
-    const activeUsers = users.filter(u => u.active && u.lastLogin && u.lastLogin >= startDate).length;
-    
+    const newUsers = users.filter((u) => u.createdAt >= startDate && u.createdAt <= endDate).length;
+    const activeUsers = users.filter(
+      (u) => u.active && u.lastLogin && u.lastLogin >= startDate,
+    ).length;
+
     // Mock retention/churn calculations
     const retainedUsers = Math.floor(activeUsers * 0.85);
     const churnedUsers = totalUsers - retainedUsers;
@@ -370,21 +424,28 @@ export class EnterpriseAnalyticsService {
       _count: { role: true },
     });
 
-    return users.reduce((acc, group) => {
-      acc[group.role] = group._count.role;
-      return acc;
-    }, {} as Record<string, number>);
+    return users.reduce(
+      (acc, group) => {
+        acc[group.role] = group._count.role;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }
 
-  private async getUsersByActivity(tenantId: string, startDate: Date, endDate: Date): Promise<UserAnalytics['usersByActivity']> {
+  private async getUsersByActivity(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UserAnalytics['usersByActivity']> {
     // Mock implementation - would track actual user sessions
     const totalUsers = await this.prisma.user.count({ where: { tenantId, active: true } });
-    
+
     return {
       highlyActive: Math.floor(totalUsers * 0.15),
       moderatelyActive: Math.floor(totalUsers * 0.35),
-      lowActive: Math.floor(totalUsers * 0.30),
-      inactive: Math.floor(totalUsers * 0.20),
+      lowActive: Math.floor(totalUsers * 0.3),
+      inactive: Math.floor(totalUsers * 0.2),
     };
   }
 
@@ -398,7 +459,11 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getCohortAnalysis(tenantId: string, startDate: Date, endDate: Date): Promise<UserAnalytics['cohortAnalysis']> {
+  private async getCohortAnalysis(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UserAnalytics['cohortAnalysis']> {
     // Mock implementation - would perform actual cohort analysis
     return [
       {
@@ -413,7 +478,11 @@ export class EnterpriseAnalyticsService {
     ];
   }
 
-  private async getUsageOverview(tenantId: string, startDate: Date, endDate: Date): Promise<UsageAnalytics['overview']> {
+  private async getUsageOverview(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UsageAnalytics['overview']> {
     const usage = await this.usageTracking.getTenantUsage(tenantId, startDate, endDate);
 
     return {
@@ -425,15 +494,21 @@ export class EnterpriseAnalyticsService {
     };
   }
 
-  private async getUsageBreakdown(tenantId: string, startDate: Date, endDate: Date): Promise<UsageAnalytics['breakdown']> {
-    const usage = await this.usageTracking.getTenantUsage(tenantId, startDate, endDate);
-    const previousUsage = await this.usageTracking.getTenantUsage(
-      tenantId,
-      new Date(startDate.getTime() - (endDate.getTime() - startDate.getTime())),
-      startDate
-    );
+  private async getUsageBreakdown(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UsageAnalytics['breakdown']> {
+    const usage =
+      (await (this.usageTracking as any).getTenantUsage(tenantId, startDate, endDate)) || {};
+    const previousUsage =
+      (await (this.usageTracking as any).getTenantUsage(
+        tenantId,
+        new Date(startDate.getTime() - (endDate.getTime() - startDate.getTime())),
+        startDate,
+      )) || {};
 
-    const breakdown: UsageAnalytics['breakdown'] = {};
+    const breakdown: UsageAnalytics['breakdown'] = {} as any;
 
     for (const eventType of Object.values(UsageEventType)) {
       const current = usage[eventType] || 0;
@@ -450,7 +525,11 @@ export class EnterpriseAnalyticsService {
     return breakdown;
   }
 
-  private async getUsagePatterns(tenantId: string, startDate: Date, endDate: Date): Promise<UsageAnalytics['patterns']> {
+  private async getUsagePatterns(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<UsageAnalytics['patterns']> {
     // Mock implementation - would analyze actual usage patterns
     return {
       hourlyDistribution: Array.from({ length: 24 }, (_, hour) => ({
@@ -463,10 +542,10 @@ export class EnterpriseAnalyticsService {
   }
 
   private async getUsageLimits(tenantId: string): Promise<UsageAnalytics['limits']> {
-    const currentUsage = await this.usageTracking.getCurrentMonthUsage(tenantId);
-    const limits = await this.usageTracking.getTenantLimits(tenantId);
+    const currentUsage = (await (this.usageTracking as any).getCurrentMonthUsage(tenantId)) || {};
+    const limits = (await (this.usageTracking as any).getTenantLimits(tenantId)) || {};
 
-    const quotaUtilization: UsageAnalytics['limits']['quotaUtilization'] = {};
+    const quotaUtilization: UsageAnalytics['limits']['quotaUtilization'] = {} as any;
     const approaching: UsageEventType[] = [];
     const exceeded: UsageEventType[] = [];
 
@@ -496,9 +575,9 @@ export class EnterpriseAnalyticsService {
 
   private async getUsageForecasting(tenantId: string): Promise<UsageAnalytics['forecasting']> {
     // Mock implementation - would use ML/statistical models for forecasting
-    const currentUsage = await this.usageTracking.getCurrentMonthUsage(tenantId);
-    
-    const projected30Day: Record<UsageEventType, number> = {};
+    const currentUsage = (await (this.usageTracking as any).getCurrentMonthUsage(tenantId)) || {};
+
+    const projected30Day: Record<UsageEventType, number> = {} as any;
     let estimatedCost = 0;
 
     for (const [eventType, used] of Object.entries(currentUsage)) {
@@ -518,7 +597,7 @@ export class EnterpriseAnalyticsService {
     // Mock pricing - would use actual pricing service
     const prices: Record<UsageEventType, number> = {
       [UsageEventType.API_CALL]: 0.001,
-      [UsageEventType.QUOTE_GENERATION]: 0.10,
+      [UsageEventType.QUOTE_GENERATION]: 0.1,
       [UsageEventType.FILE_ANALYSIS]: 0.05,
       [UsageEventType.DFM_REPORT]: 0.25,
       [UsageEventType.PDF_GENERATION]: 0.02,
@@ -556,22 +635,42 @@ export class EnterpriseAnalyticsService {
     return { startDate, endDate };
   }
 
-  private async getUserGrowthTrend(tenantId: string, startDate: Date, endDate: Date, granularity: string): Promise<Array<{ date: string; value: number }>> {
+  private async getUserGrowthTrend(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+    granularity: string,
+  ): Promise<Array<{ date: string; value: number }>> {
     // Mock implementation - would calculate actual user growth
     return [];
   }
 
-  private async getRevenueTrend(tenantId: string, startDate: Date, endDate: Date, granularity: string): Promise<Array<{ date: string; value: number }>> {
+  private async getRevenueTrend(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+    granularity: string,
+  ): Promise<Array<{ date: string; value: number }>> {
     // Mock implementation - would calculate actual revenue trend
     return [];
   }
 
-  private async getUsageTrend(tenantId: string, startDate: Date, endDate: Date, granularity: string): Promise<Array<{ date: string; value: number }>> {
+  private async getUsageTrend(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+    granularity: string,
+  ): Promise<Array<{ date: string; value: number }>> {
     // Mock implementation - would calculate actual usage trend
     return [];
   }
 
-  private async getPerformanceTrend(tenantId: string, startDate: Date, endDate: Date, granularity: string): Promise<Array<{ date: string; value: number }>> {
+  private async getPerformanceTrend(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+    granularity: string,
+  ): Promise<Array<{ date: string; value: number }>> {
     // Mock implementation - would calculate actual performance trend
     return [];
   }

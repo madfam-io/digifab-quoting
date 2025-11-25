@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 import configuration from './config/configuration';
+import { JanuaAuthGuard } from './modules/auth/guards/janua-auth.guard';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './modules/tenant/tenant.module';
@@ -25,8 +26,9 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { GuestModule } from './modules/guest/guest.module';
 import { LinkProcessingModule } from './modules/link-processing/link-processing.module';
 import { BillingModule } from './modules/billing/billing.module';
-import { ConversionModule } from './modules/conversion/conversion.module';
-import { EnterpriseModule } from './modules/enterprise/enterprise.module';
+// Temporarily disabled for Phase 1 GTM - enterprise features not ready
+// import { ConversionModule } from './modules/conversion/conversion.module';
+// import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { GeoModule } from './modules/geo/geo.module';
 
 @Module({
@@ -37,12 +39,12 @@ import { GeoModule } from './modules/geo/geo.module';
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ([
+      useFactory: (configService: ConfigService) => [
         {
           ttl: configService.get('RATE_LIMIT_TTL', 60) * 1000, // Convert seconds to milliseconds
           limit: configService.get('RATE_LIMIT_MAX', 100),
         },
-      ]),
+      ],
       inject: [ConfigService],
     }),
     TenantModule,
@@ -63,8 +65,8 @@ import { GeoModule } from './modules/geo/geo.module';
     GuestModule,
     LinkProcessingModule,
     BillingModule,
-    ConversionModule,
-    EnterpriseModule,
+    // ConversionModule,  // Disabled for Phase 1 GTM
+    // EnterpriseModule,  // Disabled for Phase 1 GTM
     GeoModule,
   ],
   controllers: [AppController],
@@ -72,6 +74,10 @@ import { GeoModule } from './modules/geo/geo.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JanuaAuthGuard,
     },
   ],
 })

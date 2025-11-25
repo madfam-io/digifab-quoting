@@ -6,14 +6,9 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/modules/redis/redis.service';
 import { firstValueFrom } from 'rxjs';
 import { Decimal } from '@prisma/client/runtime/library';
-import { 
-  Currency, 
-  ConversionResult, 
-  ConversionOptions,
-  CURRENCY_CONFIG 
-} from '@cotiza/shared';
+import { Currency, ConversionResult, ConversionOptions, CURRENCY_CONFIG } from '@cotiza/shared';
 
-interface ExchangeRatesResponse {
+export interface ExchangeRatesResponse {
   base: Currency;
   date: string;
   rates: Record<Currency, number>;
@@ -82,19 +77,15 @@ export class CurrencyService {
     private readonly configService: ConfigService,
   ) {
     // Initialize rate updates on service start
-    this.updateExchangeRates().catch(error => 
-      this.logger.error('Failed to initialize exchange rates:', error)
+    this.updateExchangeRates().catch((error) =>
+      this.logger.error('Failed to initialize exchange rates:', error),
     );
   }
 
   /**
    * Get exchange rate between two currencies
    */
-  async getRate(
-    from: Currency, 
-    to: Currency, 
-    date?: Date
-  ): Promise<number> {
+  async getRate(from: Currency, to: Currency, date?: Date): Promise<number> {
     if (from === to) return 1;
 
     // Check cache first (unless requesting historical rate)
@@ -120,11 +111,10 @@ export class CurrencyService {
 
       // Fallback to calculation using USD as base
       const rate = this.calculateRateFromFallback(from, to);
-      
-      this.logger.warn(`Using fallback rate for ${from}-${to}: ${rate}`);
-      
-      return rate;
 
+      this.logger.warn(`Using fallback rate for ${from}-${to}: ${rate}`);
+
+      return rate;
     } catch (error) {
       this.logger.error(`Failed to get rate for ${from}-${to}:`, error);
       return this.calculateRateFromFallback(from, to);
@@ -138,13 +128,13 @@ export class CurrencyService {
     amount: number,
     from: Currency,
     to: Currency,
-    options?: ConversionOptions
+    options?: ConversionOptions,
   ): Promise<ConversionResult> {
     try {
       const rate = await this.getRate(from, to, options?.date);
-      
+
       let convertedAmount = amount * rate;
-      
+
       // Apply fees if configured
       let fees: FeeCalculation | undefined;
       if (options?.includeFees) {
@@ -165,7 +155,6 @@ export class CurrencyService {
         fees,
         timestamp: new Date(),
       };
-
     } catch (error) {
       this.logger.error(`Currency conversion failed (${amount} ${from} to ${to}):`, error);
       throw new Error(`Currency conversion failed: ${error.message}`);
@@ -178,10 +167,10 @@ export class CurrencyService {
   async getExchangeRates(base: Currency = Currency.USD): Promise<ExchangeRatesResponse> {
     try {
       const rates = {} as Record<Currency, number>;
-      
+
       // Get rates for all supported currencies
       const currencies = Object.values(Currency);
-      
+
       for (const currency of currencies) {
         if (currency === base) {
           rates[currency] = 1;
@@ -197,7 +186,6 @@ export class CurrencyService {
         source: 'cotiza-studio',
         updatedAt: new Date().toISOString(),
       };
-
     } catch (error) {
       this.logger.error(`Failed to get exchange rates for base ${base}:`, error);
       throw error;
@@ -227,8 +215,8 @@ export class CurrencyService {
               base: 'USD',
             },
             timeout: 10000, // 10 second timeout
-          }
-        )
+          },
+        ),
       );
 
       const data = response.data;
@@ -242,14 +230,14 @@ export class CurrencyService {
       for (const [currencyCode, rate] of Object.entries(data.rates)) {
         if (this.isSupportedCurrency(currencyCode)) {
           const currency = currencyCode as Currency;
-          
+
           // Check for unusual rate changes
           const previousRate = await this.getLatestRateFromDB(Currency.USD, currency);
           if (previousRate) {
             const change = Math.abs((rate - previousRate) / previousRate);
             if (change > this.maxRateChange) {
               this.logger.warn(
-                `Large rate change detected for ${currency}: ${previousRate} -> ${rate} (${Math.round(change * 100)}%)`
+                `Large rate change detected for ${currency}: ${previousRate} -> ${rate} (${Math.round(change * 100)}%)`,
               );
               alertCount++;
             }
@@ -282,12 +270,11 @@ export class CurrencyService {
       // For now, we'll let cache expire naturally with TTL
 
       this.logger.log(
-        `Exchange rate update completed: ${updatedCount} rates updated, ${alertCount} alerts generated`
+        `Exchange rate update completed: ${updatedCount} rates updated, ${alertCount} alerts generated`,
       );
-
     } catch (error) {
       this.logger.error('Failed to update exchange rates:', error);
-      
+
       // Don't throw error to prevent service disruption
       // Fallback rates will be used automatically
     }
@@ -296,11 +283,7 @@ export class CurrencyService {
   /**
    * Get rate from database
    */
-  private async getRateFromDB(
-    from: Currency,
-    to: Currency,
-    date?: Date
-  ): Promise<number | null> {
+  private async getRateFromDB(from: Currency, to: Currency, date?: Date): Promise<number | null> {
     try {
       const targetDate = date || new Date();
 
@@ -338,14 +321,13 @@ export class CurrencyService {
       if (from !== Currency.USD && to !== Currency.USD) {
         const fromToUsd = await this.getRateFromDB(from, Currency.USD, date);
         const usdToTarget = await this.getRateFromDB(Currency.USD, to, date);
-        
+
         if (fromToUsd && usdToTarget) {
           return fromToUsd * usdToTarget;
         }
       }
 
       return null;
-
     } catch (error) {
       this.logger.error(`Database rate lookup failed for ${from}-${to}:`, error);
       return null;
@@ -355,10 +337,7 @@ export class CurrencyService {
   /**
    * Get latest rate from database (for change detection)
    */
-  private async getLatestRateFromDB(
-    from: Currency,
-    to: Currency
-  ): Promise<number | null> {
+  private async getLatestRateFromDB(from: Currency, to: Currency): Promise<number | null> {
     try {
       const rate = await this.prisma.exchangeRate.findFirst({
         where: {
@@ -397,9 +376,9 @@ export class CurrencyService {
    * Round amount according to currency rules
    */
   private roundByCurrency(
-    amount: number, 
+    amount: number,
     currency: Currency,
-    mode: 'floor' | 'ceil' | 'round' = 'round'
+    mode: 'floor' | 'ceil' | 'round' = 'round',
   ): number {
     const config = CURRENCY_CONFIG[currency];
     const decimals = config?.decimals || 2;
@@ -419,15 +398,11 @@ export class CurrencyService {
   /**
    * Calculate conversion fees (placeholder implementation)
    */
-  private calculateFees(
-    amount: number,
-    from: Currency,
-    _to: Currency
-  ): FeeCalculation {
+  private calculateFees(amount: number, from: Currency, _to: Currency): FeeCalculation {
     // Basic fee structure (can be made configurable)
     const percentageFee = 0.005; // 0.5%
-    const fixedFee = from === Currency.USD ? 0.30 : 0; // $0.30 for USD transactions
-    
+    const fixedFee = from === Currency.USD ? 0.3 : 0; // $0.30 for USD transactions
+
     const percentageAmount = amount * percentageFee;
     const total = percentageAmount + fixedFee;
 
@@ -465,15 +440,18 @@ export class CurrencyService {
         select: { detectedCurrency: true },
       });
 
-      const currencyCount = sessions.reduce((acc, session) => {
-        if (session.detectedCurrency) {
-          acc[session.detectedCurrency] = (acc[session.detectedCurrency] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<Currency, number>);
+      const currencyCount = sessions.reduce(
+        (acc, session) => {
+          if (session.detectedCurrency) {
+            acc[session.detectedCurrency] = (acc[session.detectedCurrency] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<Currency, number>,
+      );
 
       const topCurrencies = Object.entries(currencyCount)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 10);
 
       // Mock conversion pairs (would be real data in production)
@@ -494,7 +472,6 @@ export class CurrencyService {
         totalVolume,
         averageConversionAmount: 850, // Mock average
       };
-
     } catch (error) {
       this.logger.error('Failed to get conversion analytics:', error);
       throw error;

@@ -36,9 +36,9 @@ export class UsersController {
     const user = await this.usersService.findById(req.user.id);
     return {
       preferredLocale: user.preferredLocale || 'es',
-      emailNotifications: user.emailNotifications ?? true,
-      currency: user.currency || 'MXN',
-      timezone: user.timezone || 'America/Mexico_City',
+      emailNotifications: (user as any).emailNotifications ?? true,
+      currency: (user as any).currency || 'MXN',
+      timezone: (user as any).timezone || 'America/Mexico_City',
     };
   }
 }

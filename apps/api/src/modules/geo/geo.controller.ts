@@ -1,10 +1,10 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Req, 
-  UseGuards, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Req,
+  UseGuards,
   Query,
   HttpCode,
   HttpStatus,
@@ -17,12 +17,7 @@ import { CurrencyService } from './currency.service';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 // import { OptionalJwtAuthGuard } from '@/modules/auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import { 
-  GeoDetection, 
-  Currency,
-  ConversionResult,
-  ConversionOptions 
-} from '@cotiza/shared';
+import { GeoDetection, Currency, ConversionResult, ConversionOptions } from '@cotiza/shared';
 
 // DTOs for API validation
 class UpdatePreferencesDto {
@@ -51,19 +46,18 @@ class ExchangeRatesQuery {
 @ApiTags('geo')
 @Controller('api/v1/geo')
 export class GeoController {
-  constructor(
-    private readonly geoService: GeoService,
-  ) {}
+  constructor(private readonly geoService: GeoService) {}
 
   @Get('detect')
   @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests per minute
   // @UseGuards(OptionalJwtAuthGuard)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Detect user location and preferences',
-    description: 'Automatically detect user location, currency, and language preferences using IP geolocation and browser headers',
+    description:
+      'Automatically detect user location, currency, and language preferences using IP geolocation and browser headers',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Geo detection successful',
     schema: {
       type: 'object',
@@ -106,10 +100,10 @@ export class GeoController {
   })
   async detectLocation(
     @Req() req: Request,
-    @CurrentUser() user?: { id: string }
+    @CurrentUser() user?: { id: string },
   ): Promise<GeoDetection> {
     const detection = await this.geoService.detectFromRequest(req);
-    
+
     // Add user preferences if authenticated
     if (user) {
       const preferences = await this.geoService.getUserPreferences(user.id);
@@ -125,7 +119,7 @@ export class GeoController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update user geo preferences',
     description: 'Update user preferences for currency, locale, and auto-detection settings',
   })
@@ -133,7 +127,7 @@ export class GeoController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updatePreferences(
     @Body() preferences: UpdatePreferencesDto,
-    @CurrentUser() user: { id: string }
+    @CurrentUser() user: { id: string },
   ): Promise<void> {
     await this.geoService.updateUserPreferences(user.id, preferences);
   }
@@ -141,14 +135,12 @@ export class GeoController {
   @Get('analytics')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get geo analytics',
     description: 'Get geographic analytics and usage statistics (admin only)',
   })
   @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
-  async getAnalytics(
-    @Query('days') days?: string,
-  ) {
+  async getAnalytics(@Query('days') days?: string) {
     // TODO: Add role-based authorization for admin endpoints
     const dayCount = days ? parseInt(days) : 30;
     return this.geoService.getGeoAnalytics(dayCount);
@@ -162,12 +154,12 @@ export class CurrencyController {
 
   @Get('rates')
   @Throttle({ default: { limit: 1000, ttl: 3600000 } }) // 1000 requests per hour
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get current exchange rates',
     description: 'Get current exchange rates for all supported currencies',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Exchange rates retrieved successfully',
     schema: {
       type: 'object',
@@ -186,16 +178,16 @@ export class CurrencyController {
 
     // Filter to specific targets if requested
     if (query.targets) {
-      const targetCurrencies = query.targets.split(',').map(c => c.trim().toUpperCase());
-      const filteredRates: Record<Currency, number> = {};
-      
+      const targetCurrencies = query.targets.split(',').map((c) => c.trim().toUpperCase());
+      const filteredRates: Partial<Record<Currency, number>> = {};
+
       for (const target of targetCurrencies) {
         if (this.currencyService.isValidCurrency(target) && rates.rates[target as Currency]) {
           filteredRates[target as Currency] = rates.rates[target as Currency];
         }
       }
-      
-      rates.rates = filteredRates;
+
+      rates.rates = filteredRates as Record<Currency, number>;
     }
 
     return rates;
@@ -203,12 +195,12 @@ export class CurrencyController {
 
   @Post('convert')
   @Throttle({ default: { limit: 500, ttl: 3600000 } }) // 500 conversions per hour
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Convert currency amount',
     description: 'Convert amount between currencies with optional fees and rounding',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Currency converted successfully',
     schema: {
       type: 'object',
@@ -243,12 +235,12 @@ export class CurrencyController {
   }
 
   @Get('supported')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get supported currencies',
     description: 'Get list of all supported currencies',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Supported currencies retrieved',
     schema: {
       type: 'object',
@@ -269,14 +261,12 @@ export class CurrencyController {
   @Get('analytics')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get currency analytics',
     description: 'Get currency conversion analytics (admin only)',
   })
   @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
-  async getCurrencyAnalytics(
-    @Query('days') days?: string,
-  ) {
+  async getCurrencyAnalytics(@Query('days') days?: string) {
     // TODO: Add role-based authorization for admin endpoints
     const dayCount = days ? parseInt(days) : 30;
     return this.currencyService.getConversionAnalytics(dayCount);
@@ -286,14 +276,12 @@ export class CurrencyController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Force refresh exchange rates',
     description: 'Manually trigger exchange rate update (admin only)',
   })
   @ApiResponse({ status: 200, description: 'Rate refresh initiated' })
-  async forceRateRefresh(
-    @CurrentUser() user: { id: string; roles: string[] }
-  ) {
+  async forceRateRefresh(@CurrentUser() user: { id: string; roles: string[] }) {
     // TODO: Add role-based authorization for admin endpoints
     return this.currencyService.forceRateUpdate();
   }

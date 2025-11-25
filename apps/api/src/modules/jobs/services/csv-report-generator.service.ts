@@ -68,7 +68,9 @@ export class CsvReportGeneratorService {
     lines.push(`Status,${data.status}`);
 
     if (reportType === 'quote') {
-      lines.push(`Valid Until,${new Date((data as QuoteOrderData).expiresAt || new Date()).toLocaleDateString()}`);
+      lines.push(
+        `Valid Until,${new Date((data as QuoteOrderData).expiresAt || new Date()).toLocaleDateString()}`,
+      );
       lines.push(`Currency,${data.currency}`);
     }
 
@@ -84,7 +86,10 @@ export class CsvReportGeneratorService {
     }
 
     // Items
-    const items = reportType === 'order' ? (data as QuoteOrderData & { quote?: { items: ReportItem[] } }).quote?.items : (data as QuoteOrderData).items;
+    const items =
+      reportType === 'order'
+        ? (data as QuoteOrderData & { quote?: { items: ReportItem[] } }).quote?.items
+        : (data as QuoteOrderData).items;
     if (items && items.length > 0) {
       lines.push('');
       lines.push('ITEMS');
@@ -92,11 +97,22 @@ export class CsvReportGeneratorService {
 
       items.forEach((item: ReportItem, index: number) => {
         const fileName = this.escapeCsvValue(
-          (item as ReportItem & { files?: Array<{ originalName?: string }> }).files?.[0]?.originalName || item.name || 'Unknown',
+          (item as ReportItem & { files?: Array<{ originalName?: string }> }).files?.[0]
+            ?.originalName ||
+            item.name ||
+            'Unknown',
         );
-        const material = this.escapeCsvValue((item as ReportItem & { material?: { name?: string } }).material?.name || item.material || 'N/A');
+        const material = this.escapeCsvValue(
+          (item as ReportItem & { material?: { name?: string } }).material?.name ||
+            item.material ||
+            'N/A',
+        );
         const process = this.escapeCsvValue(
-          (item as ReportItem & { manufacturingProcess?: { name?: string }; processCode?: string }).manufacturingProcess?.name || (item as ReportItem & { processCode?: string }).processCode || item.process || 'N/A',
+          (item as ReportItem & { manufacturingProcess?: { name?: string }; processCode?: string })
+            .manufacturingProcess?.name ||
+            (item as ReportItem & { processCode?: string }).processCode ||
+            item.process ||
+            'N/A',
         );
         const total = item.unitPrice * item.quantity;
 
@@ -112,7 +128,9 @@ export class CsvReportGeneratorService {
     lines.push(`Subtotal,${(data as QuoteOrderData & { subtotal?: number }).subtotal || 0}`);
     lines.push(`Tax,${(data as QuoteOrderData & { tax?: number }).tax || 0}`);
     lines.push(`Shipping,${(data as QuoteOrderData & { shipping?: number }).shipping || 0}`);
-    lines.push(`Total,${(data as QuoteOrderData & { total?: number }).total || (data as QuoteOrderData).totalAmount || 0}`);
+    lines.push(
+      `Total,${(data as QuoteOrderData & { total?: number }).total || (data as QuoteOrderData).totalAmount || 0}`,
+    );
 
     return lines.join('\n');
   }
@@ -123,8 +141,12 @@ export class CsvReportGeneratorService {
     // Header
     lines.push('INVOICE');
     lines.push(`Invoice Number,${invoice.number}`);
-    lines.push(`Issue Date,${new Date((invoice as InvoiceData & { issuedAt?: Date }).issuedAt || invoice.dueDate).toLocaleDateString()}`);
-    lines.push(`Due Date,${new Date((invoice as InvoiceData & { dueAt?: Date }).dueAt || invoice.dueDate).toLocaleDateString()}`);
+    lines.push(
+      `Issue Date,${new Date((invoice as InvoiceData & { issuedAt?: Date }).issuedAt || invoice.dueDate).toLocaleDateString()}`,
+    );
+    lines.push(
+      `Due Date,${new Date((invoice as InvoiceData & { dueAt?: Date }).dueAt || invoice.dueDate).toLocaleDateString()}`,
+    );
     lines.push(`Status,${invoice.status}`);
     lines.push(`Currency,${(invoice as InvoiceData & { currency?: string }).currency || 'MXN'}`);
 
@@ -146,8 +168,30 @@ export class CsvReportGeneratorService {
       lines.push(`Company,${this.escapeCsvValue(invoice.customer.company || 'N/A')}`);
       lines.push(`Email,${invoice.customer.email}`);
 
-      if ((invoice.customer as CustomerData & { billingAddress?: { street?: string; city?: string; state?: string; postalCode?: string; country?: string } }).billingAddress) {
-        const addr = (invoice.customer as CustomerData & { billingAddress?: { street?: string; city?: string; state?: string; postalCode?: string; country?: string } }).billingAddress;
+      if (
+        (
+          invoice.customer as CustomerData & {
+            billingAddress?: {
+              street?: string;
+              city?: string;
+              state?: string;
+              postalCode?: string;
+              country?: string;
+            };
+          }
+        ).billingAddress
+      ) {
+        const addr = (
+          invoice.customer as CustomerData & {
+            billingAddress?: {
+              street?: string;
+              city?: string;
+              state?: string;
+              postalCode?: string;
+              country?: string;
+            };
+          }
+        ).billingAddress;
         lines.push(
           `Address,"${this.escapeCsvValue(
             [addr.street, addr.city, addr.state, addr.postalCode, addr.country]
@@ -227,8 +271,10 @@ export class CsvReportGeneratorService {
     // Summary
     lines.push('');
     lines.push('SUMMARY');
-    const totalQuotes = data.quotes?.reduce((sum: number, q: QuoteStatistic) => sum + q._count, 0) || 0;
-    const totalOrders = data.orders?.reduce((sum: number, o: OrderStatistic) => sum + o._count, 0) || 0;
+    const totalQuotes =
+      data.quotes?.reduce((sum: number, q: QuoteStatistic) => sum + q._count, 0) || 0;
+    const totalOrders =
+      data.orders?.reduce((sum: number, o: OrderStatistic) => sum + o._count, 0) || 0;
     const totalRevenue =
       data.revenue?.reduce((sum: number, r: RevenueByPeriod) => sum + (r.revenue || 0), 0) || 0;
 

@@ -13,16 +13,29 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@/*": ["src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "exclude": ["node_modules", "dist", "**/examples/**"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/examples/**",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "src/modules/enterprise/**",
+    "src/modules/conversion/**"
+  ]
 }

@@ -29,19 +29,19 @@ export interface SSOConfiguration {
   samlIssuer?: string;
   samlCallbackUrl?: string;
   samlLogoutUrl?: string;
-  
+
   // OIDC Configuration
   oidcDiscoveryUrl?: string;
   oidcClientId?: string;
   oidcClientSecret?: string;
   oidcScope?: string;
   oidcResponseType?: string;
-  
+
   // Azure AD Configuration
   azureTenantId?: string;
   azureClientId?: string;
   azureClientSecret?: string;
-  
+
   // Common Configuration
   attributeMapping?: AttributeMapping;
   roleMapping?: RoleMapping[];
@@ -90,18 +90,21 @@ export class SSOService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createSSOProvider(tenantId: string, providerData: Partial<SSOProvider>): Promise<SSOProvider> {
+  async createSSOProvider(
+    tenantId: string,
+    providerData: Partial<SSOProvider>,
+  ): Promise<SSOProvider> {
     // Validate configuration based on provider type
     this.validateSSOConfiguration(providerData.type!, providerData.configuration!);
 
-    const provider = await this.prisma.ssoProvider.create({
+    const provider = await this.prisma.sSOProvider.create({
       data: {
         tenantId,
         name: providerData.name!,
         type: providerData.type!,
         enabled: providerData.enabled ?? true,
-        configuration: providerData.configuration!,
-        metadata: providerData.metadata || {},
+        configuration: providerData.configuration as any,
+        metadata: (providerData.metadata || {}) as any,
       },
     });
 
@@ -119,11 +122,11 @@ export class SSOService {
   }
 
   async getSSOProviders(tenantId: string): Promise<SSOProvider[]> {
-    const providers = await this.prisma.ssoProvider.findMany({
+    const providers = await this.prisma.sSOProvider.findMany({
       where: { tenantId },
     });
 
-    return providers.map(provider => ({
+    return providers.map((provider) => ({
       id: provider.id,
       tenantId: provider.tenantId,
       name: provider.name,
@@ -134,9 +137,13 @@ export class SSOService {
     }));
   }
 
-  async updateSSOProvider(tenantId: string, providerId: string, updates: Partial<SSOProvider>): Promise<SSOProvider> {
+  async updateSSOProvider(
+    tenantId: string,
+    providerId: string,
+    updates: Partial<SSOProvider>,
+  ): Promise<SSOProvider> {
     if (updates.configuration) {
-      const provider = await this.prisma.ssoProvider.findFirst({
+      const provider = await this.prisma.sSOProvider.findFirst({
         where: { id: providerId, tenantId },
       });
 
@@ -145,13 +152,13 @@ export class SSOService {
       }
     }
 
-    const provider = await this.prisma.ssoProvider.update({
+    const provider = await this.prisma.sSOProvider.update({
       where: { id: providerId },
       data: {
         name: updates.name,
         enabled: updates.enabled,
-        configuration: updates.configuration,
-        metadata: updates.metadata,
+        configuration: updates.configuration as any,
+        metadata: updates.metadata as any,
       },
     });
 
@@ -167,15 +174,19 @@ export class SSOService {
   }
 
   async deleteSSOProvider(tenantId: string, providerId: string): Promise<void> {
-    await this.prisma.ssoProvider.delete({
+    await this.prisma.sSOProvider.delete({
       where: { id: providerId },
     });
 
     this.logger.log(`Deleted SSO provider ${providerId} for tenant ${tenantId}`);
   }
 
-  async initiateSSOLogin(tenantId: string, providerId: string, redirectUrl?: string): Promise<{ loginUrl: string }> {
-    const provider = await this.prisma.ssoProvider.findFirst({
+  async initiateSSOLogin(
+    tenantId: string,
+    providerId: string,
+    redirectUrl?: string,
+  ): Promise<{ loginUrl: string }> {
+    const provider = await this.prisma.sSOProvider.findFirst({
       where: { id: providerId, tenantId, enabled: true },
     });
 
@@ -190,19 +201,19 @@ export class SSOService {
       case SSOProviderType.SAML:
         loginUrl = await this.initiateSAMLLogin(config, redirectUrl);
         break;
-        
+
       case SSOProviderType.OIDC:
         loginUrl = await this.initiateOIDCLogin(config, redirectUrl);
         break;
-        
+
       case SSOProviderType.AZURE_AD:
         loginUrl = await this.initiateAzureADLogin(config, redirectUrl);
         break;
-        
+
       case SSOProviderType.OKTA:
         loginUrl = await this.initiateOktaLogin(config, redirectUrl);
         break;
-        
+
       default:
         throw new BadRequestException('Unsupported SSO provider type');
     }
@@ -210,8 +221,12 @@ export class SSOService {
     return { loginUrl };
   }
 
-  async handleSSOCallback(tenantId: string, providerId: string, callbackData: any): Promise<SSOLoginResult> {
-    const provider = await this.prisma.ssoProvider.findFirst({
+  async handleSSOCallback(
+    tenantId: string,
+    providerId: string,
+    callbackData: any,
+  ): Promise<SSOLoginResult> {
+    const provider = await this.prisma.sSOProvider.findFirst({
       where: { id: providerId, tenantId, enabled: true },
     });
 
@@ -226,25 +241,25 @@ export class SSOService {
       case SSOProviderType.SAML:
         userProfile = await this.handleSAMLCallback(config, callbackData);
         break;
-        
+
       case SSOProviderType.OIDC:
         userProfile = await this.handleOIDCCallback(config, callbackData);
         break;
-        
+
       case SSOProviderType.AZURE_AD:
         userProfile = await this.handleAzureADCallback(config, callbackData);
         break;
-        
+
       default:
         throw new BadRequestException('Unsupported SSO provider type');
     }
 
     // Map SSO profile to internal user
     const mappedUser = await this.mapSSOUserProfile(tenantId, config, userProfile);
-    
+
     // Create or update user
     const { user, isNewUser } = await this.createOrUpdateUser(tenantId, mappedUser);
-    
+
     // Generate tokens
     const tokens = await this.generateTokens(user);
 
@@ -289,7 +304,10 @@ export class SSOService {
     return `${discoveryDoc.authorization_endpoint}?${params.toString()}`;
   }
 
-  private async initiateAzureADLogin(config: SSOConfiguration, redirectUrl?: string): Promise<string> {
+  private async initiateAzureADLogin(
+    config: SSOConfiguration,
+    redirectUrl?: string,
+  ): Promise<string> {
     // Implementation for Azure AD login initiation
     const params = new URLSearchParams({
       client_id: config.azureClientId!,
@@ -311,16 +329,19 @@ export class SSOService {
   private async handleSAMLCallback(config: SSOConfiguration, callbackData: any): Promise<any> {
     // Implementation for SAML callback handling
     return new Promise((resolve, reject) => {
-      saml.parseResponse({
-        cert: config.samlCert,
-        samlResponse: callbackData.SAMLResponse,
-      }, (err: any, profile: any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(profile);
-        }
-      });
+      saml.parseResponse(
+        {
+          cert: config.samlCert,
+          samlResponse: callbackData.SAMLResponse,
+        },
+        (err: any, profile: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(profile);
+          }
+        },
+      );
     });
   }
 
@@ -335,7 +356,11 @@ export class SSOService {
     return this.handleOIDCCallback(config, callbackData);
   }
 
-  private async mapSSOUserProfile(tenantId: string, config: SSOConfiguration, profile: any): Promise<any> {
+  private async mapSSOUserProfile(
+    tenantId: string,
+    config: SSOConfiguration,
+    profile: any,
+  ): Promise<any> {
     const mapping = config.attributeMapping || {
       email: 'email',
       firstName: 'firstName',
@@ -347,7 +372,10 @@ export class SSOService {
       email: profile[mapping.email],
       firstName: profile[mapping.firstName!] || null,
       lastName: profile[mapping.lastName!] || null,
-      name: profile[mapping.name!] || `${profile[mapping.firstName!]} ${profile[mapping.lastName!]}`.trim() || null,
+      name:
+        profile[mapping.name!] ||
+        `${profile[mapping.firstName!]} ${profile[mapping.lastName!]}`.trim() ||
+        null,
       department: profile[mapping.department!] || null,
       title: profile[mapping.title!] || null,
       phone: profile[mapping.phone!] || null,
@@ -355,14 +383,15 @@ export class SSOService {
 
     // Map roles
     const ssoRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role].filter(Boolean);
-    mappedUser.role = this.mapSSORole(config.roleMapping || [], ssoRoles) || config.defaultRole || 'customer';
+    (mappedUser as any).role =
+      this.mapSSORole(config.roleMapping || [], ssoRoles) || config.defaultRole || 'customer';
 
     return mappedUser;
   }
 
   private mapSSORole(roleMapping: RoleMapping[], ssoRoles: string[]): string | null {
     for (const ssoRole of ssoRoles) {
-      const mapping = roleMapping.find(m => m.ssoRole === ssoRole);
+      const mapping = roleMapping.find((m) => m.ssoRole === ssoRole);
       if (mapping) {
         return mapping.internalRole;
       }
@@ -370,7 +399,10 @@ export class SSOService {
     return null;
   }
 
-  private async createOrUpdateUser(tenantId: string, userData: any): Promise<{ user: any; isNewUser: boolean }> {
+  private async createOrUpdateUser(
+    tenantId: string,
+    userData: any,
+  ): Promise<{ user: any; isNewUser: boolean }> {
     const existingUser = await this.prisma.user.findFirst({
       where: {
         email: userData.email,
@@ -446,19 +478,19 @@ export class SSOService {
           throw new BadRequestException('SAML configuration missing required fields');
         }
         break;
-        
+
       case SSOProviderType.OIDC:
         if (!config.oidcDiscoveryUrl || !config.oidcClientId || !config.oidcClientSecret) {
           throw new BadRequestException('OIDC configuration missing required fields');
         }
         break;
-        
+
       case SSOProviderType.AZURE_AD:
         if (!config.azureTenantId || !config.azureClientId || !config.azureClientSecret) {
           throw new BadRequestException('Azure AD configuration missing required fields');
         }
         break;
-        
+
       default:
         throw new BadRequestException('Invalid SSO provider type');
     }
@@ -472,19 +504,22 @@ export class SSOService {
 
   private async exchangeCodeForTokens(config: SSOConfiguration, code: string): Promise<any> {
     // Exchange authorization code for tokens
-    const response = await fetch(config.oidcDiscoveryUrl!.replace('/.well-known/openid_configuration', '/oauth2/token'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const response = await fetch(
+      config.oidcDiscoveryUrl!.replace('/.well-known/openid_configuration', '/oauth2/token'),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: config.oidcClientId!,
+          client_secret: config.oidcClientSecret!,
+          code,
+          redirect_uri: config.samlCallbackUrl!,
+        }),
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: config.oidcClientId!,
-        client_secret: config.oidcClientSecret!,
-        code,
-        redirect_uri: config.samlCallbackUrl!,
-      }),
-    });
+    );
 
     return response.json();
   }
@@ -495,6 +530,8 @@ export class SSOService {
   }
 
   private generateState(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    );
   }
 }

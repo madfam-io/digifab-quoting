@@ -14,7 +14,7 @@ export class QuoteValidationService {
 
   async validateQuoteForCalculation(
     tenantId: string,
-    quote: PrismaQuote & { items: PrismaQuoteItem[] }
+    quote: PrismaQuote & { items: PrismaQuoteItem[] },
   ): Promise<QuoteValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -53,7 +53,7 @@ export class QuoteValidationService {
 
   async validateQuoteForApproval(
     tenantId: string,
-    quote: PrismaQuote & { items: PrismaQuoteItem[] }
+    quote: PrismaQuote & { items: PrismaQuoteItem[] },
   ): Promise<QuoteValidationResult> {
     const result = await this.validateQuoteForCalculation(tenantId, quote);
 
@@ -62,7 +62,7 @@ export class QuoteValidationService {
       result.errors.push('Quote must be calculated before approval');
     }
 
-    if (!quote.total || quote.total <= 0) {
+    if (!quote.total || Number(quote.total) <= 0) {
       result.errors.push('Quote total must be greater than zero');
     }
 
@@ -106,7 +106,11 @@ export class QuoteValidationService {
     return errors;
   }
 
-  async validateQuoteOwnership(tenantId: string, quoteId: string, userId?: string): Promise<boolean> {
+  async validateQuoteOwnership(
+    tenantId: string,
+    quoteId: string,
+    userId?: string,
+  ): Promise<boolean> {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       select: { tenantId: true, customerId: true, origin: true },
