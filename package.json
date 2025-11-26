@@ -15,7 +15,7 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "test:cov": "turbo run test:cov", 
+    "test:cov": "turbo run test:cov",
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
@@ -40,12 +40,12 @@
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "tsup": "^8.0.2",
-    "turbo": "^1.12.4",
+    "turbo": "2.6.1",
     "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "packageManager": "npm@10.2.4"
+  "packageManager": "pnpm@9.15.0"
 }
