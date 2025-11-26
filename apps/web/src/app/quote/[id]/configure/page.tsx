@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,7 +45,8 @@ interface ProcessOption {
   type: 'material' | 'finish' | 'precision' | 'other';
 }
 
-export default function QuoteConfigurePage({ params }: { params: { id: string } }) {
+export default function QuoteConfigurePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -114,7 +115,7 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
     try {
       // For each file, add as quote item
       for (const fileId of fileIds) {
-        await apiClient.post(`/quotes/${params.id}/items`, {
+        await apiClient.post(`/quotes/${id}/items`, {
           fileId,
           processType: 'FFF', // This should be detected based on file type
           materialId: selectedMaterial,
@@ -127,7 +128,7 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
       }
 
       // Calculate quote with selected currency
-      await apiClient.post(`/quotes/${params.id}/calculate`, {
+      await apiClient.post(`/quotes/${id}/calculate`, {
         currency: selectedCurrency,
         objective: {
           cost: 0.5,
@@ -137,7 +138,7 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
       });
 
       // Navigate to quote review
-      router.push(`/quote/${params.id}`);
+      router.push(`/quote/${id}`);
     } catch (error) {
       console.error('Error calculating quote:', error);
       toast({
@@ -178,7 +179,9 @@ export default function QuoteConfigurePage({ params }: { params: { id: string } 
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <CardTitle>Configure Your Quote</CardTitle>
-                  <p className="text-muted-foreground mt-1">Select materials and options for your parts</p>
+                  <p className="text-muted-foreground mt-1">
+                    Select materials and options for your parts
+                  </p>
                 </div>
                 <CurrencySelector
                   value={selectedCurrency}

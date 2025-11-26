@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +39,8 @@ interface QuoteItem {
   leadTime: number;
 }
 
-export default function QuoteDetailsPage({ params }: { params: { id: string } }) {
+export default function QuoteDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const { data: session, status } = useSession();
   const { toast } = useToast();
@@ -58,11 +59,11 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
     }
 
     loadQuote();
-  }, [session, status, params.id]);
+  }, [session, status, id]);
 
   const loadQuote = async () => {
     try {
-      const quoteData = await apiClient.get<Quote>(`/quotes/${params.id}`);
+      const quoteData = await apiClient.get<Quote>(`/quotes/${id}`);
       setQuote(quoteData);
       setLoading(false);
     } catch (error) {
@@ -80,7 +81,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
     setApproving(true);
 
     try {
-      await apiClient.post(`/quotes/${params.id}/approve`);
+      await apiClient.post(`/quotes/${id}/approve`);
 
       // For MVP, redirect to success page
       // In production, this would redirect to payment
@@ -103,7 +104,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
 
   const handleDownloadPdf = async () => {
     try {
-      const pdfData = await apiClient.get<{ url: string }>(`/quotes/${params.id}/pdf`);
+      const pdfData = await apiClient.get<{ url: string }>(`/quotes/${id}/pdf`);
       window.open(pdfData.url, '_blank');
     } catch (error) {
       toast({
@@ -194,7 +195,8 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
                               currency={quote.currency}
                               size="sm"
                               variant="minimal"
-                            /> each
+                            />{' '}
+                            each
                           </p>
                         </div>
                       </div>

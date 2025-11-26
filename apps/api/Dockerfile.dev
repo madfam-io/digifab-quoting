@@ -15,7 +15,7 @@ COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 
 # Install all dependencies
-RUN npm ci
+RUN npm install
 
 # Generate Prisma client
 WORKDIR /app/apps/api

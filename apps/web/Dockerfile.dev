@@ -12,7 +12,7 @@ COPY packages/ ./packages/
 COPY apps/web/ ./apps/web/
 
 # Install all dependencies
-RUN npm ci
+RUN npm install
 
 WORKDIR /app
 

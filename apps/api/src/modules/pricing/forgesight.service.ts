@@ -1,6 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ForgeSightClient, ServiceType, Currency } from '@forgesight/client';
+import {
+  ForgesightClient,
+  ServiceType,
+  Currency,
+  ForgesightConfig,
+} from '../../integrations/forgesight';
 import { Cacheable } from '../redis/decorators/cache.decorator';
 import { ProcessType } from '@cotiza/shared';
 
@@ -54,7 +59,7 @@ interface MaterialPriceTrend {
 @Injectable()
 export class ForgeSightService implements OnModuleInit {
   private readonly logger = new Logger(ForgeSightService.name);
-  private client: ForgeSightClient | null = null;
+  private client: ForgesightClient | null = null;
   private enabled = false;
 
   constructor(private configService: ConfigService) {}
@@ -64,7 +69,7 @@ export class ForgeSightService implements OnModuleInit {
     const apiKey = this.configService.get<string>('FORGESIGHT_API_KEY');
 
     if (apiUrl && apiKey) {
-      this.client = new ForgeSightClient({
+      this.client = new ForgesightClient({
         baseUrl: apiUrl,
         apiKey,
         timeout: 5000, // 5s timeout for pricing calls
@@ -88,17 +93,17 @@ export class ForgeSightService implements OnModuleInit {
    */
   private mapProcessToService(process: ProcessType): ServiceType {
     const mapping: Record<string, ServiceType> = {
-      'FDM': 'fdm_printing',
-      'SLA': 'sla_printing',
-      'SLS': 'sls_printing',
-      'MJF': 'mjf_printing',
-      'DMLS': 'dmls_printing',
-      'CNC_MILLING': 'cnc_milling',
-      'CNC_TURNING': 'cnc_turning',
-      'CNC_5AXIS': 'cnc_5axis',
-      'LASER_CUTTING': 'laser_cutting',
-      'SHEET_METAL': 'sheet_metal',
-      'INJECTION_MOLDING': 'injection_molding',
+      FDM: 'fdm_printing',
+      SLA: 'sla_printing',
+      SLS: 'sls_printing',
+      MJF: 'mjf_printing',
+      DMLS: 'dmls_printing',
+      CNC_MILLING: 'cnc_milling',
+      CNC_TURNING: 'cnc_turning',
+      CNC_5AXIS: 'cnc_5axis',
+      LASER_CUTTING: 'laser_cutting',
+      SHEET_METAL: 'sheet_metal',
+      INJECTION_MOLDING: 'injection_molding',
     };
     return mapping[process] || 'fdm_printing';
   }
@@ -134,7 +139,9 @@ export class ForgeSightService implements OnModuleInit {
 
       return result;
     } catch (error) {
-      this.logger.warn(`ForgeSight pricing fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `ForgeSight pricing fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return null;
     }
   }
@@ -179,9 +186,10 @@ export class ForgeSightService implements OnModuleInit {
     }
 
     // Calculate competitive index (100 = most competitive)
-    const competitiveIndex = Math.max(0, Math.min(100,
-      100 - ((params.ourPrice - marketLow) / (marketHigh - marketLow)) * 100
-    ));
+    const competitiveIndex = Math.max(
+      0,
+      Math.min(100, 100 - ((params.ourPrice - marketLow) / (marketHigh - marketLow)) * 100),
+    );
 
     // Generate recommendation
     let recommendation: PriceBenchmark['recommendation'];
@@ -223,7 +231,8 @@ export class ForgeSightService implements OnModuleInit {
 
         if (history.dataPoints.length > 0) {
           const currentPrice = history.dataPoints[history.dataPoints.length - 1].price;
-          const price30dAgo = history.dataPoints[Math.max(0, history.dataPoints.length - 30)]?.price || currentPrice;
+          const price30dAgo =
+            history.dataPoints[Math.max(0, history.dataPoints.length - 30)]?.price || currentPrice;
           const price90dAgo = history.dataPoints[0]?.price || currentPrice;
 
           const priceChange30d = ((currentPrice - price30dAgo) / price30dAgo) * 100;
@@ -240,7 +249,7 @@ export class ForgeSightService implements OnModuleInit {
           }
 
           // Calculate volatility from standard deviation
-          const prices = history.dataPoints.map(dp => dp.price);
+          const prices = history.dataPoints.map((dp) => dp.price);
           const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
           const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
           const stdDev = Math.sqrt(variance);
@@ -269,7 +278,9 @@ export class ForgeSightService implements OnModuleInit {
 
       return trends;
     } catch (error) {
-      this.logger.warn(`ForgeSight trend fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `ForgeSight trend fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return [];
     }
   }
@@ -278,7 +289,10 @@ export class ForgeSightService implements OnModuleInit {
    * Compare vendor prices for a material
    */
   @Cacheable({ prefix: 'forgesight:vendor-comparison', ttl: 1800 }) // Cache 30 min
-  async compareVendors(materialId: string, quantity: number): Promise<{
+  async compareVendors(
+    materialId: string,
+    quantity: number,
+  ): Promise<{
     vendors: Array<{
       vendorId: string;
       vendorName: string;
@@ -302,7 +316,7 @@ export class ForgeSightService implements OnModuleInit {
       let recommendedVendor: string | null = null;
       let bestScore = -Infinity;
 
-      const vendors = comparison.vendors.map(v => {
+      const vendors = comparison.vendors.map((v) => {
         // Score = rating * 20 - normalized price (lower price = higher score)
         const priceScore = 100 - (v.pricePerUnit / comparison.averagePrice) * 50;
         const score = v.rating * 20 + priceScore;
@@ -326,7 +340,9 @@ export class ForgeSightService implements OnModuleInit {
         recommendedVendor,
       };
     } catch (error) {
-      this.logger.warn(`ForgeSight vendor comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `ForgeSight vendor comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return null;
     }
   }
@@ -361,7 +377,9 @@ export class ForgeSightService implements OnModuleInit {
 
       return result;
     } catch (error) {
-      this.logger.warn(`ForgeSight regional comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `ForgeSight regional comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return null;
     }
   }
