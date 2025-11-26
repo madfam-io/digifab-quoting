@@ -1,6 +1,6 @@
 {
   "name": "@cotiza/chaos",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Chaos engineering framework for Cotiza Studio",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@cotiza/cache",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Multi-layer distributed caching for Cotiza Studio",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
