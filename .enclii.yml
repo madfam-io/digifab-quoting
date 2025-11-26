@@ -1,0 +1,117 @@
+# DigiFab Quoting - Instant Manufacturing Quotes
+# Deploy via Enclii
+
+apiVersion: enclii.dev/v1
+kind: Service
+metadata:
+  name: digifab-quoting
+  project: madfam-platform
+  description: Instant quoting engine for digital fabrication services
+
+spec:
+  build:
+    type: dockerfile
+    dockerfile: Dockerfile
+    context: .
+    source:
+      git:
+        repository: https://github.com/madfam-io/digifab-quoting
+        branch: main
+        autoDeploy: true
+
+  runtime:
+    port: 3000
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "2000m"
+        memory: "2Gi"
+
+    healthCheck: /api/health
+    readinessProbe:
+      path: /api/health
+      initialDelaySeconds: 15
+      periodSeconds: 5
+    livenessProbe:
+      path: /api/health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+
+  env:
+    - name: PORT
+      value: "3000"
+    - name: NODE_ENV
+      value: production
+
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: digifab-secrets
+          key: database-url
+
+    - name: REDIS_URL
+      valueFrom:
+        secretKeyRef:
+          name: digifab-secrets
+          key: redis-url
+
+    # Janua SSO
+    - name: NEXT_PUBLIC_JANUA_URL
+      value: https://auth.madfam.io
+    - name: NEXT_PUBLIC_JANUA_CLIENT_ID
+      value: digifab-quoting
+    - name: JANUA_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: digifab-secrets
+          key: janua-client-secret
+
+    # MADFAM Analytics
+    - name: NEXT_PUBLIC_ANALYTICS_URL
+      value: https://analytics.madfam.io
+    - name: NEXT_PUBLIC_ANALYTICS_SITE_ID
+      value: digifab-quoting
+
+    # Coforma Feedback
+    - name: NEXT_PUBLIC_COFORMA_URL
+      value: https://coforma.madfam.io
+    - name: NEXT_PUBLIC_COFORMA_PRODUCT_ID
+      value: digifab-quoting
+
+    # Cotiza Integration
+    - name: COTIZA_API_URL
+      value: https://api.cotiza.madfam.io
+    - name: COTIZA_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: digifab-secrets
+          key: cotiza-api-key
+
+  volumes:
+    - name: upload-cache
+      mountPath: /var/cache/digifab/uploads
+      size: 20Gi
+      storageClassName: hetzner-ssd
+      accessMode: ReadWriteOnce
+
+  domains:
+    - domain: quote.digifab.io
+      tls: true
+      tlsIssuer: cloudflare
+    - domain: digifab-quoting.madfam.io
+      tls: true
+      tlsIssuer: cloudflare
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+  slo:
+    availability: 99.9
+    latencyP95: 300
+    errorRate: 0.5

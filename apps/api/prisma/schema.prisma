@@ -19,7 +19,7 @@ enum Currency {
   CLP  // Chilean Peso
   COP  // Colombian Peso
   PEN  // Peruvian Sol
-  
+
   // Europe
   EUR  // Euro
   GBP  // British Pound
@@ -28,7 +28,7 @@ enum Currency {
   NOK  // Norwegian Krone
   DKK  // Danish Krone
   PLN  // Polish Zloty
-  
+
   // Asia Pacific
   CNY  // Chinese Yuan
   JPY  // Japanese Yen
@@ -40,7 +40,7 @@ enum Currency {
   NZD  // New Zealand Dollar
   TWD  // Taiwan Dollar
   THB  // Thai Baht
-  
+
   // Middle East & Africa
   AED  // UAE Dirham
   SAR  // Saudi Riyal
@@ -63,12 +63,20 @@ model Tenant {
   settings              Json     @default("{}")
   branding              Json     @default("{}")
   active                Boolean  @default(true)
-  
+
   // Billing fields
   billingPlanId         String?
   stripeCustomerId      String?  @unique
   stripeSubscriptionId  String?  @unique
-  
+
+  // Janua multi-provider billing (Conekta for MX, Polar for international)
+  januaCustomerId       String?  @unique
+  billingProvider       String?  // 'conekta' | 'polar' | 'stripe'
+  countryCode           String?  // ISO country code for billing routing
+  taxId                 String?  // RFC for Mexican CFDI
+  companyName           String?  // Legal company name for invoicing
+  email                 String?  // Billing contact email
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -924,7 +932,7 @@ model WhiteLabelConfiguration {
   id            String   @id @default(cuid())
   tenantId      String   @unique
   branding      Json     // BrandingConfiguration
-  customization Json     // CustomizationConfiguration  
+  customization Json     // CustomizationConfiguration
   domain        Json     // DomainConfiguration
   features      Json     // FeatureConfiguration
   deployment    Json     // DeploymentConfiguration

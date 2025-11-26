@@ -7,6 +7,7 @@ import { MeteringService } from './services/metering.service';
 import { InvoiceService } from './services/invoice.service';
 import { PricingTierService } from './services/pricing-tier.service';
 import { UsageTrackingInterceptor } from './interceptors/usage-tracking.interceptor';
+import { JanuaBillingService } from './services/janua-billing.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RedisModule } from '@/modules/redis/redis.module';
 import { PaymentModule } from '@/modules/payment/payment.module';
@@ -27,12 +28,19 @@ import { PaymentModule } from '@/modules/payment/payment.module';
   controllers: [BillingController],
   providers: [
     BillingService,
+    JanuaBillingService,
     UsageTrackingService,
     MeteringService,
     InvoiceService,
     PricingTierService,
     UsageTrackingInterceptor,
   ],
-  exports: [BillingService, UsageTrackingService, MeteringService, UsageTrackingInterceptor],
+  exports: [
+    BillingService,
+    JanuaBillingService,
+    UsageTrackingService,
+    MeteringService,
+    UsageTrackingInterceptor,
+  ],
 })
 export class BillingModule {}

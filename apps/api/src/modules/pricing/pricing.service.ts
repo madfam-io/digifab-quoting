@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Cacheable } from '../redis/decorators/cache.decorator';
 import { ProcessType, Material, Machine, QuoteItemSelections } from '@cotiza/shared';
-import { PricingEngine, TenantPricingConfig, GeometryMetrics as PricingGeometryMetrics } from '@cotiza/pricing-engine';
+import {
+  PricingEngine,
+  TenantPricingConfig,
+  GeometryMetrics as PricingGeometryMetrics,
+} from '@cotiza/pricing-engine';
 import { Decimal } from 'decimal.js';
+import { ForgeSightService } from './forgesight.service';
 
 interface GeometryMetrics {
   volumeCm3?: number;
@@ -33,9 +38,13 @@ interface TenantSettings {
 
 @Injectable()
 export class PricingService {
+  private readonly logger = new Logger(PricingService.name);
   private readonly pricingEngine: PricingEngine;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private forgeSightService: ForgeSightService,
+  ) {
     this.pricingEngine = new PricingEngine();
   }
 
@@ -63,7 +72,7 @@ export class PricingService {
     if (!material) {
       throw new Error(`Material with ID ${materialId} not found or inactive`);
     }
-    
+
     if (!machine) {
       throw new Error(`Machine with ID ${machineId} not found or inactive`);
     }
@@ -81,10 +90,12 @@ export class PricingService {
       energyTariffPerKwh: new Decimal(0.12),
       laborRatePerHour: new Decimal(25),
       rushUpchargePercent: new Decimal((tenantConfig.rushOrderRate || 0.25) * 100),
-      volumeDiscounts: Object.entries(tenantConfig.volumeDiscountThresholds || {}).map(([qty, discount]) => ({
-        minQuantity: parseInt(qty),
-        discountPercent: new Decimal(discount * 100),
-      })),
+      volumeDiscounts: Object.entries(tenantConfig.volumeDiscountThresholds || {}).map(
+        ([qty, discount]) => ({
+          minQuantity: parseInt(qty),
+          discountPercent: new Decimal(discount * 100),
+        }),
+      ),
       gridCo2eFactor: new Decimal(0.42),
       logisticsCo2eFactor: new Decimal(0.0002),
     };
@@ -186,6 +197,109 @@ export class PricingService {
       where,
       orderBy: { process: 'asc' },
     });
+  }
+
+  /**
+   * Calculate quote item with market intelligence from ForgeSight
+   *
+   * This enhanced method combines internal pricing calculations with
+   * external market data to provide competitive and accurate quotes.
+   */
+  async calculateQuoteItemWithMarketIntelligence(
+    tenantId: string,
+    process: ProcessType,
+    geometryMetrics: GeometryMetrics,
+    materialId: string,
+    machineId: string,
+    selections: PricingSelections,
+    quantity: number,
+    objective: PricingObjective,
+  ) {
+    // Get base pricing from internal engine
+    const basePricing = await this.calculateQuoteItem(
+      tenantId,
+      process,
+      geometryMetrics,
+      materialId,
+      machineId,
+      selections,
+      quantity,
+      objective,
+    );
+
+    // Enhance with ForgeSight market intelligence (if available)
+    let marketIntelligence = null;
+    let benchmark = null;
+
+    if (this.forgeSightService.isEnabled()) {
+      try {
+        // Fetch market pricing in parallel with benchmark
+        const [marketPricing, priceBenchmark] = await Promise.all([
+          this.forgeSightService.getMarketPricing({
+            materialId,
+            process,
+            quantity,
+            volumeCm3: geometryMetrics.volumeCm3,
+          }),
+          this.forgeSightService.getBenchmark({
+            materialId,
+            process,
+            quantity,
+            ourPrice: basePricing.totalPrice,
+          }),
+        ]);
+
+        marketIntelligence = marketPricing;
+        benchmark = priceBenchmark;
+
+        // Log market positioning for analytics
+        if (priceBenchmark) {
+          this.logger.debug(
+            `Quote pricing: ${priceBenchmark.ourPosition} (index: ${priceBenchmark.competitiveIndex})`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `ForgeSight market intelligence unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
+
+    return {
+      ...basePricing,
+      marketIntelligence: marketIntelligence
+        ? {
+            marketPrice: marketIntelligence.totalCost,
+            confidence: marketIntelligence.confidence,
+            benchmarkPosition: marketIntelligence.benchmarkPosition,
+            breakdown: marketIntelligence.breakdown,
+          }
+        : null,
+      benchmark: benchmark
+        ? {
+            marketLow: benchmark.marketLow,
+            marketAverage: benchmark.marketAverage,
+            marketHigh: benchmark.marketHigh,
+            ourPosition: benchmark.ourPosition,
+            competitiveIndex: benchmark.competitiveIndex,
+            recommendation: benchmark.recommendation,
+          }
+        : null,
+    };
+  }
+
+  /**
+   * Get material price trends for procurement planning
+   */
+  async getMaterialPriceTrends(materialIds: string[]) {
+    return this.forgeSightService.getMaterialTrends(materialIds);
+  }
+
+  /**
+   * Compare vendor prices for a material
+   */
+  async getVendorComparison(materialId: string, quantity: number) {
+    return this.forgeSightService.compareVendors(materialId, quantity);
   }
 
   @Cacheable({ prefix: 'tenant-pricing-config', ttl: 3600 }) // Cache for 1 hour
