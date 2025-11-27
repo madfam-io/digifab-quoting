@@ -20,16 +20,19 @@ export class FFFPricingCalculator extends BasePricingCalculator {
     const marginAmount = this.calculateMargin(costTotal);
 
     const basePrice = costTotal.plus(marginAmount);
-    const { discount, warnings: discountWarnings } = this.calculateVolumeDiscount(basePrice, costTotal);
+    const { discount, warnings: discountWarnings } = this.calculateVolumeDiscount(
+      basePrice,
+      costTotal,
+    );
     const unitPrice = basePrice.minus(discount);
     const totalPrice = unitPrice.mul(this.input.quantity);
-    
+
     // Validate final pricing
     const { warnings: pricingWarnings } = this.validateFinalPricing(
       costTotal,
       unitPrice,
       marginAmount,
-      discount
+      discount,
     );
 
     // Calculate sustainability
@@ -56,11 +59,7 @@ export class FFFPricingCalculator extends BasePricingCalculator {
       ),
       sustainability,
       confidence: 0.95, // High confidence for FFF
-      warnings: [
-        ...this.generateWarnings(usage, time),
-        ...discountWarnings,
-        ...pricingWarnings
-      ],
+      warnings: [...this.generateWarnings(usage, time), ...discountWarnings, ...pricingWarnings],
     };
   }
 
@@ -136,6 +135,12 @@ export class FFFPricingCalculator extends BasePricingCalculator {
     const maxDimension = Math.max(geometry.bboxMm.x, geometry.bboxMm.y, geometry.bboxMm.z);
     if (maxDimension > 250) {
       warnings.push('Part dimensions exceed typical build volume');
+    }
+
+    // Check for tall thin parts that may require special handling
+    const aspectRatio = geometry.bboxMm.z / Math.max(geometry.bboxMm.x, geometry.bboxMm.y);
+    if (aspectRatio > 5 && geometry.bboxMm.z > 100) {
+      warnings.push('Tall part may require special handling');
     }
 
     // Check if print time is very long

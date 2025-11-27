@@ -26,7 +26,7 @@ export abstract class BasePricingCalculator {
     const { material } = this.input;
     const massKg = new Decimal(usage.grossVolumeCm3).mul(material.density).div(1000); // g to kg
     const cost = massKg.mul(material.pricePerUom);
-    
+
     CostValidator.validateCostComponent(cost, 'Material');
     return cost;
   }
@@ -35,7 +35,7 @@ export abstract class BasePricingCalculator {
     const { machine } = this.input;
     const hoursTotal = new Decimal(time.totalMinutes).div(60);
     const cost = hoursTotal.mul(machine.hourlyRate);
-    
+
     CostValidator.validateCostComponent(cost, 'Machine');
     return cost;
   }
@@ -45,7 +45,7 @@ export abstract class BasePricingCalculator {
     const hoursProcessing = new Decimal(time.processingMinutes).div(60);
     const energyKwh = hoursProcessing.mul(machine.powerW).div(1000);
     const cost = energyKwh.mul(tenantConfig.energyTariffPerKwh);
-    
+
     CostValidator.validateCostComponent(cost, 'Energy');
     return cost;
   }
@@ -55,7 +55,7 @@ export abstract class BasePricingCalculator {
     const laborMinutes = time.setupMinutes + time.postProcessingMinutes;
     const laborHours = new Decimal(laborMinutes).div(60);
     const cost = laborHours.mul(tenantConfig.laborRatePerHour);
-    
+
     CostValidator.validateCostComponent(cost, 'Labor');
     return cost;
   }
@@ -63,55 +63,64 @@ export abstract class BasePricingCalculator {
   protected calculateOverheadCost(subtotal: Decimal): Decimal {
     const { tenantConfig } = this.input;
     const cost = subtotal.mul(tenantConfig.overheadPercent).div(100);
-    
+
     CostValidator.validateCostComponent(cost, 'Overhead');
     return cost;
   }
 
   protected calculateMargin(costTotal: Decimal): Decimal {
     const { tenantConfig } = this.input;
-    
+
     // Validate margin percentage is not negative
-    MarginValidator.validateMarginPercent(tenantConfig.marginFloorPercent, 'Tenant config margin floor');
-    
+    MarginValidator.validateMarginPercent(
+      tenantConfig.marginFloorPercent,
+      'Tenant config margin floor',
+    );
+
     // Calculate the margin amount
     const marginAmount = costTotal.mul(tenantConfig.marginFloorPercent).div(100);
-    
+
     // Ensure minimum price is maintained
-    const minimumPrice = MarginValidator.calculateMinimumPrice(costTotal, tenantConfig.marginFloorPercent);
+    const minimumPrice = MarginValidator.calculateMinimumPrice(
+      costTotal,
+      tenantConfig.marginFloorPercent,
+    );
     const priceWithMargin = costTotal.plus(marginAmount);
-    
+
     if (priceWithMargin.lessThan(minimumPrice)) {
       // Adjust margin to meet minimum requirements
       return minimumPrice.minus(costTotal);
     }
-    
+
     return marginAmount;
   }
 
-  protected calculateVolumeDiscount(basePrice: Decimal, totalCost: Decimal): { discount: Decimal; warnings: string[] } {
+  protected calculateVolumeDiscount(
+    basePrice: Decimal,
+    totalCost: Decimal,
+  ): { discount: Decimal; warnings: string[] } {
     const { quantity, tenantConfig } = this.input;
     const warnings: string[] = [];
-    
+
     const applicableDiscount = tenantConfig.volumeDiscounts
       .filter((d) => quantity >= d.minQuantity)
       .sort((a, b) => b.minQuantity - a.minQuantity)[0];
 
     if (applicableDiscount) {
       const requestedDiscount = basePrice.mul(applicableDiscount.discountPercent).div(100);
-      
+
       // Ensure discount doesn't violate margin requirements
       const { adjustedDiscount, warning } = MarginValidator.adjustDiscountForMargin(
         basePrice,
         totalCost,
         requestedDiscount,
-        tenantConfig.marginFloorPercent
+        tenantConfig.marginFloorPercent,
       );
-      
+
       if (warning) {
         warnings.push(warning);
       }
-      
+
       return { discount: adjustedDiscount, warnings };
     }
 
@@ -156,7 +165,7 @@ export abstract class BasePricingCalculator {
       co2e: {
         material: materialCo2e.toNumber(),
         energy: energyCo2e.toNumber(),
-        logistics: 0,
+        logistics: logisticsCo2e.toNumber(),
         total: totalCo2e.toNumber(),
       },
       co2eKg: totalCo2e,
@@ -198,7 +207,7 @@ export abstract class BasePricingCalculator {
   ): CostBreakdown {
     // Validate all cost components
     CostValidator.validateTotalCosts(material, machine, energy, labor, overhead);
-    
+
     return {
       material,
       machine,
@@ -209,7 +218,7 @@ export abstract class BasePricingCalculator {
       discount,
     };
   }
-  
+
   /**
    * Validates the final pricing to ensure business rules are met
    */
@@ -217,17 +226,17 @@ export abstract class BasePricingCalculator {
     totalCost: Decimal,
     finalPrice: Decimal,
     margin: Decimal,
-    discount: Decimal = new Decimal(0)
+    discount: Decimal = new Decimal(0),
   ): { isValid: boolean; warnings: string[] } {
     const { tenantConfig } = this.input;
-    
+
     const validation = MarginValidator.validateFinalMargin(
       totalCost,
       finalPrice,
       tenantConfig.marginFloorPercent,
-      'Final pricing validation'
+      'Final pricing validation',
     );
-    
+
     // Additional validation for effective margin after discount
     if (discount.greaterThan(0)) {
       const effectiveMargin = margin.minus(discount);
@@ -236,7 +245,7 @@ export abstract class BasePricingCalculator {
         validation.isValid = false;
       }
     }
-    
+
     return validation;
   }
 }
