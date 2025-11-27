@@ -10,13 +10,13 @@ import { UsageTrackingInterceptor } from './interceptors/usage-tracking.intercep
 import { JanuaBillingService } from './services/janua-billing.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RedisModule } from '@/modules/redis/redis.module';
-import { PaymentModule } from '@/modules/payment/payment.module';
+// NOTE: PaymentModule (direct Stripe) removed - all payments now route through Janua
 
 @Module({
   imports: [
     PrismaModule,
     RedisModule,
-    PaymentModule,
+    // PaymentModule removed - using JanuaBillingService for all payment operations
     BullModule.registerQueue({
       name: 'billing',
       redis: {

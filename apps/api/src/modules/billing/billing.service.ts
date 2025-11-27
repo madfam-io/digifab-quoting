@@ -3,7 +3,8 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { UsageTrackingService, UsageEventType } from './services/usage-tracking.service';
 import { PricingTierService } from './services/pricing-tier.service';
 import { JanuaBillingService } from './services/janua-billing.service';
-import { StripeService } from '@/modules/payment/stripe.service';
+// NOTE: All payment processing now goes through Janua Payment Gateway
+// Direct Stripe usage removed - Janua handles provider routing (Conekta, Stripe, Polar)
 
 export interface UsageLimit {
   eventType: UsageEventType;
@@ -43,7 +44,6 @@ export class BillingService {
     private readonly usageTracking: UsageTrackingService,
     private readonly pricingTierService: PricingTierService,
     private readonly januaBilling: JanuaBillingService,
-    private readonly stripeService: StripeService,
   ) {}
 
   /**
@@ -59,7 +59,8 @@ export class BillingService {
   }
 
   /**
-   * Create checkout for quote payment via Janua multi-provider
+   * Create checkout for quote payment via Janua Payment Gateway
+   * Routes to appropriate provider based on country (Conekta for MX, Stripe/Polar for others)
    */
   async createQuoteCheckout(
     tenantId: string,
@@ -80,73 +81,54 @@ export class BillingService {
       throw new BadRequestException('Quote not found');
     }
 
-    // Use Janua if available
-    if (this.januaBilling.isEnabled()) {
-      let customerId = tenant.januaCustomerId;
-
-      if (!customerId) {
-        const result = await this.januaBilling.createCustomer({
-          email: tenant.email,
-          name: tenant.name,
-          companyName: tenant.companyName,
-          taxId: tenant.taxId, // RFC for Mexico
-          countryCode,
-        });
-        customerId = result.customerId;
-
-        await this.prisma.tenant.update({
-          where: { id: tenantId },
-          data: {
-            januaCustomerId: customerId,
-            billingProvider: result.provider,
-            countryCode,
-          },
-        });
-      }
-
-      const webUrl = process.env.WEB_URL || 'http://localhost:3000';
-      const result = await this.januaBilling.createQuotePaymentSession({
-        customerId,
-        customerEmail: tenant.email,
-        quoteId,
-        amount: Math.round(quote.totalPrice * 100), // Convert to cents
-        currency: countryCode === 'MX' ? 'MXN' : 'USD',
-        countryCode,
-        description: `Quote #${quote.quoteNumber}`,
-        lineItems: [], // Could populate from quote line items
-        successUrl: `${webUrl}/quotes/${quoteId}/success`,
-        cancelUrl: `${webUrl}/quotes/${quoteId}`,
-        metadata: { tenantId },
-      });
-
-      return {
-        checkoutUrl: result.checkoutUrl,
-        provider: result.provider,
-      };
+    // Ensure Janua is enabled
+    if (!this.januaBilling.isEnabled()) {
+      throw new BadRequestException(
+        'Payment gateway not configured. Please set JANUA_API_URL and JANUA_API_KEY.',
+      );
     }
 
-    // Fallback to direct Stripe
-    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
-    const session = await this.stripeService.createCheckoutSession({
-      quoteId,
-      customerEmail: tenant.email,
-      lineItems: [
-        {
-          name: `Quote #${quote.quoteNumber}`,
-          description: 'Manufacturing quote payment',
-          amount: Math.round(quote.totalPrice * 100),
-          currency: 'usd',
-          quantity: 1,
+    // Get or create Janua customer
+    let customerId = tenant.januaCustomerId;
+
+    if (!customerId) {
+      const result = await this.januaBilling.createCustomer({
+        email: tenant.email,
+        name: tenant.name,
+        companyName: tenant.companyName,
+        taxId: tenant.taxId, // RFC for Mexico
+        countryCode,
+      });
+      customerId = result.customerId;
+
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: {
+          januaCustomerId: customerId,
+          billingProvider: result.provider,
+          countryCode,
         },
-      ],
+      });
+    }
+
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    const result = await this.januaBilling.createQuotePaymentSession({
+      customerId,
+      customerEmail: tenant.email,
+      quoteId,
+      amount: Math.round(quote.totalPrice * 100), // Convert to cents/centavos
+      currency: countryCode === 'MX' ? 'MXN' : 'USD',
+      countryCode,
+      description: `Quote #${quote.quoteNumber}`,
+      lineItems: [], // Could populate from quote line items
       successUrl: `${webUrl}/quotes/${quoteId}/success`,
       cancelUrl: `${webUrl}/quotes/${quoteId}`,
       metadata: { tenantId },
     });
 
     return {
-      checkoutUrl: session.url,
-      provider: 'stripe',
+      checkoutUrl: result.checkoutUrl,
+      provider: result.provider,
     };
   }
 
@@ -208,10 +190,41 @@ export class BillingService {
     const amount = billingCycle === 'yearly' ? tier.yearlyPrice : tier.monthlyPrice;
 
     if (amount > 0) {
-      // Create Stripe subscription
-      const subscription = await this.stripeService.createSubscription({
-        customer: tenant.stripeCustomerId,
-        priceId: this.getStripePriceId(tier.name, billingCycle),
+      // Use Janua for subscription management
+      if (!this.januaBilling.isEnabled()) {
+        throw new BadRequestException(
+          'Payment gateway not configured. Please set JANUA_API_URL and JANUA_API_KEY.',
+        );
+      }
+
+      // Get or create Janua customer
+      let customerId = tenant.januaCustomerId;
+      if (!customerId) {
+        const customerResult = await this.januaBilling.createCustomer({
+          email: tenant.email,
+          name: tenant.name,
+          companyName: tenant.companyName,
+          countryCode: tenant.countryCode || 'US',
+        });
+        customerId = customerResult.customerId;
+
+        await this.prisma.tenant.update({
+          where: { id: tenantId },
+          data: {
+            januaCustomerId: customerId,
+            billingProvider: customerResult.provider,
+          },
+        });
+      }
+
+      // Create subscription via Janua
+      const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+      const subscription = await this.januaBilling.createSubscription({
+        customerId,
+        planId: tierName,
+        billingCycle,
+        successUrl: `${webUrl}/billing/success`,
+        cancelUrl: `${webUrl}/billing`,
         metadata: {
           tenantId,
           tierName,
@@ -224,15 +237,13 @@ export class BillingService {
         where: { id: tenantId },
         data: {
           billingPlanId: tier.id,
-          stripeSubscriptionId: subscription.id,
+          billingProvider: subscription.provider,
         },
       });
 
       return {
-        subscriptionId: subscription.id,
-        checkoutUrl: subscription.latest_invoice
-          ? (subscription.latest_invoice as any).hosted_invoice_url
-          : undefined,
+        subscriptionId: subscription.subscriptionId,
+        checkoutUrl: subscription.checkoutUrl,
       };
     } else {
       // Free tier - just update the plan
@@ -240,7 +251,6 @@ export class BillingService {
         where: { id: tenantId },
         data: {
           billingPlanId: tier.id,
-          stripeSubscriptionId: null,
         },
       });
 
@@ -315,29 +325,56 @@ export class BillingService {
       throw new BadRequestException('Tenant not found');
     }
 
-    const session = await this.stripeService.createCheckoutSession({
-      quoteId: invoiceId, // Using invoice ID as quote ID for billing context
-      customerEmail: tenant.users[0]?.email || 'noreply@cotiza.studio', // Get first user's email
-      lineItems: [
-        {
-          name: `Invoice for ${invoice.period}`,
-          description: `Cotiza Studio Quoting Service - ${invoice.period}`,
-          amount: Number(invoice.totalAmount) * 100, // Convert to cents
-          currency: 'usd',
-          quantity: 1,
+    // Ensure Janua is enabled
+    if (!this.januaBilling.isEnabled()) {
+      throw new BadRequestException(
+        'Payment gateway not configured. Please set JANUA_API_URL and JANUA_API_KEY.',
+      );
+    }
+
+    // Get or create Janua customer
+    let customerId = tenant.januaCustomerId;
+    const countryCode = tenant.countryCode || 'US';
+
+    if (!customerId) {
+      const customerResult = await this.januaBilling.createCustomer({
+        email: tenant.users[0]?.email || tenant.email,
+        name: tenant.name,
+        companyName: tenant.companyName,
+        countryCode,
+      });
+      customerId = customerResult.customerId;
+
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: {
+          januaCustomerId: customerId,
+          billingProvider: customerResult.provider,
         },
-      ],
+      });
+    }
+
+    const webUrl = process.env.WEB_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const result = await this.januaBilling.createQuotePaymentSession({
+      customerId,
+      customerEmail: tenant.users[0]?.email || tenant.email,
+      quoteId: invoiceId, // Using invoice ID as quote ID for billing context
+      amount: Math.round(Number(invoice.totalAmount) * 100), // Convert to cents/centavos
+      currency: countryCode === 'MX' ? 'MXN' : 'USD',
+      countryCode,
+      description: `Invoice for ${invoice.period} - Cotiza Studio`,
+      lineItems: [],
+      successUrl: `${webUrl}/billing/success?invoice=${invoiceId}`,
+      cancelUrl: `${webUrl}/billing/invoices`,
       metadata: {
         tenantId,
         invoiceId,
         type: 'billing_invoice',
       },
-      successUrl: `${process.env.FRONTEND_URL}/billing/success?invoice=${invoiceId}`,
-      cancelUrl: `${process.env.FRONTEND_URL}/billing/invoices`,
     });
 
     return {
-      sessionUrl: session.url,
+      sessionUrl: result.checkoutUrl,
     };
   }
 
@@ -441,6 +478,9 @@ export class BillingService {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30); // 30 days payment term
 
+    const countryCode = tenant.countryCode || 'US';
+    const currency = countryCode === 'MX' ? 'MXN' : 'USD';
+
     const invoice = await this.prisma.invoice.create({
       data: {
         tenantId,
@@ -448,35 +488,41 @@ export class BillingService {
         baseFee,
         usageCost: overageCost,
         totalAmount,
+        currency,
         status: 'pending',
         dueDate,
       },
     });
 
-    // Create Stripe invoice if amount > 0
-    if (totalAmount > 0) {
-      const stripeInvoice = await this.stripeService.createInvoice({
-        customer: tenant.stripeCustomerId,
-        amount: totalAmount,
-        currency: 'usd',
-        description: `Cotiza Studio Quoting - ${period}`,
-        metadata: {
-          tenantId,
-          invoiceId: invoice.id,
-          period,
-        },
-      });
+    // Create Janua invoice if amount > 0 and Janua is enabled
+    if (totalAmount > 0 && this.januaBilling.isEnabled() && tenant.januaCustomerId) {
+      try {
+        const januaInvoice = await this.januaBilling.createInvoice({
+          customerId: tenant.januaCustomerId,
+          amount: Math.round(totalAmount * 100), // Convert to cents/centavos
+          currency,
+          description: `Cotiza Studio Quoting - ${period}`,
+          metadata: {
+            tenantId,
+            invoiceId: invoice.id,
+            period,
+          },
+        });
 
-      await this.prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          stripeInvoiceId: stripeInvoice.id,
-        },
-      });
+        await this.prisma.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            januaInvoiceId: januaInvoice.invoiceId,
+          },
+        });
+      } catch (err) {
+        this.logger.warn(`Failed to create Janua invoice: ${err.message}`);
+        // Continue without Janua invoice - can be created later when payment is attempted
+      }
     }
 
     this.logger.log(
-      `Generated invoice for tenant ${tenantId}, period ${period}, amount $${totalAmount}`,
+      `Generated invoice for tenant ${tenantId}, period ${period}, amount ${currency} ${totalAmount}`,
     );
 
     return {
@@ -493,100 +539,9 @@ export class BillingService {
     };
   }
 
-  private getStripePriceId(tierName: string, billingCycle: 'monthly' | 'yearly'): string {
-    const priceMap = {
-      free: {
-        monthly: '',
-        yearly: '',
-      },
-      pro: {
-        monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || '',
-        yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID || '',
-      },
-      enterprise: {
-        monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || '',
-        yearly: process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID || '',
-      },
-    };
-
-    return priceMap[tierName]?.[billingCycle] || '';
-  }
-
-  async handleStripeWebhook(event: any): Promise<void> {
-    switch (event.type) {
-      case 'invoice.payment_succeeded':
-        await this.handleInvoicePaymentSucceeded(event.data.object);
-        break;
-      case 'invoice.payment_failed':
-        await this.handleInvoicePaymentFailed(event.data.object);
-        break;
-      case 'subscription.deleted':
-        await this.handleSubscriptionDeleted(event.data.object);
-        break;
-      default:
-        this.logger.debug(`Unhandled Stripe webhook event: ${event.type}`);
-    }
-  }
-
-  private async handleInvoicePaymentSucceeded(stripeInvoice: any): Promise<void> {
-    const invoice = await this.prisma.invoice.findFirst({
-      where: { stripeInvoiceId: stripeInvoice.id },
-    });
-
-    if (invoice) {
-      await this.prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: 'paid',
-          paidAt: new Date(),
-        },
-      });
-
-      this.logger.log(`Invoice ${invoice.id} marked as paid`);
-    }
-  }
-
-  private async handleInvoicePaymentFailed(stripeInvoice: any): Promise<void> {
-    const invoice = await this.prisma.invoice.findFirst({
-      where: { stripeInvoiceId: stripeInvoice.id },
-    });
-
-    if (invoice) {
-      await this.prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: 'failed',
-        },
-      });
-
-      this.logger.warn(`Invoice ${invoice.id} payment failed`);
-    }
-  }
-
-  private async handleSubscriptionDeleted(subscription: any): Promise<void> {
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { stripeSubscriptionId: subscription.id },
-    });
-
-    if (tenant) {
-      // Downgrade to free tier
-      const freeTier = await this.pricingTierService.getTier('free');
-      if (freeTier) {
-        await this.prisma.tenant.update({
-          where: { id: tenant.id },
-          data: {
-            billingPlanId: freeTier.id,
-            stripeSubscriptionId: null,
-          },
-        });
-
-        this.logger.log(`Tenant ${tenant.id} downgraded to free tier`);
-      }
-    }
-  }
-
   // ==========================================
   // Janua Webhook Handlers
+  // All payment processing now goes through Janua Payment Gateway
   // ==========================================
 
   /**

@@ -86,7 +86,7 @@ export class JanuaBillingService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.januaApiKey}`,
+        Authorization: `Bearer ${this.januaApiKey}`,
       },
       body: JSON.stringify({
         email: params.email,
@@ -149,7 +149,7 @@ export class JanuaBillingService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.januaApiKey}`,
+        Authorization: `Bearer ${this.januaApiKey}`,
       },
       body: JSON.stringify({
         customer_id: params.customerId,
@@ -212,7 +212,7 @@ export class JanuaBillingService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.januaApiKey}`,
+        Authorization: `Bearer ${this.januaApiKey}`,
       },
       body: JSON.stringify({
         customer_id: params.customerId,
@@ -247,6 +247,103 @@ export class JanuaBillingService {
   }
 
   /**
+   * Create a subscription via Janua
+   */
+  async createSubscription(params: {
+    customerId: string;
+    planId: string;
+    billingCycle: 'monthly' | 'yearly';
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ subscriptionId: string; checkoutUrl?: string; provider: string }> {
+    if (!this.isEnabled()) {
+      throw new Error('Janua billing not enabled');
+    }
+
+    const response = await fetch(`${this.januaApiUrl}/api/billing/subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.januaApiKey}`,
+      },
+      body: JSON.stringify({
+        customer_id: params.customerId,
+        plan_id: `digifab_${params.planId}_${params.billingCycle}`,
+        billing_cycle: params.billingCycle,
+        success_url: params.successUrl,
+        cancel_url: params.cancelUrl,
+        metadata: {
+          ...params.metadata,
+          product: 'digifab-quoting',
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      this.logger.error(`Janua subscription creation failed: ${error}`);
+      throw new Error(`Failed to create subscription: ${error}`);
+    }
+
+    const data = await response.json();
+    this.logger.log(`Created subscription via Janua: ${data.subscription_id}`);
+
+    return {
+      subscriptionId: data.subscription_id,
+      checkoutUrl: data.checkout_url,
+      provider: data.provider,
+    };
+  }
+
+  /**
+   * Create an invoice via Janua
+   */
+  async createInvoice(params: {
+    customerId: string;
+    amount: number; // in smallest currency unit (cents/centavos)
+    currency: string;
+    description: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ invoiceId: string; provider: string }> {
+    if (!this.isEnabled()) {
+      throw new Error('Janua billing not enabled');
+    }
+
+    const response = await fetch(`${this.januaApiUrl}/api/billing/invoices`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.januaApiKey}`,
+      },
+      body: JSON.stringify({
+        customer_id: params.customerId,
+        amount: params.amount,
+        currency: params.currency,
+        description: params.description,
+        metadata: {
+          ...params.metadata,
+          product: 'digifab-quoting',
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      this.logger.error(`Janua invoice creation failed: ${error}`);
+      throw new Error(`Failed to create invoice: ${error}`);
+    }
+
+    const data = await response.json();
+    this.logger.log(`Created invoice via Janua: ${data.invoice_id}`);
+
+    return {
+      invoiceId: data.invoice_id,
+      provider: data.provider,
+    };
+  }
+
+  /**
    * Create a billing portal session
    */
   async createPortalSession(params: {
@@ -264,7 +361,7 @@ export class JanuaBillingService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.januaApiKey}`,
+        Authorization: `Bearer ${this.januaApiKey}`,
       },
       body: JSON.stringify({
         customer_id: params.customerId,
@@ -302,7 +399,7 @@ export class JanuaBillingService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.januaApiKey}`,
+        Authorization: `Bearer ${this.januaApiKey}`,
       },
       body: JSON.stringify({
         payment_id: params.paymentId,
@@ -346,10 +443,7 @@ export class JanuaBillingService {
       .update(payload)
       .digest('hex');
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   }
 
   /**
@@ -377,12 +471,7 @@ export class JanuaBillingService {
           name: 'Starter',
           monthlyPrice: isMexico ? 999 : 59,
           yearlyPrice: isMexico ? 9990 : 590,
-          features: [
-            '50 quotes/month',
-            '5 materials',
-            'Basic pricing calculator',
-            'Email support',
-          ],
+          features: ['50 quotes/month', '5 materials', 'Basic pricing calculator', 'Email support'],
         },
         {
           id: 'professional',
