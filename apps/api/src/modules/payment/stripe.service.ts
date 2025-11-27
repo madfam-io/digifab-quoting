@@ -26,23 +26,46 @@ export class StripeService {
     });
   }
 
+  /**
+   * Get supported payment methods based on currency
+   * MXN supports: card, OXXO (cash), SPEI (bank transfer)
+   */
+  private getPaymentMethodTypes(
+    currency: string,
+  ): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
+    const currencyUpper = currency.toUpperCase();
+
+    if (currencyUpper === 'MXN') {
+      // Mexico payment methods
+      return ['card', 'oxxo'];
+    }
+
+    // Default: card only
+    return ['card'];
+  }
+
   async createCheckoutSession(params: {
     quoteId: string;
     customerEmail: string;
     lineItems: Array<{
       name: string;
       description: string;
-      amount: number; // in cents
+      amount: number; // in cents (or centavos for MXN)
       currency: string;
       quantity: number;
     }>;
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
+    /** Optional: specify payment methods. If not provided, auto-selects based on currency */
+    paymentMethods?: ('card' | 'oxxo' | 'customer_balance')[];
   }): Promise<Stripe.Checkout.Session> {
     try {
+      const currency = params.lineItems[0]?.currency || 'usd';
+      const paymentMethodTypes = params.paymentMethods || this.getPaymentMethodTypes(currency);
+
       const session = await this.stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
+        payment_method_types: paymentMethodTypes,
         line_items: params.lineItems.map((item) => ({
           price_data: {
             currency: item.currency,
