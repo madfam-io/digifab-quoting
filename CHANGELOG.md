@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Coforma API integration for external quoting services
+- Forgesight integration for project management sync
+
 ### Changed
 - Migrated all payments from direct Stripe to Janua Payment Gateway
 - Improved FFF (Fused Filament Fabrication) calculator accuracy
+- Standardized all package versions to 0.1.0
+- Updated to pnpm 9.15.0 across ecosystem
+
+### Security
+- Added SECURITY.md with vulnerability reporting guidelines
+- Added CONTRIBUTING.md with development standards
 
 ## [0.1.0] - 2024-11-27
 

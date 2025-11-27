@@ -109,8 +109,8 @@
 - **Operations Guides**: ✅ Complete
 
 ### Last Updated
-- Most Recent: December 2024
-- Next Review: Q1 2025
+- Most Recent: November 2025
+- Next Review: Q1 2026
 
 ---
 
@@ -165,10 +165,24 @@
 ### Third-Party Documentation
 - [Next.js Documentation](https://nextjs.org/docs)
 - [NestJS Documentation](https://docs.nestjs.com)
-- [Stripe API Reference](https://stripe.com/docs/api)
+- [Janua Payment Gateway](https://janua.io/docs) - Payment processing
 - [AWS Documentation](https://docs.aws.amazon.com)
+
+### MADFAM Ecosystem
+- [Primavera3D](../../primavera3d) - Manufacturing platform (embeds Cotiza)
+- [Forgesight](../../forgesight) - Project management integration
+- [Dhanam](../../dhanam) - Financial tracking
+
+---
+
+## 🔒 PROJECT GOVERNANCE
+
+### Standards & Security
+- [**CHANGELOG.md**](../CHANGELOG.md) - Version history and changes
+- [**CONTRIBUTING.md**](../CONTRIBUTING.md) - Development guidelines and PR process
+- [**SECURITY.md**](../SECURITY.md) - Security policies and vulnerability reporting
 
 ---
 
 *This index is the single source of truth for all Cotiza Studio documentation.*
-*Last Updated: December 2024*
+*Last Updated: November 2025*
