@@ -18,10 +18,10 @@ docker-compose up -d
 npm run dev
 
 # Access applications
-# Frontend: http://localhost:3002
-# API: http://localhost:4000
-# API Docs: http://localhost:4000/api/docs
-# Admin Panel: http://localhost:3002/admin
+# Frontend: http://localhost:3030
+# API: http://localhost:4030
+# API Docs: http://localhost:4030/api/docs
+# Admin Panel: http://localhost:3030/admin
 ```
 
 ## ✨ Key Features
@@ -136,7 +136,7 @@ AWS_SECRET_ACCESS_KEY=your-secret
 # Auth
 JWT_SECRET=your-secret-key-min-32-chars
 NEXTAUTH_SECRET=your-nextauth-secret-min-32-chars
-NEXTAUTH_URL=http://localhost:3002
+NEXTAUTH_URL=http://localhost:3030
 
 # Stripe (Optional for payments)
 STRIPE_KEY=sk_test_...
@@ -267,7 +267,7 @@ All project documentation is organized in the `/docs` directory. See [**docs/IND
 ### Base URL
 
 ```
-Development: http://localhost:4000/api/v1
+Development: http://localhost:4030/api/v1
 Production: https://api.cotiza.studio/v1
 ```
 
@@ -277,7 +277,7 @@ JWT Bearer token authentication:
 
 ```bash
 # Login
-curl -X POST http://localhost:4000/api/v1/auth/login \
+curl -X POST http://localhost:4030/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "password"}'
 
